@@ -38,6 +38,10 @@ packages = ["src/wayfinder"]
 line-length = 88
 target-version = "py312"
 src = ["src", "tests"]
+# Ruff formats Python inside Markdown code blocks. The design docs use those
+# blocks as illustrative sketches with deliberately aligned comments, and
+# reflowing them makes the docs worse without making any code better.
+extend-exclude = ["docs"]
 
 [tool.ruff.lint]
 select = [
