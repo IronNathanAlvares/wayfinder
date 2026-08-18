@@ -96,6 +96,36 @@ however careful the intent. A corpus written by an NGO worker who has read real
 messages is the highest-value thing available to this project, and it is what
 PDD assumption A4 was already pointing at.
 
+## Status of the fix
+
+**Built, and not yet measured.** The model screen exists, satisfies the
+`ModelScreen` protocol, and is tested end to end against a fake transport: the
+schema it sends, every response it accepts, and every way it can fail. What has
+not happened is a run against the real API, because that needs a key.
+
+Two things follow, and both matter more than the code.
+
+**The 0.167 stands until somebody re-measures.** Building a fix is not evidence
+that the fix works, and this project has already been burned once by a number
+that measured its own tuning. `wayfinder-compare` produces the comparison in one
+command, and until it is run against a key the honest description of this ADR is
+"a diagnosis and a proposed treatment", not "solved".
+
+**The prompt was written from the category definitions, not from the failures.**
+Fitting it to the held-out turns the deterministic screen missed would burn the
+split, which is exactly how holdout v1 died. If the model does poorly on those
+same turns, that is a result to report, not a prompt to tune.
+
+```bash
+uv sync --extra llm
+uv run wayfinder-compare --model claude-opus-5 --model claude-haiku-4-5
+```
+
+The runner refuses to print a model number without a key, and reports a
+could-not-evaluate rather than a result if any turn degraded partway through. A
+partial measurement presented as a measurement is how a safety number becomes
+fiction.
+
 ## Rejected alternatives
 
 | Option | Why not |

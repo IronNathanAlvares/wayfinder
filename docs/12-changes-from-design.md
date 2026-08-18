@@ -255,6 +255,27 @@ is worse than a specialist service and better than a number nobody checked.
 at 10pm and "I have nowhere to sleep tonight" is mostly typed after that, so a
 number shown without its hours sends somebody to a phone nobody answers.
 
+## 13. The model crisis screen is built and unmeasured
+
+ADR-0008 said a model becomes load-bearing in the crisis path. That model screen
+now exists: a closed two-field schema, an enumerated category set, a bounded
+timeout, and no swallowed exceptions. Every failure path turns into a visibly
+degraded screen rather than a silent clearance, and the whole adapter is tested
+offline against an injected fake client.
+
+**It has not been run against the API.** That needs a key, and a number nobody
+measured is not a number. `wayfinder-compare` runs the comparison in one command
+and refuses to print a model result without one.
+
+One bug the offline tests caught before it could matter: a response missing the
+`crisis` field read as "no crisis" rather than as malformed, which would have
+turned every schema failure into a silent clearance. It raises now.
+
+The screen defaults to `claude-opus-5` at low effort. The effort setting is a
+real decision rather than a default: this runs before everything else on every
+turn, so its latency is part of its safety story, and the deterministic lexicon
+has already run by the time it is consulted.
+
 ---
 
 ## Scope decisions

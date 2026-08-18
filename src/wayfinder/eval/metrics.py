@@ -35,6 +35,15 @@ class Score(BaseModel):
         return f"{self.value:.3f} ({self.numerator}/{self.denominator})"
 
 
+def score(numerator: int, denominator: int) -> Score:
+    """A Score, with the undefined case preserved rather than smoothed away."""
+    return Score(
+        value=None if denominator == 0 else numerator / denominator,
+        numerator=numerator,
+        denominator=denominator,
+    )
+
+
 def _score(numerator: int, denominator: int) -> Score:
     return Score(
         value=None if denominator == 0 else numerator / denominator,

@@ -15,6 +15,13 @@ dependencies = [
 [project.scripts]
 wayfinder = "wayfinder.cli.main:main"
 wayfinder-eval = "wayfinder.eval.gate:main"
+wayfinder-compare = "wayfinder.eval.compare:main"
+
+[project.optional-dependencies]
+# The plan engine and the deterministic safety layers install without this.
+# Only the model crisis screen needs it, and ADR-0008 explains why that screen
+# exists at all.
+llm = ["anthropic>=0.122"]
 
 [dependency-groups]
 dev = [
@@ -69,6 +76,7 @@ ignore = [
 # The CLI and the eval gate are the places that are supposed to write to stdout.
 "src/wayfinder/cli/*" = ["T20"]
 "src/wayfinder/eval/gate.py" = ["T20"]
+"src/wayfinder/eval/compare.py" = ["T20"]
 # Curly quotes and dashes are the subject matter here, not a typo. Normalisation
 # exists precisely because they arrive from phone keyboards constantly.
 "src/wayfinder/safety/normalise.py" = ["RUF003"]
@@ -183,6 +191,7 @@ forbidden_modules = [
     "socket",
     "random",
     "wayfinder.safety.loader",
+    "wayfinder.safety.llm",
 ]
 
 [[tool.importlinter.contracts]]

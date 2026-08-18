@@ -82,6 +82,14 @@ uv run pytest                     # unit, property and persona tests
 uv run lint-imports               # proves plan/ imports nothing with I/O
 uv run wayfinder-eval             # the safety gate, against the design targets
 uv run wayfinder-eval --baseline  # what CI runs: no regression
+uv run wayfinder-compare          # crisis recall, deterministic only
+```
+
+The comparison against a model needs a key and costs about fifty API calls:
+
+```bash
+uv sync --extra llm
+ANTHROPIC_API_KEY=... uv run wayfinder-compare --model claude-opus-5
 ```
 
 ## The number that matters
