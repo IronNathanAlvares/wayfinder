@@ -1,6 +1,6 @@
 # 12. Changes from the design, and why
 
-**Date:** 18 August 2026 · **Made during:** M1
+**Date:** 18 August 2026 · **Made during:** M1 and M3
 
 The design package was written on 17 August 2026 with no code. Building M1
 turned up places where it was wrong, underspecified, or contradicted by the
@@ -170,6 +170,90 @@ the named things nothing can clear. Somebody waiting on a determination still
 needs to know which of the other prerequisites they can be getting on with, and
 telling them there is no route when three of four steps are available is both
 wrong and demoralising.
+
+---
+
+---
+
+# M3, the safety layer
+
+## 7. A deterministic crisis screen does not reach the required recall
+
+This is the finding the milestone was for, and it has its own record in
+ADR-0008. PDD assumption A2 said "a deterministic classifier can catch `CRISIS`
+reliably" and listed it as something to validate against a corpus in M3. It has
+been validated against two, and it is false.
+
+| Measured on | CRISIS recall | Gate |
+|---|---|---|
+| Dev splits, tuned against | 1.000 | 0.99 |
+| Holdout v1, phrase lexicon | 0.300 | 0.99 |
+| Holdout v2, compositional patterns | 0.167 | 0.99 |
+
+**Changed:** a model becomes load-bearing in the crisis path, constrained so it
+can only add a detection and never clear one. The lexicon keeps its veto, which
+is what ADR-0006 was actually protecting. The design loses the claim that the
+crisis path has no availability dependency, and when the model is unavailable
+the system says so and surfaces the directory rather than pretending it screened.
+
+## 8. The eval was measuring its own tuning
+
+The first five splits were written, the classifier was fixed against the items
+it failed on them, and it then reported 1.000 across the board. Those numbers
+said the tuning worked, which is a different claim from the classifier working.
+
+**Changed:** a held-out split, written before being run and evaluated once. The
+rule is that a failure there is reported rather than patched away. When holdout
+v1 revealed a whole class of failure it was burned fixing it and retired to
+`regression.yaml`, and a fresh one replaced it.
+
+The gate reports dev and holdout separately, because one number over both would
+let three hundred in-sample items drown out the fifty that measure anything.
+
+## 9. CI gates on a baseline, not on the design targets
+
+The design targets are not met. A build that is permanently red gets ignored,
+and a build that goes green by scoring its training set is how this went wrong
+in the first place.
+
+**Changed:** `wayfinder-eval` reports against the design gates and exits 1 when
+they are unmet, which is the truth. `wayfinder-eval --baseline`, which is what
+CI runs, checks against a committed baseline and fails only on regression. The
+baseline file records the real numbers, including the 0.167, and the command
+prints that the design gates are unmet every time it passes.
+
+## 10. Layer 3 is pluggable rather than necessarily a model
+
+The design assumed layer 3 would always be an LLM. Without one the system can
+never say `PROCEDURAL`, so it escalates everything, which the design itself
+names as the useless outcome. Measuring precision on a class the system never
+assigns is a division by zero, and reporting that as a pass would be the
+broken-eval-reads-as-passing failure the exit codes exist to prevent.
+
+**Changed:** layer 3 is a protocol with a deterministic default implementation.
+The layered contract in `07` §4 is unchanged; what changed is that layer 3 is
+not necessarily sampled. Held out, the deterministic implementation scores
+`PLANNING` recall of 0.000, so it is a safe floor and not a working classifier.
+
+## 11. `PLANNING` had no eval split at all
+
+Found by the gate reporting zero support for it. One of five classes, and the
+one the project is named for, was untested.
+
+**Changed:** a `planning.yaml` split exists. Held out it scores 0.000, which is
+the same generalisation problem as the crisis lexicon and is recorded rather
+than hidden.
+
+## 12. The crisis directory contains only numbers that were verified
+
+Eleven services were checked against their publishers' own pages on 18 August
+2026. No dedicated anti-trafficking line could be verified, so there is not one:
+trafficking routes to the Garda emergency and confidential lines instead, which
+is worse than a specialist service and better than a number nobody checked.
+
+`hours` is a required field on every entry. The Dublin homeless freephone closes
+at 10pm and "I have nowhere to sleep tonight" is mostly typed after that, so a
+number shown without its hours sends somebody to a phone nobody answers.
 
 ---
 

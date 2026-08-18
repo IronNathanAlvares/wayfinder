@@ -49,6 +49,14 @@ jobs:
           uv run wayfinder corpus check
           uv run wayfinder corpus health
 
+      # The classifier is a model, so it gets a gate. This checks against the
+      # committed baseline rather than the design targets, because the design
+      # targets are not met and a permanently red build gets ignored. The
+      # baseline file records the real numbers and says the targets are unmet.
+      # See docs/adr/ADR-0008.
+      - name: safety eval, no regression against the baseline
+        run: uv run wayfinder-eval --baseline --show-failures 0
+
       # Proves the corpus data actually ships. It lives outside the Python
       # package tree conceptually, and a packaging mistake there is invisible
       # until somebody installs it.

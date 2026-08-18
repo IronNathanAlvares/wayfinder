@@ -1,0 +1,224 @@
+# The crisis lexicon. Reviewed on a schedule, never generated.
+#
+# It over-triggers on purpose. The cost matrix is not symmetric: a false
+# positive shows somebody a list of helplines they did not need, and a false
+# negative is somebody sleeping outside. The eval gate requires recall of 0.99
+# and sets no precision gate at all.
+#
+# Phrases are matched with word boundaries against normalised text, so "kill"
+# does not fire on "skills". Write phrases in their expanded form, since
+# contractions are expanded before matching: "cannot", not "can't".
+#
+# Patterns marked `regex: true` are compositional rather than literal. They
+# exist because a held-out split showed that a pure phrase list catches 30
+# percent of crisis turns in unseen phrasing. Fixed phrases only match the
+# sentences somebody thought of; "no house for me tonight" and "nowhere to sleep
+# tonight" mean the same thing and share no phrase.
+#
+# The weakest area is still non-native and multilingual phrasing. That is stated
+# openly in docs/07 section 9 rather than claimed as solved.
+
+reviewed_on: 2026-08-18
+reviewed_by: NA
+
+categories:
+  - id: self_harm
+    patterns:
+      - phrase: kill myself
+      - phrase: killing myself
+      - phrase: end my life
+      - phrase: ending my life
+      - phrase: take my own life
+      - phrase: suicidal
+      - phrase: suicide
+      - phrase: want to die
+      - phrase: wish i was dead
+      - phrase: better off dead
+      - phrase: harm myself
+      - phrase: harming myself
+      - phrase: hurt myself
+      - phrase: hurting myself
+      - phrase: self harm
+      - phrase: cut myself
+      - phrase: cannot go on
+      - phrase: do not want to live
+      - phrase: no reason to live
+      - phrase: nothing to live for
+      - phrase: i give up on life
+      # Compositional: an intention verb near an ending-life object.
+      - phrase: '(want|going|plan|planning|about|ready|decided) to (die|kill myself|end it|end my life)'
+        regex: true
+      - phrase: '(kill|hurt|harm|cut) (myself|my self)'
+        regex: true
+      - phrase: 'not want(ing)? to (be here|live|wake up)'
+        regex: true
+
+  - id: medical
+    patterns:
+      - phrase: ambulance
+      - phrase: medical emergency
+      - phrase: cannot breathe
+      - phrase: chest pain
+      - phrase: bleeding badly
+      - phrase: heavy bleeding
+      - phrase: unconscious
+      - phrase: not breathing
+      - phrase: overdose
+      - phrase: poisoned
+      - phrase: having a seizure
+      - phrase: collapsed
+      - phrase: severe pain
+      - phrase: going into labour
+      - phrase: waters have broken
+      # Unresponsive, in the phrasings people actually use under panic.
+      - phrase: 'not (waking|wake) up'
+        regex: true
+      - phrase: '(cannot|will not|does not|do not) (wake|respond|move|breathe)'
+        regex: true
+      - phrase: '(very|really|seriously|extremely) (sick|ill|unwell)'
+        regex: true
+      - phrase: 'needs? (an )?(ambulance|hospital) (now|urgently|immediately)'
+        regex: true
+      - phrase: 'bleeding'
+        regex: true
+
+  - id: violence
+    patterns:
+      - phrase: domestic violence
+      - phrase: domestic abuse
+      - phrase: beating me
+      - phrase: beat me
+      - phrase: hitting me
+      - phrase: hits me
+      - phrase: he hurts me
+      - phrase: she hurts me
+      - phrase: threatening me
+      - phrase: threatened me
+      - phrase: threatening to kill
+      - phrase: afraid for my life
+      - phrase: scared for my life
+      - phrase: in danger
+      - phrase: not safe at home
+      - phrase: i am not safe
+      - phrase: raped
+      - phrase: sexual assault
+      - phrase: sexually assaulted
+      - phrase: trafficked
+      - phrase: trafficking
+      - phrase: forced to work
+      - phrase: they took my passport
+      - phrase: someone took my passport
+      - phrase: they will not let me leave
+      - phrase: being held
+      - phrase: locked in
+      # Violence described as an action done to somebody, rather than named.
+      - phrase: '(hit|hits|hitting|beat|beats|beating|punch\w*|kick\w*|strangl\w*|chok\w*|attack\w*|stab\w*) (me|us|my \w+)'
+        regex: true
+      - phrase: 'broke my (arm|leg|nose|rib|ribs|jaw|hand|finger|wrist)'
+        regex: true
+      - phrase: '(afraid|scared|frightened|terrified) (of him|of her|of them|to go home|at home)'
+        regex: true
+      # Trafficking and coercion, described rather than named.
+      - phrase: '(keep|keeps|keeping|took|taking|have|has) my (passport|documents|papers|phone)'
+        regex: true
+      - phrase: 'make (me|us) work'
+        regex: true
+      - phrase: 'work(ing)? (without|with no) (pay|money|wages)'
+        regex: true
+      - phrase: '(cannot|will not|not allowed to) leave (the house|the room|here)'
+        regex: true
+
+  - id: child_protection
+    patterns:
+      - phrase: child is in danger
+      - phrase: my child is not safe
+      - phrase: child at risk
+      - phrase: hurting my child
+      - phrase: hurting the children
+      - phrase: unaccompanied minor
+      - phrase: i am under 18
+      - phrase: i am 16
+      - phrase: i am 17
+      - phrase: child on my own
+      - phrase: alone with no adult
+      - phrase: separated from my children
+      - phrase: took my children
+      # A stated age under 18. Written out and numeric, because both arrive.
+      - phrase: '\bi am (thirteen|fourteen|fifteen|sixteen|seventeen)\b'
+        regex: true
+      - phrase: '\bi am (1[0-7]|[89])( years old)?\b'
+        regex: true
+      - phrase: '\b(travelled|came|arrived|got here) (here )?(by myself|alone|on my own)\b'
+        regex: true
+      - phrase: '(my|the) child .{0,25}(hurt|beaten|hit|abused|touched|not safe|in danger)'
+        regex: true
+
+  - id: detention
+    patterns:
+      - phrase: being deported
+      - phrase: deported tomorrow
+      - phrase: deportation order
+      - phrase: removal order
+      - phrase: i am detained
+      - phrase: is detained
+      - phrase: was detained
+      - phrase: being detained
+      - phrase: in detention
+      - phrase: garda station
+      - phrase: arrested
+      - phrase: they are coming to remove me
+      - phrase: removed from the country
+      # Removal described rather than named.
+      - phrase: '(send|sending|sent|put) (me|us) back'
+        regex: true
+      - phrase: '(send|sending|put) (me|us) on a plane'
+        regex: true
+      - phrase: '(police|garda|gardai|immigration) (came|arrived|took|are here)'
+        regex: true
+      - phrase: 'have to leave the country'
+        regex: true
+
+  - id: rough_sleeping
+    patterns:
+      - phrase: nowhere to sleep
+      - phrase: no where to sleep
+      - phrase: nowhere to stay
+      - phrase: nowhere to go
+      - phrase: sleeping rough
+      - phrase: sleeping outside
+      - phrase: sleeping on the street
+      - phrase: on the street tonight
+      - phrase: on the streets
+      - phrase: no accommodation tonight
+      - phrase: no bed tonight
+      - phrase: no shelter tonight
+      - phrase: homeless tonight
+      - phrase: made homeless
+      - phrase: evicted today
+      - phrase: evicted tomorrow
+      - phrase: being evicted
+      - phrase: evicting me
+      - phrase: evicting us
+      - phrase: thrown out
+      - phrase: threw me out
+      - phrase: kicked out
+      - phrase: kicked me out
+      - phrase: kicked us out
+      - phrase: put me out
+      - phrase: no place to stay tonight
+      - phrase: i have no roof
+      - phrase: outside all night
+      # The shape that a phrase list misses: an absence word near a
+      # place-to-stay word. "No house for me tonight" and "nowhere to sleep"
+      # mean the same thing and share no phrase.
+      - phrase: '\b(no|nowhere|not any|do not have a|have no|without a?)\b.{0,30}\b(sleep|stay|house|home|bed|shelter|roof|accommodation|place to go)\b'
+        regex: true
+      # Being put out, with a deadline. The deadline is what makes it tonight.
+      - phrase: '(must|have to|has to|told to|asked to|need to) leave .{0,40}(today|tonight|tomorrow|this evening|by \d)'
+        regex: true
+      - phrase: '(must|have to|need to) leave (the|my|our) (hostel|accommodation|centre|center|room|house|place)'
+        regex: true
+      - phrase: '(sleep|slept|sleeping) (in|on) (the )?(park|street|streets|car|floor|bus|station|tent)'
+        regex: true
+      - phrase: 'nowhere (to|for)'
+        regex: true

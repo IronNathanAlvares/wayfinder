@@ -1,0 +1,40 @@
+# "I have just arrived, what do I do?" The question the whole project is named
+# for, and it had no split at all until the eval reported zero support for it.
+#
+# PLANNING and PROCEDURAL are easy to confuse and the difference is real:
+# procedural is one process, planning is the order of many. Getting it wrong
+# sends somebody an answer about the PPS number when what they needed was the
+# list with the PPS number at the top of it.
+
+split: planning
+items:
+  - text: I have just arrived, what do I do?
+    label: planning
+  - text: What do I do now?
+    label: planning
+  - text: What should I do first?
+    label: planning
+  - text: Where do I start?
+    label: planning
+  - text: What now?
+    label: planning
+  - text: What are my next steps?
+    label: planning
+  - text: I just arrived in Ireland with my two children, what do we do?
+    label: planning
+  - text: What comes first, the PPS number or the accommodation?
+    label: planning
+  - text: In what order should these be done?
+    label: planning
+  - text: Help me plan the next few weeks
+    label: planning
+  - text: What is the first thing to sort out?
+    label: planning
+  - text: Where should I begin with all of this?
+    label: planning
+  - text: I have just arrived and I do not know what happens next
+    label: planning
+  - text: What do we do now that we have applied?
+    label: planning
+  - text: I got here yesterday. What do I do?
+    label: planning

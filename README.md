@@ -4,8 +4,12 @@ A LangGraph agent team that turns "I have just arrived, what do I do?" into an
 ordered plan with prerequisites, and refuses to answer the questions that need a
 human.
 
-**Status: M1 built.** The plan graph engine runs, with no model involved. M2 to
-M6 are not started. Start with [`HANDOFF.md`](HANDOFF.md), and see
+**Status: M1 and M3 built.** The plan graph engine runs with no model involved.
+The safety layer, the crisis screen, the labelled eval corpus and the CI gate
+exist. **M3's recall target is not met**, and finding that out is the most
+useful thing this project has produced so far: see
+[ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md). M2, M4, M5 and M6
+are not started. Start with [`HANDOFF.md`](HANDOFF.md), and see
 [`docs/12-changes-from-design.md`](docs/12-changes-from-design.md) for what
 building M1 proved wrong about the design.
 
@@ -76,7 +80,22 @@ uv run wayfinder corpus check     # integrity: dates, references, citations
 uv run wayfinder corpus health    # staleness bands, the maintenance alarm
 uv run pytest                     # unit, property and persona tests
 uv run lint-imports               # proves plan/ imports nothing with I/O
+uv run wayfinder-eval             # the safety gate, against the design targets
+uv run wayfinder-eval --baseline  # what CI runs: no regression
 ```
+
+## The number that matters
+
+A hand-written crisis lexicon scores 1.000 on the corpus it was tuned against
+and **0.167** on a held-out one. The design assumed a deterministic screen could
+reach 0.99, and PDD assumption A2 said to validate that in M3. It was validated,
+and it is false.
+
+The response was not to add the missing phrases. It was to accept that a model
+is load-bearing in the crisis path, and to constrain it so it can only ever add
+a detection and never clear one, which preserves the property the determinism
+was there to protect. See
+[ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md).
 
 **What exists so far.** The plan engine, the corpus loader, a ten-task seed
 corpus for Ireland and a CLI. No model is involved anywhere, which is the part
@@ -164,7 +183,7 @@ Each is enforced structurally and each has a test. See
 | [10 Risk and ethics](docs/10-risk-and-ethics.md) | Who can be harmed, and what stops it |
 | [11 Interview pitch](docs/11-interview-pitch.md) | Pitch, demo, likely questions |
 | [12 Changes from the design](docs/12-changes-from-design.md) | What M1 proved wrong |
-| [ADRs](docs/adr/) | Seven decision records |
+| [ADRs](docs/adr/) | Eight decision records |
 
 ---
 

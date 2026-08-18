@@ -4,7 +4,7 @@
 **What it is:** A LangGraph agent team that turns "I have just arrived, what do I
 do?" into an ordered plan with prerequisites, and refuses to answer the questions
 that need a human.
-**Author:** Nathan Alvares · **Date:** 17 August 2026 · **Status:** M1 built. See [`12-changes-from-design.md`](12-changes-from-design.md)
+**Author:** Nathan Alvares · **Date:** 17 August 2026 · **Status:** M1 and M3 built. See [`12-changes-from-design.md`](12-changes-from-design.md)
 
 > **Standalone project.** No dependency on anything else. Nothing else needs to
 > exist for it to run.
@@ -58,6 +58,7 @@ that need a human.
 | [0005](adr/ADR-0005-dated-corpus.md) | Hand-curated dated corpus | A stale page looks exactly like a current one |
 | [0006](adr/ADR-0006-deterministic-safety-layer.md) | Deterministic safety layer, pre-graph | A model can be talked out of escalating. A regex cannot |
 | [0007](adr/ADR-0007-topology-proof-method.md) | How the topology claim is proved | The originally sketched test would have passed while the property was false |
+| [0008](adr/ADR-0008-crisis-recall-needs-a-model.md) | **A deterministic crisis screen cannot reach 0.99 recall** | Measured at 0.17 held out. Invalidates PDD A2, amends ADR-0006 |
 
 ---
 

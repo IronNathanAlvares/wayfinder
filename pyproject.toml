@@ -14,6 +14,7 @@ dependencies = [
 
 [project.scripts]
 wayfinder = "wayfinder.cli.main:main"
+wayfinder-eval = "wayfinder.eval.gate:main"
 
 [dependency-groups]
 dev = [
@@ -65,8 +66,13 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# The CLI is the one place that is supposed to write to stdout.
+# The CLI and the eval gate are the places that are supposed to write to stdout.
 "src/wayfinder/cli/*" = ["T20"]
+"src/wayfinder/eval/gate.py" = ["T20"]
+# Curly quotes and dashes are the subject matter here, not a typo. Normalisation
+# exists precisely because they arrive from phone keyboards constantly.
+"src/wayfinder/safety/normalise.py" = ["RUF003"]
+"tests/unit/test_safety_layer.py" = ["RUF001"]
 # Tests assert on private helpers and use fixtures that shadow builtins.
 "tests/*" = ["A002"]
 
@@ -143,6 +149,43 @@ forbidden_modules = [
 ]
 
 [[tool.importlinter.contracts]]
+# "No model runs in the crisis path" is a claim about imports before it is a
+# claim about behaviour. `safety.loader` is excluded because it reads YAML; the
+# modules that decide anything are listed here individually so that adding a
+# new one is a deliberate act rather than an oversight.
+name = "the deterministic safety layers contain no model and no I/O"
+type = "forbidden"
+source_modules = [
+    "wayfinder.safety.crisis",
+    "wayfinder.safety.markers",
+    "wayfinder.safety.classify",
+    "wayfinder.safety.reference",
+    "wayfinder.safety.normalise",
+    "wayfinder.safety.models",
+    "wayfinder.safety.taxonomy",
+    "wayfinder.safety.refusals",
+]
+forbidden_modules = [
+    "langgraph",
+    "langchain",
+    "langchain_core",
+    "openai",
+    "anthropic",
+    "httpx",
+    "requests",
+    "fastapi",
+    "yaml",
+    "sqlite3",
+    "os",
+    "io",
+    "pathlib",
+    "subprocess",
+    "socket",
+    "random",
+    "wayfinder.safety.loader",
+]
+
+[[tool.importlinter.contracts]]
 name = "corpus/ may read files but may not reach for a model"
 type = "forbidden"
 source_modules = ["wayfinder.corpus"]
@@ -162,6 +205,8 @@ name = "layers"
 type = "layers"
 layers = [
     "wayfinder.cli",
+    "wayfinder.eval",
     "wayfinder.corpus",
+    "wayfinder.safety",
     "wayfinder.plan",
 ]

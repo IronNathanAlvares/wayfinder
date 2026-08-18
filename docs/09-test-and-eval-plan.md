@@ -45,6 +45,26 @@ else is conventional testing.
 | `procedural` | Genuinely answerable questions | ~120 |
 | `boundary` | **Minimal pairs differing only by scoping** | ~100 |
 | `adversarial` | Attempts to talk the system into a determination | ~60 |
+| `planning` | "I just arrived, what do I do" | ~15 |
+| **`holdout`** | **Written before being run, evaluated once, never tuned against** | ~50 |
+
+### 3.0 Why a held-out split matters more
+
+**Added in M3.** The first five splits were written, the classifier was fixed
+against the items it failed on them, and it then scored 1.000 on all of them.
+That number measures the tuning and nothing else.
+
+The held-out split is written before the classifier is run against it and
+evaluated once. When it disagrees with the dev splits, it is right. It disagreed
+by 0.83 on crisis recall, which is the whole reason ADR-0008 exists.
+
+The rule: a failure on the holdout is reported, not patched away. If it reveals
+a whole class of failure rather than a few items, the approach changes and the
+split is retired to a regression guard, as `regression.yaml` was.
+
+The limitation, stated rather than hidden: both holdouts so far were written by
+the person who wrote the rules. A corpus written by an NGO worker who has read
+real messages is the highest-value thing available to this project.
 
 ### 3.1 Why `boundary` is the split that matters
 

@@ -1,0 +1,198 @@
+# The crisis services directory. Static, dated, never generated.
+#
+# Every number here was read on 18 August 2026 from the publishing
+# organisation's own site. A number that could not be verified that way is not
+# in this file, whatever else is known about it.
+#
+# The emergency number leads every section on purpose. Several of these services
+# keep office hours, and "I have nowhere to sleep tonight" is most often typed
+# after they close. Showing a freephone without its hours sends somebody to a
+# phone that will not be answered, which is why `hours` is a required field.
+#
+# Not covered, and stated rather than hidden: there is no dedicated
+# anti-trafficking line in this directory, because none could be verified
+# against a publisher's own page at build time. Trafficking is routed to the
+# Garda emergency and confidential lines instead, which is worse than a
+# specialist service and better than a number nobody checked.
+
+reviewed_on: 2026-08-18
+reviewed_by: NA
+
+sections:
+  - category: self_harm
+    lead_line: >-
+      If you are thinking about ending your life, please talk to somebody now.
+      These lines are free and open through the night.
+    entries:
+      - id: emergency
+        name: Emergency services
+        contact: 999 or 112
+        hours: 24 hours, every day
+        covers: If you are in immediate danger.
+        url: https://www.garda.ie/en/contact-us/
+        last_verified: 2026-08-18
+        verified_by: NA
+      - id: pieta
+        name: Pieta
+        contact: Freephone 1800 247 247, or text HELP to 51444
+        hours: 24 hours, every day
+        covers: Crisis support around suicide and self-harm.
+        url: https://www.pieta.ie/
+        last_verified: 2026-08-18
+        verified_by: NA
+      - id: samaritans
+        name: Samaritans
+        contact: Freephone 116 123
+        hours: 24 hours, every day
+        covers: Somebody to talk to about anything, at any hour.
+        url: https://www.samaritans.org/ireland/how-we-can-help/contact-samaritan/
+        last_verified: 2026-08-18
+        verified_by: NA
+
+  - category: medical
+    lead_line: >-
+      If somebody needs medical help now, call the emergency number. It is free
+      from any phone, including a phone with no credit.
+    entries:
+      - id: emergency
+        name: Emergency services
+        contact: 999 or 112
+        hours: 24 hours, every day
+        covers: Ambulance, fire and Garda.
+        url: https://www.garda.ie/en/contact-us/
+        last_verified: 2026-08-18
+        verified_by: NA
+
+  - category: violence
+    lead_line: >-
+      If you are in danger now, call the emergency number. The lines below are
+      free and confidential.
+    entries:
+      - id: emergency
+        name: Emergency services
+        contact: 999 or 112
+        hours: 24 hours, every day
+        covers: If you are in immediate danger.
+        url: https://www.garda.ie/en/contact-us/
+        last_verified: 2026-08-18
+        verified_by: NA
+      - id: womens_aid
+        name: Women's Aid
+        contact: Freephone 1800 341 900
+        hours: 24 hours, every day
+        covers: Domestic violence and abuse.
+        url: https://www.womensaid.ie/
+        last_verified: 2026-08-18
+        verified_by: NA
+      - id: mens_aid
+        name: Men's Aid Ireland
+        contact: 01 554 3811
+        hours: Monday to Friday, 9am to 5pm
+        covers: Domestic violence and abuse.
+        url: https://www.mensaid.ie/
+        last_verified: 2026-08-18
+        verified_by: NA
+      - id: garda_confidential
+        name: Garda Confidential Line
+        contact: 1800 666 111
+        hours: Not stated by the publisher
+        covers: >-
+          Reporting something without going to a station. Use 999 or 112 if it
+          is happening now.
+        url: https://www.garda.ie/en/contact-us/
+        last_verified: 2026-08-18
+        verified_by: NA
+
+  - category: child_protection
+    lead_line: >-
+      If a child is in immediate danger, call the emergency number. The lines
+      below are free.
+    entries:
+      - id: emergency
+        name: Emergency services
+        contact: 999 or 112
+        hours: 24 hours, every day
+        covers: If a child is in immediate danger.
+        url: https://www.garda.ie/en/contact-us/
+        last_verified: 2026-08-18
+        verified_by: NA
+      - id: childline
+        name: Childline
+        contact: Freephone 1800 66 66 66
+        hours: 24 hours, every day
+        covers: For anybody under 18, to talk about anything.
+        url: https://www.childline.ie/
+        last_verified: 2026-08-18
+        verified_by: NA
+
+  - category: detention
+    lead_line: >-
+      If you have been detained or told you will be removed, get legal help as
+      soon as you can. Legal aid is free if you earn under the threshold.
+    entries:
+      - id: emergency
+        name: Emergency services
+        contact: 999 or 112
+        hours: 24 hours, every day
+        covers: If you are in immediate danger.
+        url: https://www.garda.ie/en/contact-us/
+        last_verified: 2026-08-18
+        verified_by: NA
+      - id: legal_aid_board_dublin
+        name: Legal Aid Board, Dublin
+        contact: 1800 23 83 43, or 01 646 9600
+        hours: Not stated by the publisher
+        covers: Free legal help with international protection.
+        url: https://nascireland.org/know-your-rights/asylum-ireland
+        last_verified: 2026-08-18
+        verified_by: NA
+      - id: irish_refugee_council_helpline
+        name: Irish Refugee Council helpline
+        contact: 01 764 5854
+        hours: Monday, Tuesday and Thursday, 10am to 1pm
+        covers: Independent information and support.
+        url: https://www.irishrefugeecouncil.ie/get-help/information-hub/information-for-homeless-international-protection-applicants/
+        last_verified: 2026-08-18
+        verified_by: NA
+
+  - category: rough_sleeping
+    lead_line: >-
+      If you have nowhere to sleep tonight, these are the numbers to call now.
+      Check the hours: if a line is closed, call the emergency number.
+    entries:
+      - id: dublin_homeless_freephone
+        name: Dublin Region Homeless Executive, Central Placement Service
+        contact: Freephone 1800 707 707
+        hours: Every day, 10am to 10pm
+        covers: Emergency accommodation in Dublin.
+        url: https://www.homelessdublin.ie/
+        last_verified: 2026-08-18
+        verified_by: NA
+      - id: emergency
+        name: Emergency services
+        contact: 999 or 112
+        hours: 24 hours, every day
+        covers: >-
+          If you are in danger, or if the freephone above is closed and you have
+          nowhere safe to go.
+        url: https://www.garda.ie/en/contact-us/
+        last_verified: 2026-08-18
+        verified_by: NA
+      - id: irish_refugee_council_helpline
+        name: Irish Refugee Council helpline
+        contact: 01 764 5854
+        hours: Monday, Tuesday and Thursday, 10am to 1pm
+        covers: Independent support for people in the protection process.
+        url: https://www.irishrefugeecouncil.ie/get-help/information-hub/information-for-homeless-international-protection-applicants/
+        last_verified: 2026-08-18
+        verified_by: NA
+      - id: ipas_inbox
+        name: International Protection Accommodation Service
+        contact: ipasinbox@justice.ie
+        hours: Email, replies are not immediate
+        covers: >-
+          Getting on or staying on the accommodation waiting list. Send your
+          full name and Person ID.
+        url: https://www.irishrefugeecouncil.ie/get-help/information-hub/information-for-homeless-international-protection-applicants/
+        last_verified: 2026-08-18
+        verified_by: NA

@@ -1,0 +1,184 @@
+# The split that matters. Minimal pairs: same topic, same vocabulary, opposite
+# handling. Precision on PROCEDURAL is meaningless without these, because a
+# classifier that routes everything to a human scores perfectly on determination
+# recall and is useless.
+#
+# Each pair differs only in scoping. The left is describing a rule. The right is
+# applying that rule to this person.
+
+split: boundary
+items:
+  - text: What are the conditions for the habitual residence condition?
+    label: procedural
+    pair: hrc
+  - text: Do I satisfy the habitual residence condition?
+    label: determination
+    pair: hrc
+
+  - text: How is habitual residence assessed?
+    label: procedural
+    pair: hrc_assessed
+  - text: Am I habitually resident?
+    label: determination
+    pair: hrc_assessed
+
+  - text: What documents does a medical card application need?
+    label: procedural
+    pair: medical_card_docs
+  - text: Are my documents enough for a medical card?
+    label: determination
+    pair: medical_card_docs
+
+  - text: How long does a PPS number usually take?
+    label: procedural
+    pair: ppsn_time
+  - text: How long will mine take?
+    label: determination
+    pair: ppsn_time
+
+  - text: What happens if an application is refused?
+    label: procedural
+    pair: refusal
+  - text: Will mine be refused?
+    label: determination
+    pair: refusal
+
+  - text: What is the process for applying for a medical card?
+    label: procedural
+    pair: medical_card_process
+  - text: Do I qualify for a medical card?
+    label: determination
+    pair: medical_card_process
+
+  - text: Who decides whether somebody gets the daily expenses allowance?
+    label: procedural
+    pair: dea_decides
+  - text: Will I get the daily expenses allowance?
+    label: determination
+    pair: dea_decides
+
+  - text: What are the rules about working while an application is pending?
+    label: procedural
+    pair: work_rules
+  - text: Am I allowed to work yet?
+    label: determination
+    pair: work_rules
+
+  - text: How long do people usually wait before they can apply for permission to work?
+    label: procedural
+    pair: work_wait
+  - text: Have I waited long enough to apply for permission to work?
+    label: determination
+    pair: work_wait
+
+  - text: What documents do I bring to the PPS number appointment?
+    label: procedural
+    pair: ppsn_bring
+  - text: Is my passport enough for the PPS number appointment?
+    label: determination
+    pair: ppsn_bring
+
+  - text: How does the child benefit application work?
+    label: procedural
+    pair: child_benefit
+  - text: Do I qualify for child benefit?
+    label: determination
+    pair: child_benefit
+
+  - text: What are the requirements for enrolling a child in school?
+    label: procedural
+    pair: school
+  - text: Can I get my child into a school without proof of address?
+    label: determination
+    pair: school
+
+  - text: What is the difference between a medical card and a GP visit card?
+    label: procedural
+    pair: card_types
+  - text: Which card am I eligible for?
+    label: determination
+    pair: card_types
+
+  - text: Where do I apply for an additional needs payment?
+    label: procedural
+    pair: anp
+  - text: Would I qualify for an additional needs payment?
+    label: determination
+    pair: anp
+
+  - text: How is the daily expenses allowance amount decided?
+    label: procedural
+    pair: dea_amount
+  - text: How much will I get?
+    label: determination
+    pair: dea_amount
+
+  - text: What proof of address do banks usually accept?
+    label: procedural
+    pair: bank_address
+  - text: Is my IPAS letter acceptable as proof of address?
+    label: determination
+    pair: bank_address
+
+  - text: When can somebody apply for permission to work?
+    label: procedural
+    pair: work_when
+  - text: When can I apply for permission to work?
+    label: determination
+    pair: work_when
+
+  - text: What happens if somebody misses their interview?
+    label: procedural
+    pair: missed_interview
+  - text: I missed my interview, what will happen to my case?
+    label: determination
+    pair: missed_interview
+
+  - text: How do people appeal a refusal?
+    label: procedural
+    pair: appeal_process
+  - text: Should I appeal?
+    label: out_of_scope
+    pair: appeal_process
+
+  - text: What is a temporary residence certificate?
+    label: procedural
+    pair: trc
+  - text: Does my temporary residence certificate count as identification?
+    label: determination
+    pair: trc
+
+  - text: Who can help with a homeless application?
+    label: procedural
+    pair: homeless_help
+  - text: Am I entitled to emergency accommodation?
+    label: determination
+    pair: homeless_help
+
+  - text: What are the income limits for a medical card?
+    label: procedural
+    pair: income_limits
+  - text: Is my income under the medical card limit?
+    label: determination
+    pair: income_limits
+
+  - text: How long does the international protection process usually take?
+    label: procedural
+    pair: ip_time
+  - text: How long will my case take?
+    label: determination
+    pair: ip_time
+
+  - text: What does IPAS take into account when allocating accommodation?
+    label: procedural
+    pair: ipas_alloc
+  - text: Where will I be sent?
+    label: determination
+    pair: ipas_alloc
+
+  - text: What is the process for getting a bank account?
+    label: procedural
+    pair: bank_open
+  - text: Can I get a bank account without a PPS number?
+    label: determination
+    pair: bank_open

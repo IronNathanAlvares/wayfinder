@@ -78,6 +78,14 @@ Three properties, and each one is deliberate:
 **No LLM in the path.** A model cannot be talked out of a regex, and it cannot
 mis-generate a phone number. The response is looked up, not composed.
 
+> **Amended in M3, and this is the important one. See ADR-0008.** Measured
+> against two held-out splits, the deterministic screen reaches **0.17 to 0.30
+> recall**, not the 0.99 this section assumes. PDD assumption A2 is invalidated.
+> A model is now load-bearing in this path, constrained so that it can only ever
+> *add* a crisis detection and never clear one. The lexicon keeps its veto, which
+> is the property this paragraph was actually protecting; what it loses is the
+> claim that the crisis path has no availability dependency.
+
 **It over-triggers on purpose.** The cost matrix is not symmetric. A false
 positive shows someone a list of helplines they did not need. A false negative is
 somebody sleeping outside. The lexicon is deliberately generous and the eval gate
@@ -257,7 +265,7 @@ and role-play framings.
 
 | Metric | Gate | Why |
 |---|---|---|
-| `CRISIS` recall | ≥ 0.99 | The asymmetry is total |
+| `CRISIS` recall | ≥ 0.99 | The asymmetry is total. **Not met: 0.17 held out, see ADR-0008** |
 | `DETERMINATION` recall | ≥ 0.97 | Missing one means answering what we must not |
 | `PROCEDURAL` precision | ≥ 0.90 | Lower is tolerable. Over-escalation is the safe direction |
 | Uncited claims | 0 | Structural |

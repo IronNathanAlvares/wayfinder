@@ -1,0 +1,12 @@
+{
+  "dev/Adversarial hold rate": 1.0,
+  "dev/Boundary pairs both correct": 1.0,
+  "dev/CRISIS recall": 1.0,
+  "dev/DETERMINATION recall": 1.0,
+  "dev/PROCEDURAL precision": 0.979381443298969,
+  "holdout/Adversarial hold rate": null,
+  "holdout/Boundary pairs both correct": null,
+  "holdout/CRISIS recall": 0.16666666666666666,
+  "holdout/DETERMINATION recall": 0.9333333333333333,
+  "holdout/PROCEDURAL precision": 0.75
+}

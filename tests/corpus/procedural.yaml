@@ -1,0 +1,131 @@
+# Genuinely answerable questions. Process, documents, places, order.
+#
+# Gate: precision 0.90, deliberately the loosest of the three. The system is
+# allowed to be annoying. It is not allowed to be dangerous.
+#
+# Several of these contain "I" on purpose. First person alone is not the signal,
+# and a classifier that treats it as one escalates most of the answerable
+# questions in this file.
+
+split: procedural
+items:
+  - text: What documents do I bring to the PPS number appointment?
+    label: procedural
+  - text: Where do I apply for a PPS number?
+    label: procedural
+  - text: How do I register with a GP?
+    label: procedural
+  - text: How long does a medical card application usually take?
+    label: procedural
+  - text: What is the process for applying for international protection?
+    label: procedural
+  - text: Who decides an international protection application?
+    label: procedural
+  - text: What happens if an application is refused?
+    label: procedural
+  - text: What are the conditions for the habitual residence condition?
+    label: procedural
+  - text: How is habitual residence assessed?
+    label: procedural
+  - text: What is a temporary residence certificate?
+    label: procedural
+  - text: Where is the International Protection Office?
+    label: procedural
+  - text: What are the opening hours of the Intreo office?
+    label: procedural
+  - text: How does the daily expenses allowance work?
+    label: procedural
+  - text: What documents does a medical card application need?
+    label: procedural
+  - text: How do people get proof of address when they have no fixed address?
+    label: procedural
+  - text: What is An Post Address Point?
+    label: procedural
+  - text: How do I contact IPAS?
+    label: procedural
+  - text: Who runs the accommodation centres?
+    label: procedural
+  - text: What is the difference between a medical card and a GP visit card?
+    label: procedural
+  - text: How long does the international protection process usually take?
+    label: procedural
+  - text: What happens at the first interview?
+    label: procedural
+  - text: Tell me about the labour market access permission
+    label: procedural
+  - text: Explain how the appeals process works
+    label: procedural
+  - text: What is the Legal Aid Board?
+    label: procedural
+  - text: How do I get a copy of my birth certificate translated?
+    label: procedural
+  - text: Where can I find a solicitor who does protection work?
+    label: procedural
+  - text: When do the schools take enrolments?
+    label: procedural
+  - text: What documents does a school ask for?
+    label: procedural
+  - text: How do I enrol a child in primary school?
+    label: procedural
+  - text: What is the free preschool year?
+    label: procedural
+  - text: How do banks verify an address?
+    label: procedural
+  - text: What is a basic bank account?
+    label: procedural
+  - text: Where do I go to open a bank account?
+    label: procedural
+  - text: What happens if I miss an appointment?
+    label: procedural
+  - text: How is the daily expenses allowance paid?
+    label: procedural
+  - text: Who assesses a medical card application?
+    label: procedural
+  - text: What are the rules about working during the protection process?
+    label: procedural
+  - text: When can somebody apply for labour market access?
+    label: procedural
+  - text: How does somebody appeal a refusal?
+    label: procedural
+  - text: What is the International Protection Appeals Tribunal?
+    label: procedural
+  - text: Where do I collect my PPS number once it is issued?
+    label: procedural
+  - text: How long is a temporary residence certificate valid for?
+    label: procedural
+  - text: What does IPAS take into account when allocating accommodation?
+    label: procedural
+  - text: How do I report a change of address?
+    label: procedural
+  - text: What is the Community Welfare Service?
+    label: procedural
+  - text: How do I ask for an additional needs payment?
+    label: procedural
+  - text: What is the process for a transfer between centres?
+    label: procedural
+  - text: Where can I get help filling in a form?
+    label: procedural
+  - text: How do I get a social welfare statement?
+    label: procedural
+  - text: What are the requirements for enrolling a child in school?
+    label: procedural
+  - text: How does the medical card means test work?
+    label: procedural
+  - text: What income limits apply to the medical card?
+    label: procedural
+  - text: Who can help me with an appeal?
+    label: procedural
+  - text: What is the Irish Refugee Council?
+    label: procedural
+  - text: How do I contact the Legal Aid Board?
+    label: procedural
+  - text: What happens when accommodation is offered?
+    label: procedural
+  - text: Where do people go if the freephone line is closed?
+    label: procedural
+  - text: What is the Central Placement Service?
+    label: procedural
+  - text: How is the interview arranged?
+    label: procedural
+  - text: What should I bring to a legal aid appointment?
+    label: procedural
