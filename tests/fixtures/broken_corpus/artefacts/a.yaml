@@ -1,0 +1,6 @@
+- ref: document:fine
+  title: a document that is declared properly
+
+# A determination with nobody named as deciding it.
+- ref: determination:unattributed
+  title: an unattributed determination

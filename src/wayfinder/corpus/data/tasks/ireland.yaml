@@ -1,0 +1,174 @@
+# Seed corpus for Ireland. Ten tasks, every one cited to a source that was
+# actually fetched and read. See ../README.md for what this is and is not.
+#
+# Deliberately absent: amounts, rates and thresholds. They change most often and
+# are exactly what people plan around, so a stale one does the most damage. The
+# tasks say a payment exists and where to ask; they do not say what it pays.
+
+- id: protection.apply
+  title: Make your international protection application
+  domain: status
+  why: >
+    Almost everything else follows from this application, including the
+    certificate you will be asked for and the letter other services want to see.
+  produces:
+    - document:temporary_residence_certificate
+    - document:asylum_application_letter
+  blocking_severity: critical
+  where:
+    - source_id: nasc.asylum_ireland
+      span: Application Process
+
+- id: ppsn.apply
+  title: Apply for your PPS number
+  domain: status
+  why: >
+    You can ask for this at the same time as your protection application, and
+    almost everything in the welfare system needs it.
+  requires:
+    - ref: document:asylum_application_letter
+      note: >
+        The Irish Refugee Council describes applying at the same time as the
+        protection application, at the International Protection Office or
+        Citywest, then collecting the number from a local office.
+  produces:
+    - document:ppsn
+  typical_wait: P4D
+  blocking_severity: critical
+  where:
+    - source_id: irc.ppsn
+      span: Application Process
+    - source_id: irc.homeless
+      span: Getting Financial Support
+
+- id: ipas.request_accommodation
+  title: Ask IPAS for accommodation and get on the waiting list
+  domain: accommodation
+  why: >
+    IPAS works from a waiting list and contacts people by email, so being on the
+    list with contact details they can reach is the part you control.
+  applies_when:
+    not:
+      field: accommodation
+      eq: ipas
+  requires:
+    - ref: document:asylum_application_letter
+      note: Write to IPAS with your full name and Person ID.
+  blocking_severity: critical
+  where:
+    - source_id: irc.homeless
+      span: Accessing Accommodation
+    - source_id: unhcr.accommodation
+      span: If Currently Homeless
+
+- id: accommodation.move_in
+  title: Take up the accommodation you are offered
+  domain: accommodation
+  why: >
+    When an offer comes it comes by email, which is why checking email daily
+    matters more than it sounds.
+  applies_when:
+    not:
+      field: accommodation
+      eq: ipas
+  requires:
+    - determination:ipas_accommodation_offer
+  blocking_severity: critical
+  where:
+    - source_id: irc.homeless
+      span: Accessing Accommodation
+
+- id: address.an_post_point
+  title: Register for An Post Address Point
+  domain: accommodation
+  why: >
+    It is free, you can do it today, and it gives you somewhere post can reach
+    you while you have no fixed address.
+  applies_when:
+    field: accommodation
+    in: [homeless, staying_with_others, emergency]
+  produces:
+    - document:proof_of_address
+  blocking_severity: important
+  where:
+    - source_id: irc.homeless
+      span: Securing Proof of Address
+
+- id: address.welfare_statement
+  title: Ask the Community Welfare Service for a statement
+  domain: accommodation
+  why: >
+    A social welfare statement can be used as proof of address, which is a
+    second route if the post office option does not suit you.
+  requires:
+    - document:ppsn
+  produces:
+    - document:proof_of_address
+  blocking_severity: routine
+  where:
+    - source_id: irc.homeless
+      span: Securing Proof of Address
+
+- id: payment.weekly
+  title: Ask about the weekly payment
+  domain: income
+  why: >
+    This is the payment most people are asking about, and it needs your PPS
+    number and something showing you are on the IPAS list.
+  requires:
+    - document:ppsn
+    - ref: document:asylum_application_letter
+      note: Used to show you are on the IPAS waiting list.
+  blocking_severity: critical
+  where:
+    - source_id: irc.homeless
+      span: Getting Financial Support
+
+- id: payment.additional_needs
+  title: Ask about an Additional Needs Payment
+  domain: income
+  why: >
+    This is the route for one-off essential costs, and it is separate from the
+    weekly payment, so being turned down for one does not settle the other.
+  requires:
+    - document:ppsn
+  blocking_severity: important
+  where:
+    - source_id: irc.homeless
+      span: Getting Financial Support
+
+- id: medical_card.apply
+  title: Apply for a medical card
+  domain: health
+  why: >
+    A medical card is what gets you seen without paying, and applying early
+    matters because it is not immediate.
+  requires:
+    - document:ppsn
+  produces:
+    - document:medical_card
+  blocking_severity: important
+  where:
+    - source_id: unhcr.accommodation
+      span: Financial Support & Services
+
+- id: work.labour_market_access
+  title: Apply for permission to work
+  domain: status
+  why: >
+    There is a waiting period from the day you applied, and the application is
+    made online once it has passed.
+  requires:
+    - document:temporary_residence_certificate
+    - any_of: [elapsed:protection_application_date]
+      after: P180D
+      note: >
+        Nasc describes a six month wait for a first instance decision before
+        labour market access can be applied for. The period runs from the
+        protection application, not from arrival.
+  produces:
+    - status:labour_market_access
+  blocking_severity: important
+  where:
+    - source_id: nasc.asylum_ireland
+      span: Work Rights

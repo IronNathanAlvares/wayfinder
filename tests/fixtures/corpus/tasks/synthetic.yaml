@@ -1,0 +1,168 @@
+- id: clinic.register
+  title: Register with a clinic
+  domain: health
+  why: You can do this straight away and it does not wait on anything else.
+  produces: []
+  blocking_severity: routine
+  where:
+    - source_id: synthetic.handbook
+      span: Registering with a clinic
+
+- id: language.enrol
+  title: Enrol in a language class
+  domain: education
+  why: Places are limited and the waiting list starts when you join it.
+  applies_when:
+    field: protection_stage
+    in: [applied, appeal, granted]
+  typical_wait: P10D
+  blocking_severity: routine
+  where:
+    - source_id: synthetic.handbook
+      span: Language classes
+
+- id: id.replace
+  title: Replace your identity document
+  domain: status
+  why: Nothing that needs proof of who you are can start until you have one.
+  applies_when:
+    holds: document:identity
+    is: false
+  produces: [document:identity]
+  typical_wait: P30D
+  blocking_severity: critical
+  where:
+    - source_id: synthetic.handbook
+      span: Replacing an identity document
+
+- id: shelter.letter_request
+  title: Ask the shelter for a letter
+  domain: accommodation
+  why: The shelter can write this the same week and several things accept it.
+  applies_when:
+    field: accommodation
+    eq: emergency
+  produces: [document:shelter_letter]
+  typical_wait: P2D
+  blocking_severity: important
+  where:
+    - source_id: synthetic.handbook
+      span: Letters from a shelter
+
+- id: tenancy.obtain
+  title: Get a copy of your tenancy agreement
+  domain: accommodation
+  why: A tenancy agreement proves your address on its own.
+  applies_when:
+    field: accommodation
+    eq: private
+  produces: [document:tenancy]
+  typical_wait: P21D
+  blocking_severity: important
+  where:
+    - source_id: synthetic.handbook
+      span: Tenancy agreements
+
+- id: address.evidence
+  title: Get formal proof of address
+  domain: accommodation
+  why: Some offices will not accept a shelter letter and want this instead.
+  requires:
+    - any_of: [document:shelter_letter, document:tenancy]
+      note: Either one is accepted as the underlying evidence.
+  produces: [document:address_proof]
+  typical_wait: P3D
+  blocking_severity: important
+  where:
+    - source_id: synthetic.handbook
+      span: Formal proof of address
+
+- id: permit.apply
+  title: Apply for your permit
+  domain: status
+  why: Almost everything else waits on this, and it takes the longest.
+  requires:
+    - document:identity
+    - any_of: [document:address_proof, document:shelter_letter]
+      note: A shelter letter is accepted here, so the shorter route is enough.
+  produces: [document:permit]
+  applies_when:
+    holds: document:permit
+    is: false
+  typical_wait: P28D
+  blocking_severity: critical
+  where:
+    - source_id: synthetic.handbook
+      span: Applying for a permit
+
+- id: card.apply
+  title: Apply for the card
+  domain: health
+  why: The card is what you show at the clinic instead of paying.
+  requires:
+    - document:permit
+  produces: [document:card]
+  typical_wait: P7D
+  blocking_severity: important
+  where:
+    - source_id: synthetic.handbook
+      span: Applying for the card
+
+- id: bank.open
+  title: Open a bank account
+  domain: banking
+  why: Payments cannot reach you without one.
+  requires:
+    - document:permit
+    - document:address_proof
+  produces: [status:banked]
+  typical_wait: P1D
+  blocking_severity: routine
+  where:
+    - source_id: synthetic.handbook
+      span: Opening an account
+
+- id: school.enrol
+  title: Enrol your child in school
+  domain: education
+  why: Schools fill up, and the enrolment needs your address.
+  applies_when:
+    child_aged:
+      min: 4
+      max: 18
+  requires:
+    - document:address_proof
+  typical_wait: P5D
+  blocking_severity: important
+  where:
+    - source_id: synthetic.handbook
+      span: Enrolling a child
+
+- id: work.apply
+  title: Apply for permission to work
+  domain: status
+  why: You cannot apply until the waiting period has passed, and then you can.
+  requires:
+    - document:permit
+    - any_of: [elapsed:arrival_date]
+      after: P150D
+      note: The waiting period runs from the day you arrived.
+  produces: [status:work_allowed]
+  typical_wait: P14D
+  blocking_severity: important
+  where:
+    - source_id: synthetic.handbook
+      span: Permission to work
+
+- id: benefit.apply
+  title: Apply for the monthly payment
+  domain: income
+  why: This is the payment most people are asking about.
+  requires:
+    - document:permit
+    - determination:residence_test
+  typical_wait: P30D
+  blocking_severity: critical
+  where:
+    - source_id: synthetic.benefits
+      span: Applying for the monthly payment

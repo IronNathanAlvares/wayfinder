@@ -1,0 +1,6 @@
+- id: cycle.source
+  title: Cycle fixture source
+  publisher: Test
+  url: https://example.invalid/cycle
+  last_verified: 2026-08-10
+  verified_by: test fixture

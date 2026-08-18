@@ -1,0 +1,21 @@
+# Amara, from PDD section 4. Arrived and applied two weeks ago, sleeping rough
+# while waiting for IPAS, one child aged seven.
+#
+# Note what is stated and what is not. Anything absent from both `held` and
+# `known_absent` is genuinely unknown, and the plan will ask rather than assume.
+arrival_date: 2026-08-01
+protection_application_date: 2026-08-04
+protection_stage: applied
+accommodation: homeless
+household:
+  adults: 1
+  children_ages: [7]
+held:
+  - document:national_id
+  - document:temporary_residence_certificate
+  - document:asylum_application_letter
+known_absent:
+  - document:ppsn
+  - document:proof_of_address
+  - document:medical_card
+  - status:labour_market_access

@@ -1,0 +1,23 @@
+# A corpus bug on purpose. Loading succeeds because every reference resolves;
+# the cycle is only visible once a plan is built, which is where it must fail.
+- id: egg.get
+  title: Get an egg
+  domain: status
+  why: Fixture.
+  requires: [document:chicken]
+  produces: [document:egg]
+  blocking_severity: routine
+  where:
+    - source_id: cycle.source
+      span: Eggs
+
+- id: chicken.get
+  title: Get a chicken
+  domain: status
+  why: Fixture.
+  requires: [document:egg]
+  produces: [document:chicken]
+  blocking_severity: routine
+  where:
+    - source_id: cycle.source
+      span: Chickens

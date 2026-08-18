@@ -1,0 +1,35 @@
+- ref: document:identity
+  title: proof of who you are
+  note: A primitive. Most people arrive holding one or holding nothing.
+
+- ref: document:shelter_letter
+  title: a letter from the shelter
+  note: Cheap and fast. The short branch of the alternative in permit.apply.
+
+- ref: document:tenancy
+  title: a tenancy agreement
+  note: Only reachable for somebody in private accommodation.
+
+- ref: document:address_proof
+  title: proof of where you live
+  note: The long branch. Needs a shelter letter or a tenancy first.
+
+- ref: document:permit
+  title: the permit
+  note: The hub of the graph. Four things wait on it.
+
+- ref: document:card
+  title: the card
+
+- ref: status:work_allowed
+  title: permission to work
+
+- ref: status:banked
+  title: an open bank account
+
+- ref: determination:residence_test
+  title: the residence test
+  decided_by: the Fictional Benefits Office
+  note: >
+    Nobody in this system decides this, which is the whole point of the
+    determination kind existing separately.

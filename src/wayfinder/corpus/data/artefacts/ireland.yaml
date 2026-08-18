@@ -1,0 +1,36 @@
+- ref: document:national_id
+  title: a national identity document or passport
+  note: >
+    A primitive. Some people arrive holding one and some do not, and no task in
+    this corpus produces it.
+
+- ref: document:temporary_residence_certificate
+  title: your Temporary Residence Certificate, sometimes called the blue card
+  note: Issued after the international protection application is made.
+
+- ref: document:asylum_application_letter
+  title: the letter confirming you applied for international protection
+  note: >
+    Used as proof of being on the IPAS waiting list, which several other things
+    ask for.
+
+- ref: document:ppsn
+  title: your PPS number
+  note: Almost everything in the welfare system is keyed on this.
+
+- ref: document:proof_of_address
+  title: proof of your address
+
+- ref: document:medical_card
+  title: a medical card
+
+- ref: status:labour_market_access
+  title: permission to work
+
+- ref: determination:ipas_accommodation_offer
+  title: an offer of accommodation from IPAS
+  decided_by: the International Protection Accommodation Service
+  note: >
+    Modelled as a determination rather than a task because nobody applying can
+    make it happen. IPAS contacts people from a waiting list. Naming who decides
+    it, and refusing to guess when or whether it will come, is the point.

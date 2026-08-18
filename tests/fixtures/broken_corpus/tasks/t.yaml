@@ -1,0 +1,31 @@
+# Cites a source that does not exist.
+- id: bad.citation
+  title: Cites a source that is not there
+  domain: status
+  why: Fixture.
+  blocking_severity: routine
+  where:
+    - source_id: no.such.source
+      span: Nowhere
+
+# Requires an artefact nobody declared. This is the typo class of bug.
+- id: bad.reference
+  title: Requires an undeclared artefact
+  domain: status
+  why: Fixture.
+  requires: [document:never_declared]
+  blocking_severity: routine
+  where:
+    - source_id: good.source
+      span: Somewhere
+
+# Claims to produce a determination, which is ADR-0004 violated in the corpus.
+- id: bad.determination
+  title: Claims to decide a legal question
+  domain: income
+  why: Fixture.
+  produces: [determination:unattributed]
+  blocking_severity: routine
+  where:
+    - source_id: good.source
+      span: Somewhere

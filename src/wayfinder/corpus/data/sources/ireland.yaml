@@ -1,0 +1,40 @@
+# Every source here was fetched and read on the `last_verified` date. That date
+# is when this project checked the page, which is not the same as the page's own
+# review date. Where the page states its own date it is recorded in `note`.
+#
+# Sources that could not be fetched are NOT listed here, and the tasks that
+# would have cited them are not in the corpus. That is the design working: an
+# unverified source cannot be cited, so the corpus is smaller and honest rather
+# than larger and hopeful. See docs/adr/ADR-0005-dated-corpus.md.
+
+- id: nasc.asylum_ireland
+  title: "Know Your Rights: Asylum in Ireland"
+  publisher: Nasc, the Migrant and Refugee Rights Centre
+  url: https://nascireland.org/know-your-rights/asylum-ireland
+  last_verified: 2026-08-18
+  verified_by: NA
+  language: en
+
+- id: irc.ppsn
+  title: PPSN information for international protection applicants
+  publisher: Irish Refugee Council
+  url: https://www.irishrefugeecouncil.ie/get-help/information-hub/applied-before-12-june-2026/ppsn/
+  last_verified: 2026-08-18
+  verified_by: NA
+  language: en
+
+- id: irc.homeless
+  title: Information for homeless international protection applicants
+  publisher: Irish Refugee Council
+  url: https://www.irishrefugeecouncil.ie/get-help/information-hub/information-for-homeless-international-protection-applicants/
+  last_verified: 2026-08-18
+  verified_by: NA
+  language: en
+
+- id: unhcr.accommodation
+  title: Accommodation for asylum seekers
+  publisher: UNHCR Ireland
+  url: https://help.unhcr.org/ireland/where-to-seek-help/accommodation-for-asylum-seekers/
+  last_verified: 2026-08-18
+  verified_by: NA
+  language: en

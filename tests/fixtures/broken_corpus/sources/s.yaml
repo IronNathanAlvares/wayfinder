@@ -1,0 +1,23 @@
+# Every record here is broken on purpose, one way each.
+
+# No last_verified. An undated source is indistinguishable from a stale one.
+- id: undated.source
+  title: An undated source
+  publisher: Test
+  url: https://example.invalid/undated
+  verified_by: test fixture
+
+# Verified tomorrow, which is always a typo.
+- id: future.source
+  title: A source verified in the future
+  publisher: Test
+  url: https://example.invalid/future
+  last_verified: 2999-01-01
+  verified_by: test fixture
+
+- id: good.source
+  title: A source with nothing wrong with it
+  publisher: Test
+  url: https://example.invalid/good
+  last_verified: 2026-08-10
+  verified_by: test fixture

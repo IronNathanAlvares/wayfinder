@@ -1,0 +1,15 @@
+- id: synthetic.handbook
+  title: Synthetic Arrival Handbook
+  publisher: Invented Information Service
+  url: https://example.invalid/handbook
+  last_verified: 2026-08-10
+  verified_by: test fixture
+  language: en
+
+- id: synthetic.benefits
+  title: Synthetic Benefits Guide
+  publisher: Fictional Benefits Office
+  url: https://example.invalid/benefits
+  last_verified: 2026-08-01
+  verified_by: test fixture
+  language: en

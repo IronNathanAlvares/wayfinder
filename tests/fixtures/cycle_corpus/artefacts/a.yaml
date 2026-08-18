@@ -1,0 +1,5 @@
+- ref: document:egg
+  title: an egg
+
+- ref: document:chicken
+  title: a chicken
