@@ -115,7 +115,7 @@ class AnthropicCrisisScreen:
         client: Any = None,
         *,
         model: str = DEFAULT_MODEL,
-        effort: str = DEFAULT_EFFORT,
+        effort: str | None = DEFAULT_EFFORT,
         timeout: float = DEFAULT_TIMEOUT_SECONDS,
     ) -> None:
         if client is None:
@@ -125,14 +125,20 @@ class AnthropicCrisisScreen:
         self._effort = effort
 
     def __call__(self, text: str) -> tuple[ModelVerdict, CrisisCategory | None]:
+        # Not every model accepts `effort` — Haiku 4.5 rejects it with a 400 —
+        # so it is omitted rather than sent as a default. A screen that only
+        # works on one model tier is not a screen you can fall back with.
+        output_config: dict[str, Any] = {
+            "format": {"type": "json_schema", "schema": RESPONSE_SCHEMA}
+        }
+        if self._effort is not None:
+            output_config["effort"] = self._effort
+
         response = self._client.messages.create(
             model=self._model,
             max_tokens=256,
             system=SYSTEM_PROMPT,
-            output_config={
-                "effort": self._effort,
-                "format": {"type": "json_schema", "schema": RESPONSE_SCHEMA},
-            },
+            output_config=output_config,
             messages=[{"role": "user", "content": text}],
         )
         return _read(response)

@@ -102,7 +102,18 @@ and it is false.
 The response was not to add the missing phrases. It was to accept that a model
 is load-bearing in the crisis path, and to constrain it so it can only ever add
 a detection and never clear one, which preserves the property the determinism
-was there to protect. See
+was there to protect.
+
+| Held out, 12 crisis items | Recall | Fired on non-crisis |
+|---|---|---|
+| Deterministic lexicon only | 0.167 | 0/35 |
+| Lexicon + `claude-haiku-4-5` | 1.000 | 0/35 |
+| Lexicon + `claude-opus-5` | 1.000 | 1/35 |
+
+**And twelve items still cannot demonstrate 0.99.** Twelve out of twelve puts
+the 95 percent lower bound at 0.78; certifying the gate needs 299 consecutive
+successes. The gate is unmet for a better reason than before, and the fix is a
+bigger corpus written by somebody other than its author. See
 [ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md).
 
 **What exists so far.** The plan engine, the corpus loader, a ten-task seed

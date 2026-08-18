@@ -18,11 +18,15 @@ most important one has its own record in
 topology test as originally sketched would have passed while the property it
 names was false.
 
-**M3, the safety layer, is built and its recall target is not met.** The
+**M3, the safety layer, is built and its recall target is still not met.** The
 deterministic crisis screen measures 0.167 recall on held-out data against a
-gate of 0.99. That invalidates PDD assumption A2 and is recorded in
-[ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md). Do not start M4 on
-the strength of a gate that only passes in-sample.
+gate of 0.99, which invalidates PDD assumption A2. Adding a model screen behind
+the lexicon takes that to 1.000 across four runs with no false positives, but
+twelve held-out crisis items can only demonstrate 0.78 at 95 percent confidence
+and the gate needs 299. Both results are in
+[ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md). Do not start M4
+until the crisis corpus is large enough to certify the gate, and get it written
+by somebody other than whoever wrote the rules.
 
 M2, M4, M5 and M6 are not started.
 

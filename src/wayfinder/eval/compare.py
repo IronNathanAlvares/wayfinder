@@ -136,7 +136,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--limit", type=int, default=0, help="only measure the first N items"
     )
-    parser.add_argument("--effort", default="low")
+    parser.add_argument(
+        "--effort",
+        default="low",
+        help="effort level, or 'none' for models that reject the parameter",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -168,7 +172,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         try:
             from wayfinder.safety.llm import AnthropicCrisisScreen
 
-            screen = AnthropicCrisisScreen(model=model_id, effort=args.effort)
+            effort = None if args.effort == "none" else args.effort
+            screen = AnthropicCrisisScreen(model=model_id, effort=effort)
         except RuntimeError as exc:
             print(f"could not evaluate: {exc}", file=sys.stderr)
             return EXIT_CANNOT_EVALUATE

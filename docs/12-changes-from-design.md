@@ -255,7 +255,7 @@ is worse than a specialist service and better than a number nobody checked.
 at 10pm and "I have nowhere to sleep tonight" is mostly typed after that, so a
 number shown without its hours sends somebody to a phone nobody answers.
 
-## 13. The model crisis screen is built and unmeasured
+## 13. The model crisis screen closes the gap, and the corpus becomes the limit
 
 ADR-0008 said a model becomes load-bearing in the crisis path. That model screen
 now exists: a closed two-field schema, an enumerated category set, a bounded
@@ -263,9 +263,17 @@ timeout, and no swallowed exceptions. Every failure path turns into a visibly
 degraded screen rather than a silent clearance, and the whole adapter is tested
 offline against an injected fake client.
 
-**It has not been run against the API.** That needs a key, and a number nobody
-measured is not a number. `wayfinder-compare` runs the comparison in one command
-and refuses to print a model result without one.
+**Measured on 18 August 2026.** Held out, the deterministic screen scores 0.167
+and the same screen with `claude-haiku-4-5` behind it scores 1.000 with zero
+false positives, stable across four runs. It caught all ten turns the patterns
+missed. `claude-opus-5` also scored 1.000, three times slower and with one extra
+non-crisis trigger, so Haiku is the better choice for a screen whose latency is
+part of its safety story.
+
+**Twelve items cannot demonstrate 0.99.** Twelve out of twelve puts the 95
+percent lower bound at 0.78; the gate needs 299 consecutive successes to certify
+at that confidence. The gate is still unmet, now because the corpus is too small
+rather than because the approach cannot reach it. Full numbers in ADR-0008.
 
 One bug the offline tests caught before it could matter: a response missing the
 `crisis` field read as "no crisis" rather than as malformed, which would have

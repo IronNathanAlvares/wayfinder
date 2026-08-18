@@ -80,10 +80,12 @@ than the design hoped rather than better.
 
 ## Consequences
 
-**M3 is not complete.** The deterministic layers, the lexicon, the directory,
-the labelled corpus and the gate all exist and work. The recall target does not
-hold, and no amount of pattern writing will make it hold. M4 should not start on
-the strength of a gate that only passes in-sample.
+**M3 is not complete, and the reason changed.** The deterministic layers, the
+lexicon, the directory, the labelled corpus, the gate and the model screen all
+exist and work. With the model in place no crisis turn was missed in four runs.
+What is missing is a corpus large enough to certify the 0.99 gate: twelve
+held-out crisis items can demonstrate 0.78, and the gate needs 299. Until that
+corpus exists, M4 should not start on the strength of a number that small.
 
 **CI gates on a committed baseline rather than on the design targets.** The
 baseline records the real numbers and states plainly that the design gates are
@@ -96,35 +98,63 @@ however careful the intent. A corpus written by an NGO worker who has read real
 messages is the highest-value thing available to this project, and it is what
 PDD assumption A4 was already pointing at.
 
-## Status of the fix
+## The fix, measured
 
-**Built, and not yet measured.** The model screen exists, satisfies the
-`ModelScreen` protocol, and is tested end to end against a fake transport: the
-schema it sends, every response it accepts, and every way it can fail. What has
-not happened is a run against the real API, because that needs a key.
+Run on 18 August 2026 against the held-out split, 12 crisis items and 35
+non-crisis items. The prompt was written from the category definitions in `07`
+section 3.1 and never tuned against these turns.
 
-Two things follow, and both matter more than the code.
+| Configuration | Crisis recall | Fired on non-crisis | Wall clock |
+|---|---|---|---|
+| Deterministic lexicon only | **0.167** (2/12) | 0/35 | instant |
+| Lexicon + `claude-haiku-4-5` | **1.000** (12/12) | 0/35 | 51s |
+| Lexicon + `claude-opus-5`, effort low | **1.000** (12/12) | 1/35 | 2m46s |
 
-**The 0.167 stands until somebody re-measures.** Building a fix is not evidence
-that the fix works, and this project has already been burned once by a number
-that measured its own tuning. `wayfinder-compare` produces the comparison in one
-command, and until it is run against a key the honest description of this ADR is
-"a diagnosis and a proposed treatment", not "solved".
+Haiku was repeated three more times on the crisis items and returned 12/12 every
+time, with 0/35 false positives on each run. It caught all ten turns the
+patterns missed, including "they say the plane is booked for friday", which
+needs the inference that a booked plane means removal. No pattern set reaches
+that, and this is the clearest evidence in the project that the deterministic
+screen was never going to.
 
-**The prompt was written from the category definitions, not from the failures.**
-Fitting it to the held-out turns the deterministic screen missed would burn the
-split, which is exactly how holdout v1 died. If the model does poorly on those
-same turns, that is a result to report, not a prompt to tune.
+**Haiku is the better choice here and it is not close.** Same recall, fewer
+false positives, three times faster, and roughly a fifth of the cost. Latency is
+part of this screen's safety story because it runs before everything else on
+every turn, so the faster model is also the safer one. Opus's single extra
+trigger is not a mark against it: over-triggering is the accepted direction, and
+one helpline list nobody needed is the cheapest error in this system.
+
+### What twelve items can and cannot show
+
+**They cannot show 0.99.** Twelve successes out of twelve puts the 95 percent
+one-sided lower bound on recall at **0.78**, not 1.00. Certifying the design's
+0.99 gate at that confidence needs **299 consecutive successes**, and the
+held-out split has twelve. The honest statement is "no failures observed in
+twelve, which is consistent with recall anywhere above 0.78", and a project that
+rounds that to "gate met" has learned nothing from holdout v1.
+
+So the gate is still unmet, for a different reason than before. It was unmet
+because the approach could not reach it; it is now unmet because the corpus
+cannot demonstrate it. That is a much better problem and it has a concrete
+answer: the crisis split needs to be two orders of magnitude larger, and it
+needs to be written by somebody who is not the person who wrote the rules.
+
+**The comparison is reproducible in one command:**
 
 ```bash
 uv sync --extra llm
-uv run wayfinder-compare --model claude-opus-5 --model claude-haiku-4-5
+ANTHROPIC_API_KEY=... uv run wayfinder-compare --model claude-haiku-4-5 --effort none
 ```
 
 The runner refuses to print a model number without a key, and reports a
 could-not-evaluate rather than a result if any turn degraded partway through. A
 partial measurement presented as a measurement is how a safety number becomes
 fiction.
+
+One portability fix came out of the first real run: `claude-haiku-4-5` rejects
+the `effort` parameter with a 400, so the adapter omits it rather than sending a
+default. A screen that only works on one model tier is not a screen you can fall
+back with.
 
 ## Rejected alternatives
 
