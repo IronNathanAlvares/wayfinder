@@ -34,11 +34,6 @@ class ArtefactKind(Enum):
     DETERMINATION = "determination"
     ELAPSED = "elapsed"
 
-    @property
-    def clearable_by_the_person(self) -> bool:
-        """Whether doing something can clear this, as opposed to waiting or being decided about."""
-        return self in {ArtefactKind.TASK, ArtefactKind.DOCUMENT}
-
 
 ARTEFACT_REF_PATTERN: Final = (
     r"^(task|document|status|determination|elapsed):[a-z0-9_]+(\.[a-z0-9_]+)*$"

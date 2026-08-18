@@ -1,0 +1,9 @@
+# Verified over a year ago. Excluded from retrieval, and an operational alarm
+# rather than a soft flag, because a silently stale corpus is the most likely
+# way this system starts being quietly wrong while looking fine.
+- id: ancient.source
+  title: A source nobody has checked in years
+  publisher: Test
+  url: https://example.invalid/ancient
+  last_verified: 2024-01-01
+  verified_by: test fixture

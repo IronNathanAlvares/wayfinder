@@ -1,0 +1,9 @@
+- id: a.task
+  title: Do the thing
+  domain: status
+  why: Fixture.
+  produces: [document:thing]
+  blocking_severity: routine
+  where:
+    - source_id: ancient.source
+      span: Somewhere

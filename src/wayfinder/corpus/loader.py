@@ -37,7 +37,16 @@ class CorpusError(Exception):
 
 
 def _read_records(directory: Path) -> list[tuple[Path, dict[str, Any]]]:
-    """Every mapping in every YAML file under a directory, with its file for errors."""
+    """Every mapping in every YAML file under a directory, with its file for errors.
+
+    A missing directory raises rather than globbing to nothing. Loading an empty
+    corpus and reporting no integrity problems is the worst available answer to
+    a mistyped path: it looks like success.
+    """
+    if not directory.is_dir():
+        msg = f"corpus directory not found: {directory}"
+        raise NotADirectoryError(msg)
+
     out: list[tuple[Path, dict[str, Any]]] = []
     for path in sorted(directory.glob("*.yaml")):
         loaded = yaml.safe_load(path.read_text(encoding="utf-8"))

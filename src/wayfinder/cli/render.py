@@ -16,7 +16,7 @@ from datetime import date, timedelta
 
 from wayfinder.corpus.models import Corpus
 from wayfinder.plan.models import Prerequisite
-from wayfinder.plan.plan import ItemStatus, Plan, PlanItem
+from wayfinder.plan.plan import Plan, PlanItem
 from wayfinder.plan.refs import ArtefactKind, artefact_kind, artefact_name
 from wayfinder.plan.situation import Situation
 
@@ -96,11 +96,8 @@ def render_plan(plan: Plan, corpus: Corpus, situation: Situation) -> str:
         out.append("")
 
         lead = frontier[0]
-        waiting = [
-            b for b, route in plan.unblocking_route.items() if lead.task.id in route
-        ]
-        if waiting:
-            count = len(waiting)
+        count = plan.waiting_on.get(lead.task.id, 0)
+        if count:
             verb = "thing is" if count == 1 else "things are"
             gate = plan.gated_wait.get(lead.task.id)
             timing = f" It gates {_humanise(gate)}." if gate else ""
@@ -123,13 +120,20 @@ def render_plan(plan: Plan, corpus: Corpus, situation: Situation) -> str:
                 out.append(f"    You can start now: {', '.join(names)}")
 
             outside = plan.unroutable.get(item.task.id, ())
-            determinations = [
-                r for r in outside if artefact_kind(r) is ArtefactKind.DETERMINATION
-            ]
-            if determinations:
+            if item.determination_refs:
+                # Two different sentences, and the difference matters to the
+                # person reading it. If a determination is the only thing left,
+                # there is genuinely nothing for them to do. If it is one of
+                # several blockers, there is still work they can be getting on
+                # with, and saying otherwise would be discouraging and wrong.
                 out.append(
-                    "    The rest of it is not yours to do. A caseworker can tell "
-                    "you how it is applied for and who can help you with it."
+                    "    Nothing you do can decide this one."
+                    if item.blocked_by_determination
+                    else "    The rest of it is not yours to do."
+                )
+                out.append(
+                    "    A caseworker can tell you how it is applied for and "
+                    "who can help you with it."
                 )
             elif not actions and not outside:
                 out.append(
@@ -160,7 +164,3 @@ def _question(corpus: Corpus, question: str) -> str:
     if ":" in question:
         return f"Do you have {_title(corpus, question)}?"
     return f"What is your {question.replace('_', ' ')}?"
-
-
-def render_status_counts(plan: Plan) -> str:
-    return ", ".join(f"{s.value}: {len(plan.of_status(s))}" for s in ItemStatus)

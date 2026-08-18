@@ -43,11 +43,22 @@ missing one. Tasks say a payment exists and where to ask about it.
 
 No task asserts what anybody is entitled to.
 
+## Known modelling weaknesses in this seed
+
+`accommodation.move_in` and `ipas.request_accommodation` are gated on
+`accommodation` not being `ipas`, so once somebody is housed they leave the plan
+as "no longer applicable" rather than as "done". That is the wrong shape: they
+were completed, not made irrelevant. Fixing it properly means giving the move-in
+task an artefact to produce, which is a content decision for M2 rather than a
+patch here. The replanning output words this carefully in the meantime.
+
 ## What M2 has to do
 
 - Retrieve the blocked sources by another route, and record a real verification.
 - Model the Habitual Residence Condition once there is a source for it.
 - Expand to roughly forty tasks, including education and banking.
+- Give `accommodation.move_in` something to produce so that being housed reads
+  as done rather than as no longer applicable.
 - Have the whole thing reviewed by somebody who has navigated this process, or
   by an NGO worker. That review is the highest-value check available here and
   no amount of testing substitutes for it.

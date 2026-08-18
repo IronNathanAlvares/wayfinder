@@ -13,7 +13,7 @@ from collections.abc import Mapping, Sequence
 from datetime import date, timedelta
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from wayfinder.plan.models import Prerequisite, Task
 from wayfinder.plan.refs import ArtefactKind, TaskId, artefact_kind
@@ -95,18 +95,42 @@ class Plan(BaseModel):
     # Longest downstream waiting time gated by each frontier task.
     gated_wait: Mapping[TaskId, timedelta] = {}
 
+    # How many blocked tasks each frontier task appears in the route for. This
+    # is the "four other things are waiting on it" line, computed here rather
+    # than in whatever renders the plan, so the claim can be tested.
+    waiting_on: Mapping[TaskId, int] = {}
+
     def of_status(self, status: ItemStatus) -> tuple[PlanItem, ...]:
         return tuple(i for i in self.items if i.status is status)
+
+    @model_validator(mode="after")
+    def _frontier_order_covers_the_frontier(self) -> Plan:
+        """The ranking must name every startable task, exactly once.
+
+        Falling back to unranked order when the two disagree would hide a
+        builder bug behind a plan that still looks reasonable, and the thing it
+        would hide is somebody being told to do the wrong task first. Everything
+        else in this engine fails loudly on inconsistent data and so does this.
+        """
+        startable = {i.task.id for i in self.items if i.status is ItemStatus.FRONTIER}
+        ranked = self.frontier_order
+        if len(set(ranked)) != len(ranked):
+            msg = f"frontier_order repeats a task: {ranked}"
+            raise ValueError(msg)
+        if set(ranked) != startable:
+            missing = sorted(startable - set(ranked))
+            extra = sorted(set(ranked) - startable)
+            msg = (
+                f"frontier_order does not match the frontier. "
+                f"missing {missing}, unexpected {extra}"
+            )
+            raise ValueError(msg)
+        return self
 
     @property
     def frontier(self) -> tuple[PlanItem, ...]:
         by_id = {i.task.id: i for i in self.items}
-        ordered = tuple(by_id[t] for t in self.frontier_order if t in by_id)
-        # frontier_order is authoritative when present, but never silently drops
-        # an item if a caller built a Plan without ranking it.
-        if len(ordered) == len(self.of_status(ItemStatus.FRONTIER)):
-            return ordered
-        return self.of_status(ItemStatus.FRONTIER)
+        return tuple(by_id[t] for t in self.frontier_order)
 
     @property
     def blocked(self) -> tuple[PlanItem, ...]:

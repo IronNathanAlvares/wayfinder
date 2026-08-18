@@ -67,11 +67,6 @@ class Route(NamedTuple):
     tasks: RouteSet
     unroutable: tuple[str, ...]
 
-    @property
-    def complete(self) -> bool:
-        """Whether finishing `tasks` is enough on its own."""
-        return not self.unroutable
-
 
 class _RouteSolver:
     def __init__(
@@ -219,14 +214,15 @@ def next_actions(route: Route, startable: frozenset[TaskId]) -> tuple[TaskId, ..
     return tuple(sorted(route.tasks & startable))
 
 
-def rank_by_gating(
+def count_waiting_on(
     routes: Mapping[TaskId, Route], frontier: Iterable[TaskId]
 ) -> dict[TaskId, int]:
     """How many blocked tasks each frontier task appears in the route for.
 
-    A count, not the ordering. Calendar time is what actually costs people
-    weeks, so `critical_path` ranks on that instead and this is used for the
-    explanatory line: "four other things are waiting on it".
+    A count, not the ordering. Calendar time is what costs people weeks, so
+    `critical_path` ranks on that instead. This is the explanatory line: "four
+    other things are waiting on it". It is computed here rather than in the
+    renderer so that the claim is testable in the pure engine.
     """
     counts = dict.fromkeys(frontier, 0)
     for route in routes.values():

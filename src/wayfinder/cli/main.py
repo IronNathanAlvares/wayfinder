@@ -78,11 +78,24 @@ def _cmd_diff(args: argparse.Namespace) -> int:
         return EXIT_OK
 
     titles = {i.task.id: i.task.title for i in (*before.items, *after.items)}
+
+    # Newly unblocked leads, because it is the good news and somebody six months
+    # in is reading this to find out what they can finally do.
+    #
+    # The wording of the fourth heading is deliberate. A task disappearing can
+    # read as something being taken away, and for somebody in this position that
+    # is a frightening sentence to read by accident. Naming the cause, that the
+    # situation changed rather than that an entitlement was withdrawn, is the
+    # difference. It also happens to be the only thing this system knows: it has
+    # no idea whether the task was completed or simply stopped applying.
     sections = (
         ("You can now start", changes.newly_unblocked),
-        ("New for you", changes.newly_applicable),
+        ("New on your list", changes.newly_applicable),
         ("Now done", changes.newly_done),
-        ("No longer on your list", changes.no_longer_applicable),
+        (
+            "Not on your list any more, because your situation changed",
+            changes.no_longer_applicable,
+        ),
         ("Now waiting on something", changes.newly_blocked),
     )
     for heading, ids in sections:
@@ -92,6 +105,15 @@ def _cmd_diff(args: argparse.Namespace) -> int:
         for task_id in ids:
             print(f"  {titles.get(task_id, task_id)}")
         print()
+
+    if changes.blocker_changed:
+        print("Still waiting, but on something different now")
+        for change in changes.blocker_changed:
+            print(f"  {titles.get(change.task_id, change.task_id)}")
+            print(f"    was: {', '.join(change.was) or 'nothing recorded'}")
+            print(f"    now: {', '.join(change.now) or 'nothing recorded'}")
+        print()
+
     return EXIT_OK
 
 

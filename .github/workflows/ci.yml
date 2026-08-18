@@ -14,10 +14,10 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
 
@@ -37,4 +37,23 @@ jobs:
         run: uv run lint-imports
 
       - name: pytest
-        run: uv run pytest
+        # The floor is a ratchet, not a target. It exists so coverage cannot
+        # drift down unnoticed while somebody adds code in a hurry.
+        run: uv run pytest --cov --cov-fail-under=90
+
+      # The corpus is content, and content rots. This runs against the shipped
+      # corpus rather than a fixture, so a source ageing past a year fails the
+      # build rather than waiting for somebody to notice.
+      - name: corpus integrity and staleness
+        run: |
+          uv run wayfinder corpus check
+          uv run wayfinder corpus health
+
+      # Proves the corpus data actually ships. It lives outside the Python
+      # package tree conceptually, and a packaging mistake there is invisible
+      # until somebody installs it.
+      - name: the built wheel works without the repo
+        run: |
+          uv build --out-dir dist
+          WHEEL=$(ls dist/*.whl)
+          uv run --isolated --no-project --with "$WHEEL" wayfinder --today 2026-08-18 corpus check

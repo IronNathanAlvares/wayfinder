@@ -4,7 +4,8 @@ version = "0.1.0"
 description = "Turns a situation into an ordered plan with prerequisites, and refuses the questions that need a human."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Nathan Alvares" }]
 dependencies = [
     "pydantic>=2.11",

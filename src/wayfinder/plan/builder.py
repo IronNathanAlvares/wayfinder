@@ -21,12 +21,17 @@ from datetime import date
 
 from wayfinder.plan.critical_path import gated_wait, rank_frontier
 from wayfinder.plan.errors import CycleError
-from wayfinder.plan.models import Prerequisite, Task
+from wayfinder.plan.models import Task
 from wayfinder.plan.plan import ItemStatus, Plan, PlanItem
 from wayfinder.plan.refs import TaskId
 from wayfinder.plan.situation import Situation
 from wayfinder.plan.truth import Truth
-from wayfinder.plan.unblock import DEFAULT_SEARCH_LIMIT, next_actions, solve_routes
+from wayfinder.plan.unblock import (
+    DEFAULT_SEARCH_LIMIT,
+    count_waiting_on,
+    next_actions,
+    solve_routes,
+)
 
 
 def build_plan(
@@ -64,6 +69,7 @@ def build_plan(
         next_actions={t: next_actions(r, startable) for t, r in routes.items()},
         unroutable={t: r.unroutable for t, r in routes.items() if r.unroutable},
         gated_wait={t: gated[t] for t in startable},
+        waiting_on=count_waiting_on(routes, startable),
     )
 
 
@@ -290,8 +296,3 @@ def _union(sets: Iterable[frozenset[str]]) -> frozenset[str]:
     for s in sets:
         out |= s
     return frozenset(out)
-
-
-def unmet_summary(unmet: Sequence[Prerequisite]) -> tuple[str, ...]:
-    """Human-order list of what is missing, for the CLI and later the composer."""
-    return tuple(sorted(" or ".join(p.any_of) for p in unmet))

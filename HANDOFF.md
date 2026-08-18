@@ -8,7 +8,8 @@ are easy to get wrong.
 ## Where things stand
 
 **M1 is built.** The plan graph engine, the corpus loader and a CLI demo exist,
-pass mypy strict, ruff, import-linter and 214 tests, and run in CI.
+pass ruff, mypy strict, import-linter and the test suite at 97 percent
+coverage, and run in CI.
 
 Building it proved several things in the design wrong. Every change is recorded
 in [`docs/12-changes-from-design.md`](docs/12-changes-from-design.md), and the

@@ -104,10 +104,6 @@ class Prerequisite(BaseModel):
         return self
 
     @property
-    def kinds(self) -> frozenset[ArtefactKind]:
-        return frozenset(artefact_kind(r) for r in self.any_of)
-
-    @property
     def blocked_on_determination(self) -> bool:
         """True when every route through this requirement runs through an authority.
 
@@ -209,16 +205,10 @@ class Task(BaseModel):
         return self.applies_when.evaluate(situation)
 
 
-def prerequisite_options(task: Task) -> tuple[tuple[ArtefactRef, ...], ...]:
-    """The CNF shape of a task's requirements, for the unblocking solver."""
-    return tuple(p.any_of for p in task.requires)
-
-
 __all__: Final = [
     "Domain",
     "Prerequisite",
     "Severity",
     "SourceSpan",
     "Task",
-    "prerequisite_options",
 ]

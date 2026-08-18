@@ -202,3 +202,114 @@ def test_corpus_health_reports_bands(capsys: pytest.CaptureFixture[str]) -> None
     out = capsys.readouterr().out
     assert "normal:" in out
     assert "excluded: 0" in out
+
+
+def test_the_diff_never_reads_as_something_being_taken_away(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A task leaving the plan must name why, or it reads as a loss.
+
+    For somebody in this position "no longer on your list" is a frightening
+    sentence to read by accident, and the system does not actually know whether
+    the task was completed or simply stopped applying.
+    """
+    before = tmp_path / "before.yaml"
+    after = tmp_path / "after.yaml"
+    before.write_text(SHELTER_SITUATION, encoding="utf-8")
+    after.write_text(
+        SHELTER_SITUATION.replace("accommodation: emergency", "accommodation: private"),
+        encoding="utf-8",
+    )
+    assert (
+        _run(["--corpus", str(FIXTURES / "corpus"), "diff", str(before), str(after)])
+        == EXIT_OK
+    )
+    out = capsys.readouterr().out
+    assert "because your situation changed" in out
+    for phrase in ("no longer entitled", "taken away", "you have lost", "removed"):
+        assert phrase not in out.lower()
+
+
+def test_an_unchanged_situation_diffs_to_nothing(
+    situation_file: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert (
+        _run(
+            [
+                "--corpus",
+                str(FIXTURES / "corpus"),
+                "diff",
+                str(situation_file),
+                str(situation_file),
+            ]
+        )
+        == EXIT_OK
+    )
+    assert "Nothing has changed." in capsys.readouterr().out
+
+
+def test_diff_json_output_is_machine_readable(
+    tmp_path: Path, situation_file: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import json
+
+    after = tmp_path / "after.yaml"
+    after.write_text(
+        SHELTER_SITUATION.replace("accommodation: emergency", "accommodation: private"),
+        encoding="utf-8",
+    )
+    _run(
+        [
+            "--corpus",
+            str(FIXTURES / "corpus"),
+            "diff",
+            str(situation_file),
+            str(after),
+            "--format",
+            "json",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert "shelter.letter_request" in payload["no_longer_applicable"]
+    assert "tenancy.obtain" in payload["newly_applicable"]
+
+
+def test_corpus_health_is_an_alarm_not_a_warning(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A source past a year old fails the command.
+
+    A silently stale corpus is the most likely way this system starts being
+    quietly wrong while still looking fine, so it exits non-zero and CI catches
+    it rather than waiting for somebody to read a report.
+    """
+    code = _run(["--corpus", str(FIXTURES / "stale_corpus"), "corpus", "health"])
+    assert code == EXIT_FAIL
+    out = capsys.readouterr().out
+    assert "excluded: 1" in out
+    assert "operational alarm" in out
+
+
+def test_a_changed_blocker_is_reported_rather_than_just_still_blocked(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """ "Still waiting" is not the same news as "waiting on something else now"."""
+    before = tmp_path / "before.yaml"
+    after = tmp_path / "after.yaml"
+    before.write_text(SHELTER_SITUATION, encoding="utf-8")
+    # Getting the permit changes what bank.open is waiting for, without
+    # unblocking it: it still needs proof of address.
+    after.write_text(
+        SHELTER_SITUATION.replace(
+            "held: [document:identity]",
+            "held: [document:identity, document:permit]",
+        ).replace("  - document:permit\n", ""),
+        encoding="utf-8",
+    )
+    assert (
+        _run(["--corpus", str(FIXTURES / "corpus"), "diff", str(before), str(after)])
+        == EXIT_OK
+    )
+    out = capsys.readouterr().out
+    assert "Still waiting, but on something different now" in out
+    assert "was:" in out and "now:" in out

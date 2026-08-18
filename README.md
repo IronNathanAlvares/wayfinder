@@ -74,7 +74,7 @@ produces the same plan. That is also why the engine is testable.
 ```bash
 uv run wayfinder corpus check     # integrity: dates, references, citations
 uv run wayfinder corpus health    # staleness bands, the maintenance alarm
-uv run pytest                     # 214 tests
+uv run pytest                     # unit, property and persona tests
 uv run lint-imports               # proves plan/ imports nothing with I/O
 ```
 

@@ -1,0 +1,27 @@
+# The same person six weeks on. Two things changed that she did not control:
+# IPAS made an offer, and she now has her PPS number.
+#
+# The offer is recorded as a determination with a named decider and a date.
+# There is no way to record one anonymously, which is the point: the system
+# cannot decide this, and it cannot pretend somebody else did either.
+arrival_date: 2026-08-01
+protection_application_date: 2026-08-04
+protection_stage: applied
+accommodation: ipas
+household:
+  adults: 1
+  children_ages: [7]
+held:
+  - document:national_id
+  - document:temporary_residence_certificate
+  - document:asylum_application_letter
+  - document:ppsn
+known_absent:
+  - document:proof_of_address
+  - document:medical_card
+  - status:labour_market_access
+determinations:
+  "determination:ipas_accommodation_offer":
+    outcome: granted
+    authority: the International Protection Accommodation Service
+    recorded_on: 2026-09-20
