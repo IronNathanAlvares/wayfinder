@@ -13,3 +13,8 @@ build/
 *.sqlite
 *.sqlite3
 .env
+
+# Never commit credentials. This path is blocked permanently, not by memory.
+api_keys.txt
+*.key
+.secrets/

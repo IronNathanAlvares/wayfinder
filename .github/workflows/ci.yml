@@ -21,8 +21,11 @@ jobs:
         with:
           enable-cache: true
 
+      # --all-extras so the optional model adapter is type-checked and tested
+      # too. An adapter that only compiles on the author's machine is not
+      # checked, and this one sits in the crisis path.
       - name: Install Python and dependencies
-        run: uv sync --locked --all-groups
+        run: uv sync --locked --all-groups --all-extras
 
       - name: ruff format
         run: uv run ruff format --check .
