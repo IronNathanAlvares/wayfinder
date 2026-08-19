@@ -401,6 +401,47 @@ measurement had to be paid for twice. `wayfinder-compare` now takes `--save` and
 writes every miss to JSON, and the run is committed under
 `tests/corpus/measurements/`.
 
+## 19. The crisis prompt was rewritten from the clinical taxonomy, and it nets to nothing
+
+ADR-0008's plan said to rewrite the self-harm guidance from the published
+warning-sign taxonomy rather than from the category name, and to validate on a
+fresh split. Both were done.
+
+The prompt now carries the Columbia ideation ladder, the behaviour categories,
+and the preparatory and leave-taking signs, and it spends as much space on what
+is *not* a crisis as on what is. `llm.py` keeps both prompts rather than
+replacing one with the other, so the change is measurable instead of asserted.
+
+`crisis-holdout-v2` is a second split of 320 crisis turns and 180 near misses,
+written before either prompt was run against it, because the first split's
+failures had by then been read and a prompt written by somebody who has seen
+those cannot be judged on them.
+
+**Self-harm 0.481 to 0.685. Detention 0.963 to 0.778. Overall 0.844 to 0.841.**
+It fixed the category it aimed at and broke a different one by almost exactly as
+much. Precision held at 13 false positives against 14, which was the risk worth
+worrying about and the one thing that clearly went right.
+
+Three things this changed about how the eval works.
+
+**Both prompts run in one invocation.** Measuring a new prompt today against a
+number recorded last week attributes the model's variance to the prompt. The
+runner takes `--prompt` more than once and scores them over the same items.
+
+**Verdicts are cached to disk.** Two paid runs were lost to interruptions before
+this existed, one to a shell timeout. `eval/cache.py` keys on model, prompt and
+turn together, hashing the prompt in full so an edit without a rename cannot
+read stale answers, and never persists a failure. It is eval-only and the layers
+contract keeps `safety/` from reaching it: a cached verdict in a live screen
+would answer today's turn with last month's answer.
+
+**Near-duplicate leakage is a test.** A similarity sweep found four pairs above
+0.75 between the two splits. Two items differing by a word contaminate a holdout
+as much as two identical ones and pass every equality check. They were rewritten
+before any model had run against the file, which is the only point at which
+fixing them is honest, and the sweep is now
+`test_the_two_crisis_splits_share_no_near_duplicates`.
+
 ---
 
 ## Scope decisions

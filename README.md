@@ -19,7 +19,7 @@ in the design rather than in the test.
 
 Start with [`HANDOFF.md`](HANDOFF.md), and see
 [`docs/12-changes-from-design.md`](docs/12-changes-from-design.md) for the
-eighteen things building this proved wrong about the design.
+nineteen things building this proved wrong about the design.
 
 Standalone project. Nothing else needs to exist for it to run.
 
@@ -104,12 +104,22 @@ uv run wayfinder-eval --baseline  # what CI runs: no regression
 uv run wayfinder-compare          # crisis recall, deterministic only
 ```
 
-The comparison against a model needs a key and costs about fifty API calls:
+The comparison against a model needs a key. The default split holds 500 turns,
+so a run against one prompt is 500 requests:
 
 ```bash
 uv sync --extra llm
-ANTHROPIC_API_KEY=... uv run wayfinder-compare --model claude-opus-5
+ANTHROPIC_API_KEY=... uv run wayfinder-compare --model claude-haiku-4-5 --effort none --cache .eval-cache.json --save out.json
 ```
+
+`--cache` makes an interrupted run resume for the price of what is left, keyed
+on the model, the prompt and the turn together so a prompt edit never reads a
+stale verdict. `--save` keeps the per-item misses, which are the half of the
+result worth having. Both exist because two paid runs were lost without them.
+
+`--prompt v1 --prompt v2` measures both prompts on the same items in one run,
+which is the only way to attribute a difference to the prompt rather than to
+the day.
 
 `ask` and `serve` both exit 2 without `ANTHROPIC_API_KEY`, because the crisis
 screen they would otherwise run with catches one crisis turn in six. Pass
@@ -176,14 +186,26 @@ holds 320 crisis turns and 156 near misses.
 
 **The gate is still not met, and now for the third distinct reason.** Not
 because the approach cannot reach it, and no longer because the corpus is too
-small. Because the screen misses about one crisis turn in ten, and thirteen of
-its thirty-three misses are self-harm items of the exact kind that clinical risk
-assessment treats as highest-risk: giving away possessions, arranging care for a
-child, a note, a goodbye, a prior attempt.
+small. Because the screen misses about one crisis turn in ten, and most of its
+misses are self-harm items of the kind clinical risk assessment treats as
+highest-risk: giving away possessions, arranging care for a child, a note, a
+goodbye, a prior attempt.
 
-The prompt has not been edited against those thirty-three. Doing that would burn
-the only large held-out split this project has, to buy a number rather than a
-screen. What it calls for instead is in
+So the prompt was rewritten from the clinical taxonomy, and validated on a
+second held-out split written for the purpose, because a prompt written by
+somebody who has seen a split's failures cannot be judged on that split.
+
+| On 500 fresh items | Prompt V1 | Prompt V2 |
+|---|---|---|
+| Self-harm | 0.481 | **0.685** |
+| Detention | **0.963** | 0.778 |
+| Overall | 0.844 | 0.841 |
+
+**It improved the category it was aimed at by a fifth and broke a different one
+by a fifth.** The overall number did not move. That is the honest result of the
+fix, and the reason it is in the README rather than buried: a rewrite that
+trades one category for another looks like progress in every summary that only
+reports an average. What it actually calls for is in
 [ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md).
 
 **What exists.** The plan engine, a twenty-task Irish corpus across eight
@@ -279,7 +301,7 @@ Each is enforced structurally and each has a test. See
 | [09 Test and eval plan](docs/09-test-and-eval-plan.md) | Corpus, gates, topology tests |
 | [10 Risk and ethics](docs/10-risk-and-ethics.md) | Who can be harmed, and what stops it |
 | [11 Interview pitch](docs/11-interview-pitch.md) | Pitch, demo, likely questions |
-| [12 Changes from the design](docs/12-changes-from-design.md) | The eighteen things building it proved wrong |
+| [12 Changes from the design](docs/12-changes-from-design.md) | The nineteen things building it proved wrong |
 | [ADRs](docs/adr/) | Eight decision records |
 
 ---

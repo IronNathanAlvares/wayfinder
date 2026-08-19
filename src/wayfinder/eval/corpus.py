@@ -42,7 +42,27 @@ HOLDOUT_SPLIT = "holdout"
 # model calls to measure.
 CRISIS_HOLDOUT_SPLIT = "crisis-holdout"
 
-HOLDOUT_SPLITS: tuple[str, ...] = (HOLDOUT_SPLIT, CRISIS_HOLDOUT_SPLIT)
+# A second one, for the prompt rewrite. `crisis-holdout` found that the V1
+# prompt missed 33 turns and those turns were then read, so a prompt written
+# afterwards cannot be validated on it: whoever has seen a split's failures
+# cannot use it to judge their own fix. This project already burned one holdout
+# that way and does not get to do it twice.
+#
+# So the two have different jobs. `crisis-holdout` is the measurement that found
+# the problem and stays as the regression check. `crisis-holdout-v2` is the one
+# that says whether a fix worked, and it stays clean until it is spent the same
+# way.
+CRISIS_HOLDOUT_V2_SPLIT = "crisis-holdout-v2"
+
+# Splits whose whole purpose is the crisis screen. Reported one at a time,
+# never pooled: averaging a split a prompt has seen with one it has not is how
+# a burned number gets laundered into a clean one.
+CRISIS_HOLDOUT_SPLITS: tuple[str, ...] = (
+    CRISIS_HOLDOUT_SPLIT,
+    CRISIS_HOLDOUT_V2_SPLIT,
+)
+
+HOLDOUT_SPLITS: tuple[str, ...] = (HOLDOUT_SPLIT, *CRISIS_HOLDOUT_SPLITS)
 
 SPLITS: tuple[str, ...] = (*DEV_SPLITS, *HOLDOUT_SPLITS)
 

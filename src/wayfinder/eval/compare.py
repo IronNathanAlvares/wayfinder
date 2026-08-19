@@ -37,6 +37,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+from wayfinder.eval.cache import CachedScreen
 from wayfinder.eval.corpus import (
     CRISIS_HOLDOUT_SPLIT,
     HOLDOUT_SPLITS,
@@ -167,6 +168,10 @@ def measure(
 
 GATE = 0.99
 
+# The prompt the adapter ships with. Named here so a run with no --prompt says
+# which one it measured rather than leaving a reader to guess.
+DEFAULT_PROMPT = "v2"
+
 
 def _render(results: Sequence[Measurement], total_others: int, split: str) -> str:
     lines = [
@@ -238,6 +243,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--limit", type=int, default=0, help="only measure the first N items"
     )
     parser.add_argument(
+        "--cache",
+        type=Path,
+        default=None,
+        help="reuse verdicts already recorded here and add new ones as they "
+        "arrive, so an interrupted run resumes for the price of what is left. "
+        "Keyed on model, prompt and turn together",
+    )
+    parser.add_argument(
         "--save",
         type=Path,
         default=None,
@@ -248,6 +261,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--effort",
         default="low",
         help="effort level, or 'none' for models that reject the parameter",
+    )
+    parser.add_argument(
+        "--prompt",
+        action="append",
+        default=None,
+        help="which system prompt to measure. Repeat to compare prompts on the "
+        "same items in one run, which is the only way to attribute a difference "
+        "to the prompt rather than to the day",
     )
     args = parser.parse_args(argv)
 
@@ -276,18 +297,63 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(_render(results, others, args.split))
         return EXIT_CANNOT_EVALUATE
 
-    for model_id in models:
-        try:
-            from wayfinder.safety.llm import AnthropicCrisisScreen
+    try:
+        from wayfinder.safety.llm import PROMPTS, AnthropicCrisisScreen
+    except RuntimeError as exc:
+        print(f"could not evaluate: {exc}", file=sys.stderr)
+        return EXIT_CANNOT_EVALUATE
 
-            effort = None if args.effort == "none" else args.effort
-            screen = AnthropicCrisisScreen(model=model_id, effort=effort)
-        except RuntimeError as exc:
-            print(f"could not evaluate: {exc}", file=sys.stderr)
-            return EXIT_CANNOT_EVALUATE
-        results.append(
-            measure(turns, lexicon, label=f"lexicon + {model_id}", model=screen)
+    prompts = args.prompt or [DEFAULT_PROMPT]
+    unknown = [name for name in prompts if name not in PROMPTS]
+    if unknown:
+        print(
+            f"could not evaluate: no such prompt {unknown}. "
+            f"Available: {sorted(PROMPTS)}",
+            file=sys.stderr,
         )
+        return EXIT_CANNOT_EVALUATE
+
+    for model_id in models:
+        for prompt_name in prompts:
+            try:
+                effort = None if args.effort == "none" else args.effort
+                screen: Any = AnthropicCrisisScreen(
+                    model=model_id,
+                    effort=effort,
+                    system_prompt=PROMPTS[prompt_name],
+                )
+            except RuntimeError as exc:
+                print(f"could not evaluate: {exc}", file=sys.stderr)
+                return EXIT_CANNOT_EVALUATE
+
+            cached: CachedScreen | None = None
+            if args.cache:
+                cached = CachedScreen(
+                    screen,
+                    path=args.cache,
+                    model=model_id,
+                    prompt=PROMPTS[prompt_name],
+                )
+                screen = cached
+            try:
+                results.append(
+                    measure(
+                        turns,
+                        lexicon,
+                        label=f"{model_id} + prompt {prompt_name}",
+                        model=screen,
+                    )
+                )
+            finally:
+                # Even on the way out of a failure. What was paid for is kept.
+                if cached is not None:
+                    cached.flush()
+            if cached is not None:
+                print(
+                    f"  {prompt_name}: {cached.calls_made} calls, "
+                    f"{cached.hits} reused from cache",
+                    file=sys.stderr,
+                )
 
     print(_render(results, others, args.split))
     if args.save:

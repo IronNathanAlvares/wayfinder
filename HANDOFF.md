@@ -197,14 +197,21 @@ note, a goodbye, a previous attempt. Both layers are good at stated emergencies
 and poor at implied ones, and self-harm is the category people almost never
 state.
 
-**Do not fix this by editing the prompt against those thirty-three turns.** That
-burns the only large held-out split the project has. The order of work is in
-[ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md): rewrite the prompt
-from the clinical warning-sign taxonomy rather than from the category names,
-validate on a fresh split written to the same protocol, and run it more than
-once because the screen is not deterministic.
+The prompt has since been rewritten from the clinical taxonomy and validated on
+a second split, `crisis-holdout-v2`, written for the purpose. **Self-harm recall
+went from 0.481 to 0.685 and detention fell from 0.963 to 0.778, so the overall
+number did not move.** Precision held: 13 false positives against 14.
 
-Getting the corpus written by somebody who did not write the rules is still the
+The next step, and there is budget for exactly one more measurement on v2 before
+it stops being a holdout: revert the detention wording to V1's phrasing while
+keeping the new self-harm section. V1 said "facing imminent removal from the
+country"; V2 said "a removal with a named date close enough to matter", which
+substitutes a judgement for a fact and the model makes it conservatively.
+
+After that a third split is required. Do not run a series of A/B rounds against
+v2, which is how the first holdout stopped being one.
+
+Getting a corpus written by somebody who did not write the rules is still the
 highest-value item available and still not something testing substitutes for.
 
 **2. The Habitual Residence Condition is still not in the corpus.**

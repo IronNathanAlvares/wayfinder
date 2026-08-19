@@ -262,3 +262,75 @@ def test_the_deterministic_build_needs_no_model_at_all(
     result = full_screen("I want to kill myself", lexicon)
     assert result.is_crisis
     assert result.outcome is ScreenOutcome.LEXICON
+
+
+# --- the V2 prompt ----------------------------------------------------------
+#
+# ADR-0008 measured V1 at 0.750 on self-harm, where its entire guidance was
+# "thoughts of suicide or self-harm": a description of a state of mind rather
+# than of anything a person writes down. V2 is written from the published
+# clinical taxonomy instead. These pin the parts of it that are load-bearing,
+# so a later edit that quietly drops one is visible.
+
+
+def test_both_prompts_are_kept_so_a_change_can_be_measured() -> None:
+    """A prompt rewrite with no way to run the old one is an assertion, not a
+    result."""
+    from wayfinder.safety.llm import PROMPTS, SYSTEM_PROMPT_V1, SYSTEM_PROMPT_V2
+
+    assert PROMPTS == {"v1": SYSTEM_PROMPT_V1, "v2": SYSTEM_PROMPT_V2}
+    # Through the mapping rather than the constants. Both are `Final` string
+    # literals, so comparing them directly is decided at type-check time and
+    # mypy is right to say the assertion carries no information.
+    assert PROMPTS["v1"] != PROMPTS["v2"]
+    assert SYSTEM_PROMPT is SYSTEM_PROMPT_V2, "the shipped prompt is not V2"
+
+
+@pytest.mark.parametrize(
+    "sign",
+    [
+        "wishing to be dead",
+        "previous attempt",
+        "giving away possessions",
+        "writing a note",
+        "saying goodbye",
+        "care for their child",
+        "sudden calm",
+        "cutting or burning",
+        "trapped",
+    ],
+)
+def test_the_prompt_names_the_clinical_warning_signs(sign: str) -> None:
+    """Each of these is a documented proximal indicator, and each corresponds to
+    a turn V1 was measured missing. They are in the prompt because the taxonomy
+    names them, not because the misses did."""
+    assert sign in SYSTEM_PROMPT.lower()
+
+
+def test_the_prompt_says_a_previous_attempt_is_not_history() -> None:
+    """The strongest single predictor there is, and the one V1 read as somebody
+    describing their past."""
+    lowered = SYSTEM_PROMPT.lower()
+    assert "strongest" in lowered
+    assert "do not read it as history" in lowered
+
+
+@pytest.mark.parametrize(
+    "counter_example",
+    ["killing me", "dying to", "my phone died", "grief", "left years ago"],
+)
+def test_the_prompt_spends_as_much_care_on_what_is_not_a_crisis(
+    counter_example: str,
+) -> None:
+    """The cheap way to buy recall is to fire on every mention of death, and a
+    screen that does that is one people learn to scroll past. That failure is
+    silent, so the counter-examples are pinned as tightly as the signs."""
+    assert counter_example in SYSTEM_PROMPT.lower()
+
+
+def test_the_prompt_still_covers_the_other_five_categories() -> None:
+    """A rewrite aimed at self-harm must not quietly cost the categories that
+    were already working."""
+    lowered = SYSTEM_PROMPT.lower()
+    for term in ("trafficking", "under 18", "medication", "removal", "locked out"):
+        assert term in lowered

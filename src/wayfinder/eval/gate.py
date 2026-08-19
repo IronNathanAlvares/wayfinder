@@ -25,7 +25,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict
 
 from wayfinder.eval.corpus import (
-    CRISIS_HOLDOUT_SPLIT,
+    CRISIS_HOLDOUT_SPLITS,
     HOLDOUT_SPLIT,
     HOLDOUT_SPLITS,
     EvalError,
@@ -251,7 +251,7 @@ def _check_baseline(
 
 
 def _render_crisis_holdout(
-    turns: Sequence[LabelledTurn], lexicon: CrisisLexicon
+    turns: Sequence[LabelledTurn], lexicon: CrisisLexicon, name: str
 ) -> tuple[str, Score]:
     """The crisis screen alone, at the size the gate needs, with the bound.
 
@@ -283,7 +283,7 @@ def _render_crisis_holdout(
     lines = [
         "",
         "=" * 70,
-        "Crisis screen, held out, sized to certify the gate",
+        f"Crisis screen, {name}, sized to certify the gate",
         "=" * 70,
         "",
         f"recall                {recall.render()}",
@@ -352,7 +352,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     dev = [t for t in turns if t.split not in HOLDOUT_SPLITS]
     holdout = [t for t in turns if t.split == HOLDOUT_SPLIT]
-    crisis_holdout = [t for t in turns if t.split == CRISIS_HOLDOUT_SPLIT]
+    crisis_holdouts = {
+        name: [t for t in turns if t.split == name] for name in CRISIS_HOLDOUT_SPLITS
+    }
 
     results, reports, pairs, failures = evaluate(dev, lexicon)
     print(
@@ -395,12 +397,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         **_scores(results[len(GATES) :], "holdout/"),
     }
 
-    if crisis_holdout:
-        rendered, crisis_recall = _render_crisis_holdout(crisis_holdout, lexicon)
+    for name, split_turns in crisis_holdouts.items():
+        if not split_turns:
+            continue
+        rendered, crisis_recall = _render_crisis_holdout(split_turns, lexicon, name)
         print(rendered)
         # Tracked in the baseline like everything else, so a lexicon edit that
         # quietly costs recall on three hundred items fails the build.
-        current["crisis-holdout/CRISIS recall"] = crisis_recall.value
+        current[f"{name}/CRISIS recall"] = crisis_recall.value
 
     if args.write_baseline:
         args.corpus.joinpath("baseline.json").write_text(

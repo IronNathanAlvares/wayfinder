@@ -20,3 +20,7 @@ build/
 api_keys.txt
 *.key
 .secrets/
+
+# The eval verdict cache. Reusable across runs, not evidence, and it can get
+# large. The measurements that are evidence live in tests/corpus/measurements/.
+.eval-cache.json
