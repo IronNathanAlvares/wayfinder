@@ -32,7 +32,19 @@ DEV_SPLITS: tuple[str, ...] = (
 # than the classifier. This is the split that measures anything.
 HOLDOUT_SPLIT = "holdout"
 
-SPLITS: tuple[str, ...] = (*DEV_SPLITS, HOLDOUT_SPLIT)
+# The crisis screen measured on its own, at the size the gate actually needs.
+#
+# Separate from `holdout` for two reasons. A 0.99 gate at 95 percent confidence
+# needs 299 consecutive successes, so a split that can certify it is six times
+# the size of the mixed one, and folding it in would drown the forty-seven items
+# that measure the other four classes. And the crisis screen is the only layer
+# that a model is allowed to touch, so it is the only one worth paying per-turn
+# model calls to measure.
+CRISIS_HOLDOUT_SPLIT = "crisis-holdout"
+
+HOLDOUT_SPLITS: tuple[str, ...] = (HOLDOUT_SPLIT, CRISIS_HOLDOUT_SPLIT)
+
+SPLITS: tuple[str, ...] = (*DEV_SPLITS, *HOLDOUT_SPLITS)
 
 
 class EvalError(Exception):
@@ -50,6 +62,11 @@ class LabelledTurn(BaseModel):
     # that means anything on that split: getting one side right by escalating
     # everything is not a result.
     pair: str = ""
+    # Which of the six crisis categories, on crisis items. Carried so recall can
+    # be reported per category: three hundred items with one aggregate number
+    # hides a screen that catches every eviction and no trafficking, and those
+    # are not the same system.
+    category: str = ""
 
 
 class Split(BaseModel):

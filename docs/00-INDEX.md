@@ -45,7 +45,7 @@ that need a human.
 | 09 | [Test and eval plan](09-test-and-eval-plan.md) | Corpus, gates, topology tests |
 | 10 | [Risk and ethics](10-risk-and-ethics.md) | Who can be harmed and what stops it |
 | 11 | [Interview pitch](11-interview-pitch.md) | How to explain it, demo it, and defend it |
-| 12 | [Changes from the design](12-changes-from-design.md) | **The seventeen things building it proved wrong, and what replaced them** |
+| 12 | [Changes from the design](12-changes-from-design.md) | **The eighteen things building it proved wrong, and what replaced them** |
 
 ## Decision records
 

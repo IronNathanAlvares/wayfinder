@@ -11,6 +11,7 @@ could not evaluate, rather than 0 or 1.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 
 from pydantic import BaseModel, ConfigDict
@@ -124,3 +125,62 @@ def pair_report(
         total=len(complete),
         both_correct=sum(1 for v in complete if all(v)),
     )
+
+
+# --- how much a score is worth -----------------------------------------------
+#
+# A recall of 1.000 over twelve items and a recall of 1.000 over three hundred
+# are not the same claim, and reporting both as "1.000" is how a safety number
+# becomes fiction. ADR-0008 worked the arithmetic out by hand in prose. It lives
+# here now so the runner prints it and nobody has to trust a paragraph.
+
+CONFIDENCE = 0.95
+
+
+def _tail(successes: int, trials: int, p: float) -> float:
+    """P(X >= successes) for X binomial with `trials` and probability p."""
+    return sum(
+        math.comb(trials, i) * p**i * (1.0 - p) ** (trials - i)
+        for i in range(successes, trials + 1)
+    )
+
+
+def lower_bound(successes: int, trials: int, confidence: float = CONFIDENCE) -> float:
+    """The Clopper-Pearson one-sided lower bound on the true rate.
+
+    The number to quote. Observing 12 out of 12 does not mean the rate is 1.0,
+    it means the rate is somewhere above 0.78 and the corpus was too small to
+    say more than that.
+
+    Bisection rather than a library, because the alternative is taking a scipy
+    dependency into a package whose whole point is that the safety-critical part
+    imports almost nothing.
+    """
+    if trials <= 0:
+        return 0.0
+    if successes >= trials:
+        # Closed form for the no-failures case, which is the one that matters
+        # here and the one the gate is sized around.
+        return float((1.0 - confidence) ** (1.0 / trials))
+
+    alpha = 1.0 - confidence
+    low, high = 0.0, successes / trials
+    for _ in range(200):
+        mid = (low + high) / 2.0
+        if _tail(successes, trials, mid) < alpha:
+            low = mid
+        else:
+            high = mid
+    return low
+
+
+def trials_needed(target: float, confidence: float = CONFIDENCE) -> int:
+    """How many consecutive successes it takes to certify `target`.
+
+    299 for a 0.99 gate at 95 percent. This is why a twelve-item split cannot
+    demonstrate the crisis gate however well it scores.
+    """
+    if not 0.0 < target < 1.0:
+        msg = f"a target rate must be strictly between 0 and 1, got {target}"
+        raise ValueError(msg)
+    return math.ceil(math.log(1.0 - confidence) / math.log(target))

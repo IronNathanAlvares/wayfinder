@@ -359,6 +359,48 @@ The pattern is the same one as change 14: the durability of the pause was
 tested thoroughly at the graph, and not at all at the surface a caseworker
 actually uses.
 
+## 18. The crisis holdout was sized to certify the gate, and the gate failed
+
+`tests/corpus/crisis-holdout.yaml` holds 320 crisis turns across the six
+categories and 156 near misses. The size is not arbitrary: certifying 0.99 at 95
+percent confidence takes 299 consecutive successes, so anything smaller cannot
+demonstrate the gate however well it scores. The size was fixed from that
+arithmetic before a line of it was written.
+
+The confidence arithmetic moved out of prose and into `eval/metrics.py`, where
+`lower_bound` and `trials_needed` are computed and printed next to every recall
+figure. A number that lives only in a paragraph is a number nobody recomputes
+when the corpus changes.
+
+**The result.** Deterministic 0.138, lexicon plus `claude-haiku-4-5` **0.897**.
+On the previous twelve-item split the same model scored 1.000. The gate is not
+met and the misses concentrate in self-harm, which is measured per category
+because an aggregate hides that. Details in ADR-0008.
+
+Three things worth separating out.
+
+**The 0.138 is the contamination check.** This corpus was written by the person
+who wrote the lexicon, which is the wrong person, and no amount of care fixes
+that. But if the sentences had been produced by recalling the patterns, the
+deterministic screen would have scored near the top of its range on them. It
+scored 0.138, in line with the 0.167 that came before, which is evidence the
+file measures something the patterns do not already contain.
+
+**The near misses are not padding.** Recall alone is achieved perfectly by a
+screen that fires on everything, so 156 turns that mention homelessness,
+violence, deportation and death without being an emergency are what stops the
+headline number being meaningless. Both configurations fired on 7 of them.
+
+**The screen is not deterministic.** Two runs with identical settings scored 288
+and 287 out of 320. That is worth knowing before anybody quotes a single figure
+from it, and it means a gate this tight cannot be certified from one run.
+
+One process failure of my own, recorded because it cost real money: the first
+run's output was piped through `head` and the per-item detail was lost, so the
+measurement had to be paid for twice. `wayfinder-compare` now takes `--save` and
+writes every miss to JSON, and the run is committed under
+`tests/corpus/measurements/`.
+
 ---
 
 ## Scope decisions

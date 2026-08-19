@@ -95,11 +95,59 @@ def test_no_key_is_could_not_evaluate_rather_than_a_silent_baseline(
 def test_the_baseline_runs_without_a_key(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """The deterministic half needs no key, so a run with no key is still a
+    measurement rather than nothing."""
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     assert main(["--corpus", str(CORPUS)]) == EXIT_OK
     out = capsys.readouterr().out
     assert "deterministic only" in out
-    assert "0.167" in out
+    # The denominator rather than the score. The score belongs to
+    # `baseline.json`, which fails a build when it moves; asserting it here as
+    # well would mean two places to update and one of them forgotten.
+    assert "/320)" in out, "the default run measured the wrong split, or nothing"
+
+
+def test_the_default_split_is_the_one_sized_to_certify_the_gate(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Defaulting to the twelve-item split would make every run of this tool
+    produce a number too weak to mean anything, which is the mistake ADR-0008
+    exists to record."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    main(["--corpus", str(CORPUS)])
+    assert "crisis-holdout split" in capsys.readouterr().out
+
+
+def test_the_smaller_mixed_split_can_still_be_asked_for(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    assert main(["--corpus", str(CORPUS), "--split", "holdout"]) == EXIT_OK
+    out = capsys.readouterr().out
+    assert "holdout split" in out
+    assert "/12)" in out
+
+
+def test_a_dev_split_cannot_be_measured_by_this_tool(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Measuring a split the screen was tuned against reports the tuning. The
+    argument parser refuses rather than leaving it to a reader to notice."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    with pytest.raises(SystemExit):
+        main(["--corpus", str(CORPUS), "--split", "crisis"])
+
+
+def test_the_run_reports_a_confidence_bound_next_to_the_recall(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A recall printed without its bound is how 1.000 over twelve items gets
+    quoted as if it settled something."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    main(["--corpus", str(CORPUS)])
+    out = capsys.readouterr().out
+    assert "95% bound" in out
+    assert "299" in out, "the run did not say how many successes the gate needs"
 
 
 def test_a_missing_corpus_is_could_not_evaluate(tmp_path: Path) -> None:

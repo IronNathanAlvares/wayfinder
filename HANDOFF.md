@@ -185,13 +185,27 @@ Carried over because they worked on the previous project.
 
 Ordered by how much it matters, not by how hard it is.
 
-**1. The crisis eval corpus is two orders of magnitude too small.** Twelve
-held-out crisis items. Certifying the 0.99 gate at 95 percent confidence needs
-299 consecutive successes. This is the one thing blocking the project's central
-safety claim, and it cannot be fixed by writing more code. It needs several
-hundred crisis and near-crisis turns written by somebody who did not write the
-lexicon or the prompt, ideally somebody who has taken these calls. Until then
-the honest statement is "no failures observed in twelve".
+**1. The crisis screen misses about one turn in ten, and the misses are
+self-harm.** The held-out crisis corpus is now 320 crisis turns and 156 near
+misses, which is large enough to certify the 0.99 gate. Measured against it,
+`claude-haiku-4-5` behind the lexicon scores **0.897, lower bound 0.865**. The
+gate is not met.
+
+Thirteen of the thirty-three misses are self-harm items, and they are the
+recognised warning signs: giving away possessions, arranging care for a child, a
+note, a goodbye, a previous attempt. Both layers are good at stated emergencies
+and poor at implied ones, and self-harm is the category people almost never
+state.
+
+**Do not fix this by editing the prompt against those thirty-three turns.** That
+burns the only large held-out split the project has. The order of work is in
+[ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md): rewrite the prompt
+from the clinical warning-sign taxonomy rather than from the category names,
+validate on a fresh split written to the same protocol, and run it more than
+once because the screen is not deterministic.
+
+Getting the corpus written by somebody who did not write the rules is still the
+highest-value item available and still not something testing substitutes for.
 
 **2. The Habitual Residence Condition is still not in the corpus.**
 citizensinformation.ie and gov.ie return 403 to the fetcher, so the canonical

@@ -19,7 +19,7 @@ in the design rather than in the test.
 
 Start with [`HANDOFF.md`](HANDOFF.md), and see
 [`docs/12-changes-from-design.md`](docs/12-changes-from-design.md) for the
-seventeen things building this proved wrong about the design.
+eighteen things building this proved wrong about the design.
 
 Standalone project. Nothing else needs to exist for it to run.
 
@@ -152,7 +152,7 @@ over one file to prove it.
 ## The number that matters
 
 A hand-written crisis lexicon scores 1.000 on the corpus it was tuned against
-and **0.167** on a held-out one. The design assumed a deterministic screen could
+and **0.138** on a held-out one. The design assumed a deterministic screen could
 reach 0.99, and PDD assumption A2 said to validate that in M3. It was validated,
 and it is false.
 
@@ -161,16 +161,29 @@ is load-bearing in the crisis path, and to constrain it so it can only ever add
 a detection and never clear one, which preserves the property the determinism
 was there to protect.
 
-| Held out, 12 crisis items | Recall | Fired on non-crisis |
-|---|---|---|
-| Deterministic lexicon only | 0.167 | 0/35 |
-| Lexicon + `claude-haiku-4-5` | 1.000 | 0/35 |
-| Lexicon + `claude-opus-5` | 1.000 | 1/35 |
+Then the model was measured, first on twelve held-out items and later on 320.
 
-**And twelve items still cannot demonstrate 0.99.** Twelve out of twelve puts
-the 95 percent lower bound at 0.78; certifying the gate needs 299 consecutive
-successes. The gate is unmet for a better reason than before, and the fix is a
-bigger corpus written by somebody other than its author. See
+| Held out | 12 items | 320 items |
+|---|---|---|
+| Deterministic lexicon only | 0.167 | **0.138** |
+| Lexicon + `claude-haiku-4-5` | 1.000 | **0.897** |
+
+**Twelve items could not have told you that.** Twelve successes out of twelve
+put the 95 percent lower bound at 0.78, so "1.000" was always consistent with a
+true rate near 0.8, and the true rate turned out to be 0.897. Certifying a 0.99
+gate takes 299 consecutive successes, which is why the held-out crisis split now
+holds 320 crisis turns and 156 near misses.
+
+**The gate is still not met, and now for the third distinct reason.** Not
+because the approach cannot reach it, and no longer because the corpus is too
+small. Because the screen misses about one crisis turn in ten, and thirteen of
+its thirty-three misses are self-harm items of the exact kind that clinical risk
+assessment treats as highest-risk: giving away possessions, arranging care for a
+child, a note, a goodbye, a prior attempt.
+
+The prompt has not been edited against those thirty-three. Doing that would burn
+the only large held-out split this project has, to buy a number rather than a
+screen. What it calls for instead is in
 [ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md).
 
 **What exists.** The plan engine, a twenty-task Irish corpus across eight
@@ -266,7 +279,7 @@ Each is enforced structurally and each has a test. See
 | [09 Test and eval plan](docs/09-test-and-eval-plan.md) | Corpus, gates, topology tests |
 | [10 Risk and ethics](docs/10-risk-and-ethics.md) | Who can be harmed, and what stops it |
 | [11 Interview pitch](docs/11-interview-pitch.md) | Pitch, demo, likely questions |
-| [12 Changes from the design](docs/12-changes-from-design.md) | The seventeen things building it proved wrong |
+| [12 Changes from the design](docs/12-changes-from-design.md) | The eighteen things building it proved wrong |
 | [ADRs](docs/adr/) | Eight decision records |
 
 ---
