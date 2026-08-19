@@ -12,6 +12,7 @@ appearing to raise it.
 
 from __future__ import annotations
 
+import difflib
 from pathlib import Path
 
 import pytest
@@ -172,39 +173,65 @@ def test_the_stated_counts_in_the_header_match_the_file(split: Path) -> None:
     assert f"{len(others)} near misses" in raw
 
 
-def test_the_second_split_is_at_least_as_demanding_as_the_first() -> None:
-    """v2 is the split that judges a fix written by somebody who saw v1 fail.
+def test_no_later_split_is_easier_than_the_one_before_it() -> None:
+    """Each split judges a fix written by somebody who saw the previous one fail.
 
-    If it were easier than v1, the rewrite would look better for reasons that
-    have nothing to do with the rewrite. More near misses is the specific
-    guard: the cheap way to buy recall is to fire on everything.
+    If a later split were easier, the fix would look better for reasons that
+    have nothing to do with the fix. Near-miss count is the specific guard,
+    because the cheap way to buy recall is to fire on everything, and it must
+    not fall as the series goes on.
     """
-    first, second = (load_split(path).items for path in SPLITS)
-    for items in (first, second):
-        assert sum(1 for t in items if t.label is QuestionClass.CRISIS) == 320
-    assert sum(1 for t in second if t.label is not QuestionClass.CRISIS) >= sum(
-        1 for t in first if t.label is not QuestionClass.CRISIS
+    splits = [load_split(path).items for path in SPLITS]
+    crisis = [sum(1 for t in s if t.label is QuestionClass.CRISIS) for s in splits]
+    others = [sum(1 for t in s if t.label is not QuestionClass.CRISIS) for s in splits]
+
+    assert crisis == [320] * len(SPLITS), crisis
+    assert others == sorted(others), others
+
+
+SIMILARITY_CEILING = 0.75
+
+
+def _similarity(left: str, right: str) -> float:
+    """Symmetric, because `SequenceMatcher` is not.
+
+    Its junk heuristics index the second sequence, so `ratio(a, b)` and
+    `ratio(b, a)` can differ. Taking one of them missed a pair at 0.83 that the
+    other found, which is a quiet way for a leakage check to pass while leaking.
+    """
+    return max(
+        difflib.SequenceMatcher(None, left, right).ratio(),
+        difflib.SequenceMatcher(None, right, left).ratio(),
     )
 
 
-def test_the_two_crisis_splits_share_no_near_duplicates() -> None:
+def test_no_two_crisis_splits_share_a_near_duplicate() -> None:
     """Exact-match leakage is checked above. This catches the softer kind.
 
     Two items differing by one word contaminate a holdout exactly as much as
-    two identical ones, and pass every equality check. Four pairs above this
-    threshold were found and rewritten before the v2 split was ever run, which
-    is the only point at which fixing them is honest.
-    """
-    import difflib
+    two identical ones and pass every equality check. Four such pairs were
+    found before v2 was first run and twenty-six before v3 was, in both cases
+    while no result existed yet, which is the only point at which fixing them
+    is honest.
 
-    first, second = ([t.text for t in load_split(path).items] for path in SPLITS)
-    too_close = [
-        (round(ratio, 2), b, near[0])
-        for b in second
-        for near in [difflib.get_close_matches(b, first, n=1, cutoff=0.75)]
-        if near
-        for ratio in [difflib.SequenceMatcher(None, b, near[0]).ratio()]
-    ]
+    The word-overlap gate is a speed optimisation, not part of the claim: two
+    sentences sharing under a quarter of their words cannot reach the ceiling.
+    """
+    texts = {path.stem: [t.text for t in load_split(path).items] for path in SPLITS}
+    too_close = []
+    for i, (name, items) in enumerate(texts.items()):
+        for other_name, others in list(texts.items())[i + 1 :]:
+            indexed = [(o, set(o.split())) for o in others]
+            for item in items:
+                words = set(item.split())
+                for other, other_words in indexed:
+                    if len(words & other_words) / len(words | other_words) < 0.25:
+                        continue
+                    ratio = _similarity(item, other)
+                    if ratio >= SIMILARITY_CEILING:
+                        too_close.append(
+                            (round(ratio, 2), name, item, other_name, other)
+                        )
     assert not too_close, too_close[:5]
 
 

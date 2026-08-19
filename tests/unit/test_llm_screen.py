@@ -283,11 +283,12 @@ def test_every_prompt_is_kept_so_a_change_can_be_measured() -> None:
         SYSTEM_PROMPT_V3,
     )
 
-    assert PROMPTS == {
-        "v1": SYSTEM_PROMPT_V1,
-        "v2": SYSTEM_PROMPT_V2,
-        "v3": SYSTEM_PROMPT_V3,
-    }
+    for name, prompt in (
+        ("v1", SYSTEM_PROMPT_V1),
+        ("v2", SYSTEM_PROMPT_V2),
+        ("v3", SYSTEM_PROMPT_V3),
+    ):
+        assert PROMPTS[name] is prompt
     # Through the mapping rather than the constants. The literals are `Final`,
     # so comparing them directly is decided at type-check time and mypy is
     # right to say such an assertion carries no information.
@@ -424,3 +425,109 @@ def test_a_prompt_that_stopped_differing_fails_at_import() -> None:
             llm._one_line_changed()
     finally:
         llm.SYSTEM_PROMPT_V3 = original  # type: ignore[misc]
+
+
+# --- the emphasis experiment -------------------------------------------------
+#
+# V5 expands detention only. V4 expands the other four as well. Both are built
+# from V2 by substitution, and these check the properties the experiment needs
+# to be interpretable: the arms are nested, each differs from its control in
+# exactly the intended place, and no substitution silently did nothing.
+
+
+def test_the_arms_are_nested_so_the_comparison_isolates_one_change() -> None:
+    """V2 to V5 changes detention. V5 to V4 changes the other four. Anything
+    else differing between them would make a result unattributable."""
+    from wayfinder.safety.llm import (
+        SYSTEM_PROMPT_V2,
+        SYSTEM_PROMPT_V4,
+        SYSTEM_PROMPT_V5,
+    )
+
+    assert len({SYSTEM_PROMPT_V2, SYSTEM_PROMPT_V5, SYSTEM_PROMPT_V4}) == 3
+    assert len(SYSTEM_PROMPT_V2) < len(SYSTEM_PROMPT_V5) < len(SYSTEM_PROMPT_V4)
+
+
+@pytest.mark.parametrize(
+    ("prompt_name", "expected"),
+    [
+        ("v1", set()),
+        ("v2", {"self_harm"}),
+        ("v3", {"self_harm"}),
+        ("v5", {"self_harm", "detention"}),
+        (
+            "v4",
+            {
+                "self_harm",
+                "detention",
+                "rough_sleeping",
+                "violence",
+                "child_protection",
+                "medical",
+            },
+        ),
+    ],
+)
+def test_each_arm_expands_exactly_the_categories_it_claims(
+    prompt_name: str, expected: set[str]
+) -> None:
+    """The independent variable, asserted rather than assumed. This is the
+    whole experiment: which categories got a section of their own."""
+    import re
+
+    from wayfinder.safety.llm import PROMPTS
+
+    categories = {c.value for c in CrisisCategory}
+    headings = set(re.findall(r"^## (\w+)$", PROMPTS[prompt_name], re.M))
+    assert headings & categories == expected
+
+
+def test_an_expanded_category_still_appears_in_the_list_as_a_pointer() -> None:
+    """Removing the bullet entirely would change two things at once: the
+    emphasis and whether the category is listed at all."""
+    from wayfinder.safety.llm import SYSTEM_PROMPT_V4
+
+    for category in CrisisCategory:
+        assert f"- {category.value}: see below." in SYSTEM_PROMPT_V4
+
+
+def test_the_negative_guidance_stays_last() -> None:
+    """Inserting sections after it would bury the counter-examples under a wall
+    of reasons to escalate, which is a second change nobody intended."""
+    from wayfinder.safety.llm import PROMPTS
+
+    for name in ("v2", "v4", "v5"):
+        prompt = PROMPTS[name]
+        assert prompt.index("## What is not a crisis") > prompt.index("## self_harm")
+        assert prompt.index("## When you are unsure") > prompt.index(
+            "## What is not a crisis"
+        )
+
+
+def test_an_expansion_that_matched_nothing_fails_loudly() -> None:
+    """A substitution that silently no-ops produces an arm identical to its
+    control, and a difference of zero that reads as a finding."""
+    from wayfinder.safety.llm import _expand
+
+    with pytest.raises(RuntimeError, match="not in the prompt being expanded"):
+        _expand("a prompt with no bullets in it", ["detention"])
+
+
+def test_expanding_twice_is_refused_rather_than_silently_ignored() -> None:
+    """Applying an expansion to a prompt that already has it would append a
+    second copy of the section. The bullet check catches it, because the bullet
+    is gone the first time."""
+    from wayfinder.safety.llm import SYSTEM_PROMPT_V5, _expand
+
+    with pytest.raises(RuntimeError, match="detention"):
+        _expand(SYSTEM_PROMPT_V5, ["detention"])
+
+
+def test_the_expanded_detention_section_keeps_the_date_instruction_explicit() -> None:
+    """The measured failure was detention turns with a named date being read as
+    not urgent. This says not to make that judgement, which is the substance of
+    the arm rather than its length."""
+    from wayfinder.safety.llm import SYSTEM_PROMPT_V4, SYSTEM_PROMPT_V5
+
+    for prompt in (SYSTEM_PROMPT_V4, SYSTEM_PROMPT_V5):
+        assert "Do not judge whether the date is close enough to matter" in prompt

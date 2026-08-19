@@ -57,9 +57,16 @@ CRISIS_HOLDOUT_V2_SPLIT = "crisis-holdout-v2"
 # Splits whose whole purpose is the crisis screen. Reported one at a time,
 # never pooled: averaging a split a prompt has seen with one it has not is how
 # a burned number gets laundered into a clean one.
+# A third, for the emphasis hypothesis. v2 has been measured twice and its
+# per-category numbers are known, so a prompt written now is written by somebody
+# who knows where that split hurts. Each split is spent the same way: it answers
+# one question and then it is a regression check.
+CRISIS_HOLDOUT_V3_SPLIT = "crisis-holdout-v3"
+
 CRISIS_HOLDOUT_SPLITS: tuple[str, ...] = (
     CRISIS_HOLDOUT_SPLIT,
     CRISIS_HOLDOUT_V2_SPLIT,
+    CRISIS_HOLDOUT_V3_SPLIT,
 )
 
 HOLDOUT_SPLITS: tuple[str, ...] = (HOLDOUT_SPLIT, *CRISIS_HOLDOUT_SPLITS)
