@@ -4,7 +4,7 @@
 **What it is:** A LangGraph agent team that turns "I have just arrived, what do I
 do?" into an ordered plan with prerequisites, and refuses to answer the questions
 that need a human.
-**Author:** Nathan Alvares · **Date:** 17 August 2026 · **Status:** M1 and M3 built. See [`12-changes-from-design.md`](12-changes-from-design.md)
+**Author:** Nathan Alvares · **Date:** 17 August 2026 · **Status:** M1 to M6 built, 413 tests green. See [`12-changes-from-design.md`](12-changes-from-design.md)
 
 > **Standalone project.** No dependency on anything else. Nothing else needs to
 > exist for it to run.
@@ -45,7 +45,7 @@ that need a human.
 | 09 | [Test and eval plan](09-test-and-eval-plan.md) | Corpus, gates, topology tests |
 | 10 | [Risk and ethics](10-risk-and-ethics.md) | Who can be harmed and what stops it |
 | 11 | [Interview pitch](11-interview-pitch.md) | How to explain it, demo it, and defend it |
-| 12 | [Changes from the design](12-changes-from-design.md) | **What building M1 proved wrong, and what replaced it** |
+| 12 | [Changes from the design](12-changes-from-design.md) | **The seventeen things building it proved wrong, and what replaced them** |
 
 ## Decision records
 

@@ -12,6 +12,7 @@ household:
   adults: 1
   children_ages: [7]
 held:
+  - status:ipas_accommodation
   - document:national_id
   - document:temporary_residence_certificate
   - document:asylum_application_letter

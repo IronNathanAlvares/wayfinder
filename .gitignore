@@ -12,6 +12,8 @@ build/
 *.egg-info/
 *.sqlite
 *.sqlite3
+*.sqlite-shm
+*.sqlite-wal
 .env
 
 # Never commit credentials. This path is blocked permanently, not by memory.

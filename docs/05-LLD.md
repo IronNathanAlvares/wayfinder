@@ -277,14 +277,35 @@ time, since somebody editing YAML wants the whole list.
 | Method | Path | Purpose |
 |---|---|---|
 | `POST` | `/v1/threads` | Start a session |
-| `POST` | `/v1/threads/{id}/turn` | Send a turn, stream the response |
+| `POST` | `/v1/threads/{id}/turn` | Send a turn |
 | `GET` | `/v1/threads/{id}/plan` | Current plan: frontier, blocked, unblocking sets |
+| `DELETE` | `/v1/threads/{id}` | Forget the thread. NG5 |
 | `GET` | `/v1/queue` | Caseworker queue of pending determinations |
 | `POST` | `/v1/queue/{id}/respond` | Resume the graph with a determination |
-| `GET` | `/v1/corpus/health` | Staleness report. An operational alarm |
+| `GET` | `/v1/corpus/health` | Staleness. **503** once a source has aged out |
 
 `/v1/corpus/health` is not an afterthought. Source staleness is the most likely
-silent failure in this system.
+silent failure in this system, and an endpoint that returns 200 with a list of
+rotting sources nobody reads is not an alarm. It returns 503.
+
+**Built, with three corrections to this table.**
+
+Turns are not streamed. A turn either completes or pauses at the handoff, and a
+paused turn has nothing to stream. Streaming would only make the wait feel
+shorter, which is not what is scarce here.
+
+`DELETE /v1/threads/{id}` was missing from the design and is required by NG5.
+Personal data that is not retained cannot leak, and an endpoint that does the
+retaining without one that undoes it is a one-way door.
+
+The queue and the situation lookup both read through to the checkpointer rather
+than to process memory. The first version did not, which meant the queue came
+back empty after a redeploy while the graph was still paused on disk. See change
+17 in `12-changes-from-design.md`.
+
+Both `/v1/queue` endpoints return 503 when no checkpointer is configured. An
+empty list would read as "nothing is waiting" rather than "this is not set up",
+and the difference matters to whoever is on call.
 
 ---
 

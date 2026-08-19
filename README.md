@@ -4,14 +4,22 @@ A LangGraph agent team that turns "I have just arrived, what do I do?" into an
 ordered plan with prerequisites, and refuses to answer the questions that need a
 human.
 
-**Status: M1 and M3 built.** The plan graph engine runs with no model involved.
-The safety layer, the crisis screen, the labelled eval corpus and the CI gate
-exist. **M3's recall target is not met**, and finding that out is the most
-useful thing this project has produced so far: see
-[ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md). M2, M4, M5 and M6
-are not started. Start with [`HANDOFF.md`](HANDOFF.md), and see
-[`docs/12-changes-from-design.md`](docs/12-changes-from-design.md) for what
-building M1 proved wrong about the design.
+**Status: M1 to M6 built. 409 tests, mypy strict, four import contracts.** A
+question goes in through the CLI or the API, the safety layers classify it, a
+determination pauses the graph for a named caseworker, and the answer comes back
+with dated citations or with a refusal that names somebody who can help.
+
+**Two of the design's headline safety claims turned out to be unprovable as
+written, and finding that out is the most useful thing this project has
+produced.** The topology test could not have proved what it claimed
+([ADR-0007](docs/adr/ADR-0007-topology-proof-method.md)), and the deterministic
+crisis screen scored 0.167 on held-out data against a gate of 0.99
+([ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md)). Both were fixed
+in the design rather than in the test.
+
+Start with [`HANDOFF.md`](HANDOFF.md), and see
+[`docs/12-changes-from-design.md`](docs/12-changes-from-design.md) for the
+seventeen things building this proved wrong about the design.
 
 Standalone project. Nothing else needs to exist for it to run.
 
@@ -68,8 +76,19 @@ refuse to assess it, and still be useful.
 Python 3.12 and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-uv sync --all-groups
+uv sync --all-groups --all-extras
+uv run python scripts/demo.py
+```
+
+That is the whole system in one run: a plan, a cited answer, an entitlement
+question pausing for a caseworker, the caseworker's answer coming back
+attributed, a six-week diff, and the corpus staleness check. No server, no
+network, no key.
+
+```bash
 uv run wayfinder --today 2026-08-18 plan examples/amara-week-one.yaml
+uv run wayfinder ask "how do I apply for a PPS number"
+uv run wayfinder serve
 ```
 
 The date is an input rather than a clock read, so the same situation always
@@ -91,6 +110,44 @@ The comparison against a model needs a key and costs about fifty API calls:
 uv sync --extra llm
 ANTHROPIC_API_KEY=... uv run wayfinder-compare --model claude-opus-5
 ```
+
+`ask` and `serve` both exit 2 without `ANTHROPIC_API_KEY`, because the crisis
+screen they would otherwise run with catches one crisis turn in six. Pass
+`--no-model-screen` to accept that; it prints the measured number on stderr
+every time.
+
+Or in Docker, where there is no opt-out at all:
+
+```bash
+ANTHROPIC_API_KEY=... docker compose up
+```
+
+## The API
+
+`uv run wayfinder serve`, then `http://127.0.0.1:8000/docs`.
+
+| | |
+|---|---|
+| `POST /v1/threads` | Start a thread with a situation |
+| `POST /v1/threads/{id}/turn` | Ask something. Answers, refuses, or pauses |
+| `GET /v1/threads/{id}/plan` | What can start now, what is waiting, what is unknown |
+| `DELETE /v1/threads/{id}` | Forget it. NG5, and it is expected to be used |
+| `GET /v1/queue` | Everything waiting on a caseworker, with the context to answer it |
+| `POST /v1/queue/{id}/respond` | A named person's answer, relayed rather than restated |
+| `GET /v1/corpus/health` | **503** once a source has aged out of retrieval |
+
+Two of those are the point. The queue is the endpoint the design optimises for,
+because Clare the caseworker is the user whose time this project is actually
+trying to save. And corpus health returns 503 rather than a green page with a
+list of rotting sources on it, because staleness is the failure this system is
+most likely to have while still looking fine, and an alarm nobody reads is not
+an alarm.
+
+The queue is read from the checkpointer, not from process memory, so it survives
+a redeploy with paused threads intact. There is a test that builds the app twice
+over one file to prove it.
+
+---
 
 ## The number that matters
 
@@ -116,13 +173,21 @@ successes. The gate is unmet for a better reason than before, and the fix is a
 bigger corpus written by somebody other than its author. See
 [ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md).
 
-**What exists so far.** The plan engine, the corpus loader, a ten-task seed
-corpus for Ireland and a CLI. No model is involved anywhere, which is the part
-worth defending: the ordering is derived from structure, so it is the same every
-time and it can be asserted exactly.
+**What exists.** The plan engine, a twenty-task Irish corpus across eight
+verified sources, BM25 retrieval, the three-layer safety classifier, the crisis
+screen and its directory, the compiled LangGraph with a durable SQLite
+checkpointer, the human handoff, composition with a readability target, a CLI
+and a FastAPI surface with a caseworker queue.
 
-**What does not exist yet.** The safety classifier, the crisis path, the
-LangGraph assembly, the human handoff, retrieval and composition. M2 to M6.
+**What no model touches.** The ordering, every safety layer below the model
+screen, and the crisis response. The ordering is derived from structure, so it
+is the same every time and it can be asserted exactly. Four import-linter
+contracts prove the purity rather than asserting it.
+
+**What is unfinished** is listed at the end of [`HANDOFF.md`](HANDOFF.md). The
+short version: the crisis eval corpus is 12 held-out items where certifying the
+gate needs 299, and the Habitual Residence Condition itself is still not in the
+corpus because the source pages return 403.
 
 ---
 
@@ -201,7 +266,7 @@ Each is enforced structurally and each has a test. See
 | [09 Test and eval plan](docs/09-test-and-eval-plan.md) | Corpus, gates, topology tests |
 | [10 Risk and ethics](docs/10-risk-and-ethics.md) | Who can be harmed, and what stops it |
 | [11 Interview pitch](docs/11-interview-pitch.md) | Pitch, demo, likely questions |
-| [12 Changes from the design](docs/12-changes-from-design.md) | What M1 proved wrong |
+| [12 Changes from the design](docs/12-changes-from-design.md) | The seventeen things building it proved wrong |
 | [ADRs](docs/adr/) | Eight decision records |
 
 ---

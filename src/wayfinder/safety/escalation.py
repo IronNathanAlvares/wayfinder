@@ -120,9 +120,9 @@ def full_screen(
 
 
 DEGRADED_NOTICE = """\
-One part of my safety check is not running at the moment, so I may miss
-something urgent that I would normally catch. If any of this applies to you
-right now, please use these numbers rather than waiting for me:
+Part of my safety check is not working right now. That means I might miss
+something urgent. If any of this is happening to you, call one of these numbers.
+Do not wait for me.
 
   Emergency services              999 or 112, 24 hours
   Samaritans                      Freephone 116 123, 24 hours

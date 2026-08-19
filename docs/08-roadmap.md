@@ -11,6 +11,27 @@ guardrails are an afterthought, and it always shows.
 
 ---
 
+## Status, 19 August 2026
+
+| M | State | Note |
+|---|---|---|
+| M1 Plan graph engine | Built | The design was wrong in six places. `12-changes-from-design.md` |
+| M2 Corpus and retrieval | Built | 20 tasks, 8 verified sources, 17 artefacts. The design's ~40 tasks are not there |
+| M3 Safety layer | Built, gate unmet | The deterministic screen scores 0.167 held out. ADR-0008 |
+| M4 LangGraph assembly | Built | The topology proof had to be replaced. ADR-0007 |
+| M5 Composition | Built | Extractive, not generative. The `Composer` protocol takes a model and nothing implements it |
+| M6 Surfaces | Built | API, caseworker queue, corpus alarm, CLI, Docker, demo script |
+
+Two of the design's headline safety claims turned out to be unprovable as
+written, and both were fixed in the design rather than in the test. That is the
+most useful thing this project produced.
+
+The sequencing rule held with one deliberate exception: M3 was built before M2,
+because the safety layer needs no corpus and the corpus benefits from knowing
+what the classifier will ask of it.
+
+---
+
 ## M1. Plan graph engine (~22 h)
 
 Pure Python, no LLM, no framework. The part that survives everything else.

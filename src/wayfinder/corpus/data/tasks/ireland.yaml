@@ -9,8 +9,9 @@
   title: Make your international protection application
   domain: status
   why: >
-    Almost everything else follows from this application, including the
-    certificate you will be asked for and the letter other services want to see.
+    Almost everything else starts here. This is how you get the certificate
+    people will ask you for. It is also how you get the letter other services
+    want to see.
   produces:
     - document:temporary_residence_certificate
     - document:asylum_application_letter
@@ -23,8 +24,8 @@
   title: Apply for your PPS number
   domain: status
   why: >
-    You can ask for this at the same time as your protection application, and
-    almost everything in the welfare system needs it.
+    Ask for this when you make your protection application. Almost everything in
+    the welfare system needs it.
   requires:
     - ref: document:asylum_application_letter
       note: >
@@ -45,12 +46,11 @@
   title: Ask IPAS for accommodation and get on the waiting list
   domain: accommodation
   why: >
-    IPAS works from a waiting list and contacts people by email, so being on the
-    list with contact details they can reach is the part you control.
+    IPAS works from a waiting list. They contact people by email. Being on that
+    list, with an email they can reach, is the part you control.
   applies_when:
-    not:
-      field: accommodation
-      eq: ipas
+    holds: status:ipas_accommodation
+    is: false
   requires:
     - ref: document:asylum_application_letter
       note: Write to IPAS with your full name and Person ID.
@@ -65,12 +65,10 @@
   title: Take up the accommodation you are offered
   domain: accommodation
   why: >
-    When an offer comes it comes by email, which is why checking email daily
-    matters more than it sounds.
-  applies_when:
-    not:
-      field: accommodation
-      eq: ipas
+    An offer comes by email. That is why checking your email every day matters
+    more than it sounds.
+  produces:
+    - status:ipas_accommodation
   requires:
     - determination:ipas_accommodation_offer
   blocking_severity: critical
@@ -82,8 +80,8 @@
   title: Register for An Post Address Point
   domain: accommodation
   why: >
-    It is free, you can do it today, and it gives you somewhere post can reach
-    you while you have no fixed address.
+    It is free and you can do it today. It gives you an address where post can
+    reach you.
   applies_when:
     field: accommodation
     in: [homeless, staying_with_others, emergency]
@@ -98,8 +96,8 @@
   title: Ask the Community Welfare Service for a statement
   domain: accommodation
   why: >
-    A social welfare statement can be used as proof of address, which is a
-    second route if the post office option does not suit you.
+    A social welfare statement works as proof of address. It is a second way in
+    if the post office option does not suit you.
   requires:
     - document:ppsn
   produces:
@@ -113,8 +111,8 @@
   title: Ask about the weekly payment
   domain: income
   why: >
-    This is the payment most people are asking about, and it needs your PPS
-    number and something showing you are on the IPAS list.
+    This is the payment most people ask about. You need your PPS number for it.
+    You also need something that shows you are on the IPAS list.
   requires:
     - document:ppsn
     - ref: document:asylum_application_letter
@@ -128,8 +126,8 @@
   title: Ask about an Additional Needs Payment
   domain: income
   why: >
-    This is the route for one-off essential costs, and it is separate from the
-    weekly payment, so being turned down for one does not settle the other.
+    This is for one-off costs you cannot avoid. It is separate from the weekly
+    payment. Being turned down for one does not settle the other.
   requires:
     - document:ppsn
   blocking_severity: important
@@ -141,8 +139,8 @@
   title: Apply for a medical card
   domain: health
   why: >
-    A medical card is what gets you seen without paying, and applying early
-    matters because it is not immediate.
+    A medical card means you are seen without paying. Apply early. It does not
+    come through straight away.
   requires:
     - document:ppsn
   produces:
@@ -156,8 +154,8 @@
   title: Apply for permission to work
   domain: status
   why: >
-    There is a waiting period from the day you applied, and the application is
-    made online once it has passed.
+    There is a waiting period. It starts the day you applied. Once it has passed,
+    you apply online.
   requires:
     - document:temporary_residence_certificate
     - any_of: [elapsed:protection_application_date]
@@ -172,3 +170,181 @@
   where:
     - source_id: nasc.asylum_ireland
       span: Work Rights
+
+# --- income ----------------------------------------------------------------
+
+- id: child_benefit.apply
+  title: Apply for child benefit
+  domain: income
+  why: >
+    This is the payment most families ask about. Part of the decision is not
+    yours to settle.
+  applies_when:
+    child_aged:
+      min: 0
+      max: 17
+  requires:
+    - document:ppsn
+    - ref: determination:habitual_residence
+      note: >
+        Assessed by the Department of Social Protection on five factors. Not all
+        of them have to be satisfied. Nothing in this system decides it.
+  blocking_severity: critical
+  where:
+    - source_id: crosscare.habitual_residence
+      span: Five Assessment Factors
+
+- id: appeal.social_welfare
+  title: Appeal a social welfare refusal
+  domain: income
+  why: >
+    A refusal is not the end of it. But the clock starts on the date of the
+    letter, so do not leave it.
+  requires:
+    - document:ppsn
+  typical_wait: P90D
+  blocking_severity: important
+  where:
+    - source_id: crosscare.habitual_residence
+      span: Refusal Process
+
+# --- health ----------------------------------------------------------------
+
+- id: gp.register
+  title: Register with a GP
+  domain: health
+  why: >
+    A GP is the way in to the rest of the health system. You do not have to wait
+    for the medical card to register.
+  blocking_severity: important
+  where:
+    - source_id: hse.medical_cards
+      span: About the medical card
+
+- id: medical_card.renew
+  title: Renew your medical card before it runs out
+  domain: health
+  why: >
+    A card that runs out takes weeks to get back. In that time you pay for your
+    own prescriptions.
+  requires:
+    - document:medical_card
+  blocking_severity: routine
+  where:
+    - source_id: hse.medical_cards
+      span: Managing your medical card
+
+# --- education -------------------------------------------------------------
+
+- id: school.enrol_primary
+  title: Enrol your child in primary school
+  domain: education
+  why: >
+    Schools fill up from the spring. A place is easier to get before the year
+    starts.
+  applies_when:
+    child_aged:
+      min: 4
+      max: 12
+  requires:
+    - any_of: [document:birth_certificate, document:temporary_residence_certificate]
+      note: Schools ask for proof of the child's age and identity.
+  produces:
+    - document:school_place
+  typical_wait: P30D
+  blocking_severity: critical
+  where:
+    - source_id: irc.education
+      span: Key Findings
+
+- id: school.enrol_secondary
+  title: Enrol your child in secondary school
+  domain: education
+  why: >
+    Secondary schools give out places earlier than primary schools do. Often a
+    full year ahead.
+  applies_when:
+    child_aged:
+      min: 12
+      max: 18
+  requires:
+    - any_of: [document:birth_certificate, document:temporary_residence_certificate]
+  produces:
+    - document:school_place
+  typical_wait: P30D
+  blocking_severity: critical
+  where:
+    - source_id: irc.education
+      span: Key Findings
+
+- id: english.classes
+  title: Ask an ETB about free English classes
+  domain: education
+  why: >
+    Ask the guidance counsellor at your local Education and Training Board. They
+    know what is running near you. The classes are free.
+  produces:
+    - status:english_class_place
+  typical_wait: P21D
+  blocking_severity: important
+  where:
+    - source_id: irc.education
+      span: Support Resources
+
+- id: further_education.enrol
+  title: Ask about a further education course
+  domain: education
+  why: >
+    A level 5 course is the usual way in to higher education here. What you pay
+    depends on whether you have permission to work.
+  requires:
+    - ref: status:labour_market_access
+      note: >
+        Not a hard requirement for a place. It changes the fee substantially,
+        which is why it is worth sorting first if you can.
+  produces:
+    - status:further_education_place
+  typical_wait: P60D
+  blocking_severity: routine
+  where:
+    - source_id: irc.education
+      span: Further Education (Levels 5-6)
+
+- id: thirdlevel.support
+  title: Ask about support for third level study
+  domain: education
+  why: >
+    Most funding has a waiting period. It is worth knowing the exact date it
+    opens to you.
+  requires:
+    - any_of: [elapsed:protection_application_date]
+      after: P1095D
+      note: >
+        Nasc describes a three year wait before financial supports for further
+        or third level education are available to people in the asylum process.
+  blocking_severity: routine
+  where:
+    - source_id: nasc.education
+      span: Third Level Education Barriers
+    - source_id: irc.education
+      span: Funding Options
+
+# --- banking ---------------------------------------------------------------
+
+- id: bank.basic_account
+  title: Open a basic bank account
+  domain: banking
+  why: >
+    Payments cannot reach you without an account. A basic account is made for
+    people who cannot meet the usual requirements.
+  requires:
+    - document:ppsn
+    - any_of: [document:proof_of_address, document:temporary_residence_certificate]
+      note: One of these is usually accepted as proof of who you are and where you live.
+  produces:
+    - status:basic_bank_account
+  typical_wait: P7D
+  blocking_severity: important
+  where:
+    - source_id: irc.homeless
+      span: Securing Proof of Address

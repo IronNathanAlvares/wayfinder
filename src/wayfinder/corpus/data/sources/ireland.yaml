@@ -38,3 +38,35 @@
   last_verified: 2026-08-18
   verified_by: NA
   language: en
+
+- id: crosscare.habitual_residence
+  title: Habitual Residence Condition
+  publisher: Crosscare Migrant Project
+  url: https://diasporasupport.ie/returning-to-ireland/habitual-residence-condition/
+  last_verified: 2026-08-18
+  verified_by: NA
+  language: en
+
+- id: nasc.education
+  title: "Know Your Rights: education"
+  publisher: Nasc, the Migrant and Refugee Rights Centre
+  url: https://nascireland.org/know-your-rights/education
+  last_verified: 2026-08-18
+  verified_by: NA
+  language: en
+
+- id: irc.education
+  title: Education information for international protection applicants
+  publisher: Irish Refugee Council
+  url: https://www.irishrefugeecouncil.ie/get-help/information-hub/education/
+  last_verified: 2026-08-18
+  verified_by: NA
+  language: en
+
+- id: hse.medical_cards
+  title: Medical cards
+  publisher: Health Service Executive
+  url: https://www2.hse.ie/services/medical-cards/
+  last_verified: 2026-08-18
+  verified_by: NA
+  language: en

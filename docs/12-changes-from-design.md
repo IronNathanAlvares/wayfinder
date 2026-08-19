@@ -284,6 +284,81 @@ real decision rather than a default: this runs before everything else on every
 turn, so its latency is part of its safety story, and the deterministic lexicon
 has already run by the time it is consulted.
 
+## 14. A caseworker's answer was followed by a refusal
+
+Found by running the server, not by reading the code, and not caught by any of
+the six handoff tests that existed at the time.
+
+Determinations route from classification straight to the handoff, so retrieval
+never runs on that path. Composition then called the composer anyway, and with
+no spans to work from the composer returns the no-source refusal. What a person
+actually received was a named caseworker's answer, followed immediately by "I
+do not have a source I trust for that". That reads as the system doubting the
+person it had just named, and it contradicts the sentence directly above it.
+
+Composition now returns the attributed answer alone when a determination is
+present. `test_a_caseworkers_answer_is_not_followed_by_a_refusal` covers it.
+
+The wider lesson is about where the tests were pointed. Every handoff test
+asserted on state and on substrings that were present. None of them read the
+whole answer as a person would, so a contradiction sitting in plain sight
+survived six of them.
+
+## 15. The checkpoint deserialises an explicit list of types, not anything
+
+LangGraph 1.2.11 deserialises whatever it finds in a checkpoint, warns once per
+type, and says the permissive behaviour will be blocked in a future version.
+Its own serialiser docstring notes that an attacker who can write to the
+checkpoint database may be able to trigger code execution.
+
+That is a live concern in this design rather than a theoretical one. The
+database holds paused threads containing what somebody said about their own
+situation, and by design it outlives the process by days.
+
+`checkpoint.py` now passes an explicit `allowed_msgpack_modules` naming the
+thirty-four types this system actually checkpoints, listed as classes so a
+rename is an import error. A blocked type does not raise: it comes back as a
+plain dict, so the tests assert on attribute access after a real reopen rather
+than on the absence of a warning.
+
+## 16. Both entry points refuse to start with the deterministic screen alone
+
+`wayfinder ask` and `wayfinder serve` stop with exit code 2 unless
+`ANTHROPIC_API_KEY` is set or `--no-model-screen` is passed. Opting out prints
+the measured recall on stderr on every run.
+
+ADR-0008 measured that configuration catching 2 of 12 held-out crisis turns.
+Starting quietly with it would ship a safety claim the measurements do not
+support, and a warning in a README is not a control. Exit code 2 rather than 1
+because this is a configuration problem, not a verdict.
+
+A concrete case from a live run on 19 August 2026. The turn "my landlord says we
+have to be out by tomorrow and i have my daughter with me" is routed to the
+crisis directory with the model screen on, and classified as a determination and
+queued for a caseworker with it off. Same input, same code, one line of
+configuration: a phone number now, or a wait of days.
+
+## 17. The caseworker queue emptied on restart
+
+The first version of `/v1/queue` listed threads out of an in-memory dictionary,
+so after a redeploy it returned an empty list while the graph was still paused
+on disk with somebody's question in it. The endpoint's own docstring claimed the
+opposite: that it reads paused threads out of the checkpointer so the queue
+cannot drift out of step with what the graph is waiting on.
+
+Nothing caught it. Every API test built the app once and used it, which is the
+shape that makes an in-memory cache look like durable storage. The durability
+tests that did kill a process were all one layer down, against the graph.
+
+The queue now enumerates threads from the checkpointer, and situations read
+through to the checkpoint as well, so a person coming back after a redeploy is
+not asked to describe their circumstances again.
+`test_the_queue_survives_a_restart` builds the app twice over one file.
+
+The pattern is the same one as change 14: the durability of the pause was
+tested thoroughly at the graph, and not at all at the surface a caseworker
+actually uses.
+
 ---
 
 ## Scope decisions

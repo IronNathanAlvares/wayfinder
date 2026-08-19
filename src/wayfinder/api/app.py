@@ -1,0 +1,293 @@
+"""The API. Threads, turns, the caseworker queue, and the corpus alarm.
+
+Two design points carry over from everything below.
+
+**The queue is the product.** PDD section 4 says Clare the caseworker is the user
+this design optimises for, and her endpoint is the one that has to be good: an
+escalation arrives with the question, a short situation summary, and the sources
+already found, so she can answer in two minutes rather than twenty.
+
+**`/v1/corpus/health` is not an afterthought.** Source staleness is the most
+likely silent failure in this system, and an endpoint that returns 200 with a
+list of rotting sources nobody reads is not an alarm. It returns 503 when a
+source has aged out, so a monitor notices without anybody remembering to look.
+
+Personal data is not persisted beyond the thread's checkpoint (PDD NG5). There is
+a delete endpoint, and it is expected to be used.
+"""
+
+from __future__ import annotations
+
+from datetime import date
+from pathlib import Path
+from typing import Any
+
+from fastapi import FastAPI, HTTPException, Response
+from pydantic import BaseModel, ConfigDict, Field
+
+from wayfinder.corpus.loader import load_corpus
+from wayfinder.corpus.models import StalenessBand, staleness
+from wayfinder.graph.build import compile_graph
+from wayfinder.graph.checkpoint import thread
+from wayfinder.graph.nodes import Deps
+from wayfinder.graph.state import HumanDetermination, WayfinderState
+from wayfinder.plan.situation import Situation
+from wayfinder.retrieval.index import Index
+from wayfinder.safety.escalation import ModelScreen
+from wayfinder.safety.loader import load_directory, load_lexicon
+
+DATA = Path(__file__).resolve().parent.parent / "corpus" / "data"
+
+
+class StartThread(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    thread_id: str = Field(min_length=1)
+    situation: Situation = Field(default_factory=Situation)
+
+
+class SendTurn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    question: str = Field(min_length=1)
+
+
+class Respond(BaseModel):
+    """A caseworker's answer. The name is required, as everywhere else."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    answer: str = Field(min_length=1)
+    answered_by: str = Field(min_length=1)
+    source: str = ""
+
+
+def create_app(
+    *,
+    deps: Deps | None = None,
+    checkpointer: Any = None,
+    today: date | None = None,
+    model_screen: ModelScreen | None = None,
+) -> FastAPI:
+    """Build the app.
+
+    Dependencies are injected so a test drives the real routes with a stub
+    composer and a fixed date. An app that can only be exercised against a live
+    model is an app whose routes are untested.
+    """
+    on = today or date.today()  # noqa: DTZ011 - a calendar date is the right unit
+
+    corpus = load_corpus(DATA, today=on)
+    resolved = deps or Deps(
+        lexicon=load_lexicon(today=on),
+        directory=load_directory(today=on),
+        index=Index(corpus, today=on),
+        tasks=corpus.tasks,
+        # ADR-0008: the lexicon alone caught 2 of 12 held-out crisis turns.
+        # Serving without this is serving a screen known not to work.
+        model_screen=model_screen,
+    )
+    graph = compile_graph(resolved, checkpointer=checkpointer)
+
+    app = FastAPI(
+        title="Wayfinder",
+        description=(
+            "An ordered plan with prerequisites, and a refusal to answer the "
+            "questions that need a human."
+        ),
+    )
+    # Situations for threads that have not taken a turn yet. Once a turn runs,
+    # the checkpoint is the record and this map is only a cache: see
+    # `_situation_for`, which reads through to the checkpointer so a restart
+    # does not silently reset somebody to knowing nothing about themselves.
+    situations: dict[str, Situation] = {}
+
+    def _known_thread_ids() -> list[str]:
+        """Every thread the checkpointer has heard of, plus any started here.
+
+        Read from the checkpointer rather than from `situations`, because
+        `situations` is empty after a restart and a queue that empties on
+        redeploy is the one failure this design cannot have.
+        """
+        seen = set(situations)
+        if checkpointer is not None:
+            seen.update(
+                tup.config["configurable"]["thread_id"]
+                for tup in checkpointer.list(None)
+            )
+        return sorted(seen)
+
+    def _situation_for(thread_id: str) -> Situation | None:
+        if thread_id in situations:
+            return situations[thread_id]
+        if checkpointer is None:
+            return None
+        values = graph.get_state(thread(thread_id)).values
+        stored = values.get("situation") if values else None
+        return stored if isinstance(stored, Situation) else None
+
+    @app.post("/v1/threads", status_code=201)
+    def start_thread(body: StartThread) -> dict[str, str]:
+        situations[body.thread_id] = body.situation
+        return {"thread_id": body.thread_id}
+
+    @app.post("/v1/threads/{thread_id}/turn")
+    def send_turn(thread_id: str, body: SendTurn) -> dict[str, Any]:
+        state = WayfinderState(
+            current_question=body.question,
+            situation=_situation_for(thread_id) or Situation(),
+            today=on,
+        )
+        result = graph.invoke(state, thread(thread_id))
+
+        if "__interrupt__" in result:
+            payload = result["__interrupt__"][0].value
+            return {
+                "status": "waiting_for_a_person",
+                "why": (
+                    "That question needs a decision about your own situation. "
+                    "It has gone to a caseworker."
+                ),
+                "escalation": payload,
+            }
+
+        answer = result.get("answer")
+        return {
+            "status": "answered",
+            "question_class": result["question_class"].value,
+            "text": answer.text if answer else "",
+            "citations": [
+                {
+                    "source": s.source_title,
+                    "url": s.url,
+                    "last_verified": s.last_verified.isoformat(),
+                    "staleness": s.staleness.value,
+                }
+                for s in (answer.citations if answer else ())
+            ],
+        }
+
+    @app.get("/v1/threads/{thread_id}/plan")
+    def get_plan(thread_id: str) -> dict[str, Any]:
+        from wayfinder.plan.builder import build_plan
+
+        situation = _situation_for(thread_id)
+        if situation is None:
+            raise HTTPException(status_code=404, detail="no such thread")
+
+        plan = build_plan(corpus.tasks, situation, today=on)
+        titles = {i.task.id: i.task.title for i in plan.items}
+        return {
+            "start_now": [
+                {"id": t, "title": titles[t], "gates_days": plan.gated_wait[t].days}
+                for t in plan.frontier_order
+            ],
+            "not_yet": [
+                {
+                    "id": i.task.id,
+                    "title": i.task.title,
+                    "next_actions": [
+                        titles.get(a, a) for a in plan.next_actions.get(i.task.id, ())
+                    ],
+                    # Named, never assessed. This is the field the whole design
+                    # is built around.
+                    "decided_by_somebody_else": list(i.determination_refs),
+                }
+                for i in plan.blocked
+            ],
+            "questions_for_you": sorted(plan.open_questions),
+        }
+
+    @app.delete("/v1/threads/{thread_id}", status_code=204)
+    def delete_thread(thread_id: str) -> Response:
+        """NG5. The less it retains, the less there is to leak."""
+        situations.pop(thread_id, None)
+        return Response(status_code=204)
+
+    # --- the caseworker's endpoints -----------------------------------------
+
+    @app.get("/v1/queue")
+    def queue() -> dict[str, Any]:
+        """Everything waiting on a person, with the context to answer it.
+
+        Reads paused threads out of the checkpointer rather than a second store,
+        so the queue cannot drift out of step with what the graph is actually
+        waiting on.
+        """
+        if checkpointer is None:
+            raise HTTPException(
+                status_code=503,
+                detail="no checkpointer configured, so there is no durable queue",
+            )
+        items = []
+        for thread_id in _known_thread_ids():
+            snapshot = graph.get_state(thread(thread_id))
+            if snapshot.next != ("handoff",):
+                continue
+            pending = snapshot.tasks[0].interrupts if snapshot.tasks else ()
+            items.append(
+                {
+                    "thread_id": thread_id,
+                    "asked": snapshot.values.get("current_question", ""),
+                    "context": pending[0].value if pending else {},
+                }
+            )
+        return {"waiting": items}
+
+    @app.post("/v1/queue/{thread_id}/respond")
+    def respond(thread_id: str, body: Respond) -> dict[str, Any]:
+        """Resume the graph with the caseworker's answer, attributed to them."""
+        from langgraph.types import Command
+
+        if checkpointer is None:
+            raise HTTPException(status_code=503, detail="no checkpointer configured")
+
+        determination = HumanDetermination(
+            answer=body.answer,
+            answered_by=body.answered_by,
+            answered_on=on,
+            source=body.source,
+        )
+        result = graph.invoke(
+            Command(resume=determination.model_dump(mode="json")), thread(thread_id)
+        )
+        answer = result.get("answer")
+        return {
+            "status": "answered",
+            "attributed_to": answer.attributed_to if answer else "",
+            "text": answer.text if answer else "",
+        }
+
+    # --- operations ----------------------------------------------------------
+
+    @app.get("/v1/corpus/health")
+    def corpus_health(response: Response) -> dict[str, Any]:
+        """Staleness as an alarm rather than a report.
+
+        Returns 503 once a source has aged out of retrieval, because a page
+        nobody has checked in a year is how this system starts being quietly
+        wrong while looking fine.
+        """
+        bands: dict[str, list[dict[str, str]]] = {b.value: [] for b in StalenessBand}
+        for source in corpus.sources.values():
+            band = staleness(source, today=on)
+            bands[band.value].append(
+                {
+                    "id": source.id,
+                    "publisher": source.publisher,
+                    "last_verified": source.last_verified.isoformat(),
+                }
+            )
+
+        excluded = bands[StalenessBand.EXCLUDED.value]
+        if excluded:
+            response.status_code = 503
+        return {
+            "checked_on": on.isoformat(),
+            "tasks": len(corpus.tasks),
+            "sources": len(corpus.sources),
+            "bands": bands,
+            "alarm": bool(excluded),
+        }
+
+    return app

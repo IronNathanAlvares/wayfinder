@@ -34,3 +34,47 @@
     Modelled as a determination rather than a task because nobody applying can
     make it happen. IPAS contacts people from a waiting list. Naming who decides
     it, and refusing to guess when or whether it will come, is the point.
+
+- ref: determination:habitual_residence
+  title: the habitual residence condition
+  decided_by: the Department of Social Protection
+  note: >
+    The canonical determination in this domain, and the reason this system
+    exists in the shape it does. Five factors, no requirement to satisfy all of
+    them, and the question is where a person's main centre of interest lies.
+    That is a judgement made by a named authority. It is not ours, and it is not
+    something a plan engine can compute.
+
+- ref: determination:protection_outcome
+  title: a grant of international protection
+  decided_by: the International Protection Office
+  note: >
+    Modelled as a determination rather than a status somebody holds, because
+    nothing the person does makes it happen and nothing this system knows
+    predicts it.
+
+- ref: status:ipas_accommodation
+  title: a place in IPAS accommodation
+  note: >
+    Being housed is a thing you hold, not a task that stops applying. Modelling
+    it this way is what makes taking up an offer read as done rather than as
+    "no longer on your list", which for somebody who has just been housed reads
+    as something being taken away.
+
+- ref: document:school_place
+  title: an offer of a school place
+
+- ref: document:proof_of_income
+  title: proof of your income
+
+- ref: document:birth_certificate
+  title: a birth certificate for your child
+
+- ref: status:basic_bank_account
+  title: a basic bank account
+
+- ref: status:english_class_place
+  title: a place in an English class
+
+- ref: status:further_education_place
+  title: a place on a further education course

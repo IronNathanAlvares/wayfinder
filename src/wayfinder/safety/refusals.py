@@ -52,21 +52,23 @@ I can tell you how to register with a GP and how to apply for a medical card.
 """
 
 OUT_OF_SCOPE_PREDICTION: Final = """\
-Nobody can tell you how a decision will go, including me, and somebody who says
-they can is guessing with your life.
+Nobody can tell you how a decision will go. Not me, and not anyone else. If
+somebody tells you they can, they are guessing.
 
-What I can do is describe how the process works, what the decision is based on,
-and who can help you prepare. A caseworker or a solicitor can look at your
-actual papers, which is the only way anybody gets closer to an answer than that.
+Here is what I can do. I can tell you how the process works. I can tell you what
+the decision is based on. I can tell you who can help you get ready.
+
+A caseworker or a solicitor can look at your real papers. That is the only way
+to get closer to an answer than this.
 """
 
 NO_SOURCE: Final = """\
-I do not have a reliable source for that, so I am not going to answer it from
-memory.
+I do not have a source I trust for that. So I will not answer it from memory.
 
-The Irish Refugee Council helpline is 01 764 5854, Monday, Tuesday and Thursday
-from 10am to 1pm, and they answer questions like this. Citizens Information also
-covers most processes in plain language.
+The Irish Refugee Council helpline is 01 764 5854. It is open on Monday, Tuesday
+and Thursday, from 10am to 1pm. They answer questions like this one.
+
+Citizens Information also covers most of these processes in plain words.
 """
 
 _BY_CLASS: Final[dict[QuestionClass, str]] = {

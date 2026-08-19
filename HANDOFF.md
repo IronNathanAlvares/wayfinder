@@ -7,28 +7,40 @@ are easy to get wrong.
 
 ## Where things stand
 
-**M1 is built.** The plan graph engine, the corpus loader and a CLI demo exist,
-pass ruff, mypy strict, import-linter and the test suite at 97 percent
-coverage, and run in CI.
+**M1 to M6 are built.** 409 tests, mypy strict across 74 source files, four
+import-linter contracts kept, 93 percent coverage, green in CI. A question goes
+in through `wayfinder ask` or the API, gets classified, and comes back either as
+an answer with dated citations, as a phone number, as a refusal that names
+somebody else, or as a paused thread waiting on a caseworker.
 
-Building it proved several things in the design wrong. Every change is recorded
-in [`docs/12-changes-from-design.md`](docs/12-changes-from-design.md), and the
-most important one has its own record in
-[`docs/adr/ADR-0007`](docs/adr/ADR-0007-topology-proof-method.md): the graph
-topology test as originally sketched would have passed while the property it
-names was false.
+Run `uv run python scripts/demo.py` to see all of it in about four seconds.
 
-**M3, the safety layer, is built and its recall target is still not met.** The
-deterministic crisis screen measures 0.167 recall on held-out data against a
-gate of 0.99, which invalidates PDD assumption A2. Adding a model screen behind
-the lexicon takes that to 1.000 across four runs with no false positives, but
-twelve held-out crisis items can only demonstrate 0.78 at 95 percent confidence
-and the gate needs 299. Both results are in
-[ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md). Do not start M4
-until the crisis corpus is large enough to certify the gate, and get it written
-by somebody other than whoever wrote the rules.
+**What is built and what merely exists.** Everything listed above is called by
+something. There is no module in `src/` that nothing reaches: the import graph is
+checked by import-linter and the coverage floor is 90 percent. The two pieces
+that exist without being exercised in normal use are `wayfinder.safety.llm`,
+which needs a key, and `wayfinder.eval.compare`, which is a measurement tool
+rather than a runtime path. Both have offline tests against injected fakes.
 
-M2, M4, M5 and M6 are not started.
+**Two of the design's headline safety claims were unprovable as written.**
+
+[ADR-0007](docs/adr/ADR-0007-topology-proof-method.md): the topology test as
+sketched would have gone green while the property it names was false, because
+`path.taken_when(...)` does not exist and a compiled graph exports every
+conditional-edge target as an edge. The replacement is a declarative route table
+plus a deletion test that removes the human node and proves generation becomes
+unreachable.
+
+[ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md): the deterministic
+crisis screen measures 0.167 recall on held-out data against a gate of 0.99,
+which invalidates PDD assumption A2. A model screen behind the lexicon takes it
+to 1.000 with no false positives, but twelve held-out items can only demonstrate
+0.78 at 95 percent confidence and certifying the gate needs 299 consecutive
+successes. **The gate is still unmet**, now because the corpus is too small
+rather than because the approach cannot reach it.
+
+All sixteen changes are in
+[`docs/12-changes-from-design.md`](docs/12-changes-from-design.md).
 
 ```
 02-wayfinder/
@@ -47,7 +59,20 @@ M2, M4, M5 and M6 are not started.
    ├─ 09-test-and-eval-plan.md
    ├─ 10-risk-and-ethics.md
    ├─ 11-interview-pitch.md
-   └─ adr/ADR-0001..0006
+   ├─ 12-changes-from-design.md   what building it proved wrong
+   └─ adr/ADR-0001..0008
+```
+
+```
+src/wayfinder/
+├─ plan/        the DAG engine. No I/O, no framework, no model
+├─ safety/      three ordered layers, plus the optional model screen
+├─ corpus/      loading, validation, staleness banding
+├─ retrieval/   BM25 with a two-term match floor
+├─ graph/       the compiled LangGraph, the routes table, the checkpointer
+├─ eval/        the CI gate and the model comparison runner
+├─ api/         threads, turns, the caseworker queue, the corpus alarm
+└─ cli/         plan, diff, corpus, ask, serve
 ```
 
 **Minimum before writing code:** `02-PDD.md`, `04-HLD.md`,
@@ -91,8 +116,8 @@ afterwards produces a system whose guardrails are an afterthought, and it shows.
 | M5 | Composition, verification, staleness, plain language | 18 |
 | M6 | API, caseworker queue, deployment | 14 |
 
-M1 is a good first session: pure, testable, no API keys, and it produces a real
-demo on its own.
+All six are built. The estimates held roughly, with M3 running long because
+measuring the crisis screen honestly meant discovering it did not work.
 
 ---
 
@@ -153,6 +178,59 @@ Carried over because they worked on the previous project.
 - Prose style: plain and direct. No em dashes.
 - Every refusal names an alternative. A refusal that leaves somebody stuck is a
   failure, not a safety win.
+
+---
+
+## What is left
+
+Ordered by how much it matters, not by how hard it is.
+
+**1. The crisis eval corpus is two orders of magnitude too small.** Twelve
+held-out crisis items. Certifying the 0.99 gate at 95 percent confidence needs
+299 consecutive successes. This is the one thing blocking the project's central
+safety claim, and it cannot be fixed by writing more code. It needs several
+hundred crisis and near-crisis turns written by somebody who did not write the
+lexicon or the prompt, ideally somebody who has taken these calls. Until then
+the honest statement is "no failures observed in twelve".
+
+**2. The Habitual Residence Condition is still not in the corpus.**
+citizensinformation.ie and gov.ie return 403 to the fetcher, so the canonical
+determination in this whole design, the one the README leads with, is the one
+thing the corpus cannot cite. Everything around it works. The gap is content,
+and under ADR-0005 an unverified source cannot be cited, so it stays absent
+until somebody obtains the pages a way that produces a real `last_verified`.
+
+**3. The corpus is 20 tasks against a design that describes about 40.** Four
+domains are covered properly. Employment, and the transition after a protection
+decision, are not covered at all.
+
+**4. Nothing generates prose.** Composition works, is verified, and is measured
+for reading age, but `default_composer` is extractive: it states what the
+retrieved spans say and attaches their sources. The `Composer` protocol exists
+and takes a model implementation, and nothing implements it. That is a
+deliberate ordering, since the citation rule is satisfied structurally by
+extraction and a model composer has to be evaluated against it rather than
+trusted, but it does mean the system does not yet write.
+
+**5. The API has no authentication.** `/v1/queue` exposes what people have said
+about their own circumstances to anybody who can reach the port. Fine for a
+local demo, disqualifying for anything else, and
+[`10-risk-and-ethics.md`](docs/10-risk-and-ethics.md) section 5 is the honest
+statement of that gap.
+
+**6. SQLite only.** `sqlite_checkpointer` is the one implementation. Postgres is
+what the design assumes for deployment and the swap is small, but it is not
+done, and the deserialisation allowlist in `checkpoint.py` would need to carry
+over with it.
+
+**7. The Docker image works and has never been deployed anywhere.** It builds,
+it refuses to start without a crisis screen, and a real turn goes through it;
+CI does all three on every push. Nothing has run it for longer than a smoke
+test, so nothing is known about it under any real load or over any real time.
+
+**8. No load or latency measurement.** The crisis screen's timeout is 8 seconds
+and its latency is part of its safety story, and nobody has measured what a real
+turn costs end to end.
 
 ---
 

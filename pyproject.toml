@@ -10,6 +10,11 @@ authors = [{ name = "Nathan Alvares" }]
 dependencies = [
     "pydantic>=2.11",
     "pyyaml>=6.0",
+    # ADR-0001. Durable execution is what makes a multi-day handoff real, and
+    # `plan/` and the deterministic parts of `safety/` are kept free of it by
+    # contract so the pieces carrying the value survive a framework migration.
+    "langgraph>=1.2",
+    "langgraph-checkpoint-sqlite>=3.0",
 ]
 
 [project.scripts]
@@ -22,6 +27,9 @@ wayfinder-compare = "wayfinder.eval.compare:main"
 # Only the model crisis screen needs it, and ADR-0008 explains why that screen
 # exists at all.
 llm = ["anthropic>=0.122"]
+# The HTTP surface. Everything below it runs without a web framework, which is
+# what lets the plan engine and the safety layers be used as a library.
+api = ["fastapi>=0.115", "uvicorn>=0.32"]
 
 [dependency-groups]
 dev = [
@@ -32,6 +40,8 @@ dev = [
     "mypy>=1.14",
     "import-linter>=2.1",
     "types-pyyaml>=6.0",
+    # Starlette's TestClient drives the app in-process. It wants httpx2 now.
+    "httpx2>=0.28",
 ]
 
 [build-system]
@@ -77,6 +87,9 @@ ignore = [
 "src/wayfinder/cli/*" = ["T20"]
 "src/wayfinder/eval/gate.py" = ["T20"]
 "src/wayfinder/eval/compare.py" = ["T20"]
+# The demo exists to print. It is also the one place allowed to reach into the
+# graph the way a caller would, so it imports what it needs where it needs it.
+"scripts/demo.py" = ["T20"]
 # Curly quotes and dashes are the subject matter here, not a typo. Normalisation
 # exists precisely because they arrive from phone keyboards constantly.
 "src/wayfinder/safety/normalise.py" = ["RUF003"]
@@ -111,6 +124,12 @@ enable_error_code = [
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+# LangGraph ships no stubs. The graph package is the boundary where that is
+# accepted; nothing below it imports the framework at all.
+module = ["langgraph.*"]
+ignore_missing_imports = true
 
 # ---------------------------------------------------------------------------
 
@@ -212,9 +231,15 @@ forbidden_modules = [
 [[tool.importlinter.contracts]]
 name = "layers"
 type = "layers"
+# The CLI sits above the API because `wayfinder serve` starts it. Everything
+# below `wayfinder.graph` runs with no web framework imported at all, which is
+# what keeps the plan engine and the safety layers usable as a library.
 layers = [
     "wayfinder.cli",
+    "wayfinder.api",
     "wayfinder.eval",
+    "wayfinder.graph",
+    "wayfinder.retrieval",
     "wayfinder.corpus",
     "wayfinder.safety",
     "wayfinder.plan",

@@ -68,3 +68,39 @@ jobs:
           uv build --out-dir dist
           WHEEL=$(ls dist/*.whl)
           uv run --isolated --no-project --with "$WHEEL" wayfinder --today 2026-08-18 corpus check
+
+  # A Dockerfile that has only ever been read is not a Dockerfile that works.
+  # This builds it and runs a real turn through the container, including the
+  # refusal to start without a crisis screen, which is the behaviour the image
+  # exists to enforce.
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build the image
+        run: docker build -t wayfinder:ci .
+
+      - name: It refuses to start without a working crisis screen
+        run: |
+          if docker run --rm wayfinder:ci; then
+            echo "the container started with the deterministic screen alone" >&2
+            exit 1
+          fi
+
+      - name: A turn goes through the container
+        run: |
+          docker run --rm -d --name wf -p 8000:8000 wayfinder:ci \
+            wayfinder --today 2026-08-18 serve --host 0.0.0.0 \
+            --no-model-screen --db /data/ci.sqlite
+          for _ in $(seq 30); do
+            curl -sf http://127.0.0.1:8000/v1/corpus/health >/dev/null && break
+            sleep 1
+          done
+          curl -sf -X POST http://127.0.0.1:8000/v1/threads \
+            -H 'content-type: application/json' -d '{"thread_id":"ci"}'
+          curl -sf -X POST http://127.0.0.1:8000/v1/threads/ci/turn \
+            -H 'content-type: application/json' \
+            -d '{"question":"am I entitled to a medical card"}' \
+            | grep -q waiting_for_a_person
+          docker rm -f wf

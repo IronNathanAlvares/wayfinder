@@ -1,4 +1,9 @@
-"""The M1 demo surface. A situation goes in, an ordered plan comes out.
+"""The command line. A situation goes in, an ordered plan comes out.
+
+`ask` runs one whole turn through the graph and `serve` starts the API. Both
+refuse to run with the deterministic crisis screen alone unless told to in so
+many words, because ADR-0008 measured that configuration catching two crisis
+turns out of twelve.
 
 Exit codes follow the project convention: 0 pass, 1 a verdict of fail, 2 could
 not evaluate. Collapsing 1 and 2 would let a broken check read as a passing one,
@@ -9,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import date
 from pathlib import Path
@@ -30,6 +36,14 @@ EXIT_FAIL = 1
 EXIT_CANNOT_EVALUATE = 2
 
 DEFAULT_CORPUS = Path(__file__).resolve().parent.parent / "corpus" / "data"
+
+
+class CannotEvaluateError(Exception):
+    """Not a failed check. A check that could not be run at all.
+
+    Kept distinct so exit code 2 never gets collapsed into exit code 1, which
+    would let a configuration problem read as a verdict.
+    """
 
 
 def _load_situation(path: Path) -> Situation:
@@ -146,6 +160,103 @@ def _cmd_corpus_health(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+# --- turns and serving -------------------------------------------------------
+
+
+def _crisis_screen(args: argparse.Namespace) -> object | None:
+    """The model screen, or a refusal to start without one.
+
+    ADR-0008 is the reason this is a hard stop rather than a warning. The
+    deterministic lexicon caught 2 of 12 held-out crisis turns. Starting
+    silently with it alone would ship a safety claim the measurements do not
+    support, so the way to do it is to say so on the command line.
+    """
+    if args.no_model_screen:
+        print(
+            "Starting with the deterministic crisis screen only. ADR-0008 "
+            "measured that at 0.167 recall on held-out data.",
+            file=sys.stderr,
+        )
+        return None
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        msg = (
+            "ANTHROPIC_API_KEY is not set, so the model-backed crisis screen "
+            "cannot start. Set it, or pass --no-model-screen to run with the "
+            "deterministic screen alone and accept what ADR-0008 measured."
+        )
+        raise CannotEvaluateError(msg)
+    from wayfinder.safety.llm import AnthropicCrisisScreen
+
+    return AnthropicCrisisScreen()
+
+
+def _cmd_ask(args: argparse.Namespace) -> int:
+    """One whole turn, printed the way a person would read it."""
+    from wayfinder.graph.build import compile_graph
+    from wayfinder.graph.nodes import Deps
+    from wayfinder.graph.state import WayfinderState
+    from wayfinder.retrieval.index import Index
+    from wayfinder.safety.loader import load_directory, load_lexicon
+
+    screen = _crisis_screen(args)
+    corpus = load_corpus(args.corpus, today=args.today)
+    situation = _load_situation(args.situation) if args.situation else Situation()
+    graph = compile_graph(
+        Deps(
+            lexicon=load_lexicon(today=args.today),
+            directory=load_directory(today=args.today),
+            index=Index(corpus, today=args.today),
+            tasks=corpus.tasks,
+            model_screen=screen,  # type: ignore[arg-type]
+        )
+    )
+    result = dict(
+        graph.invoke(
+            WayfinderState(
+                current_question=args.question, situation=situation, today=args.today
+            )
+        )
+    )
+
+    if "__interrupt__" in result:
+        payload = result["__interrupt__"][0].value
+        print("This one needs a person, so it has gone to a caseworker.")
+        print()
+        print(json.dumps(payload, indent=2, default=str))
+        return EXIT_OK
+
+    answer = result.get("answer")
+    print(answer.text if answer else "")
+    for span in answer.citations if answer else ():
+        print(f"  {span.source_title}, checked {span.last_verified}")
+        print(f"  {span.url}")
+    return EXIT_OK
+
+
+def _cmd_serve(args: argparse.Namespace) -> int:
+    """Start the API with a durable checkpointer.
+
+    The checkpointer is a file rather than memory because the pause this system
+    is built around lasts days. An in-memory one would lose every caseworker
+    queue item on restart, which is the one failure this design cannot have.
+    """
+    import uvicorn
+
+    from wayfinder.api import create_app
+    from wayfinder.graph.checkpoint import sqlite_checkpointer
+
+    screen = _crisis_screen(args)
+    with sqlite_checkpointer(args.db) as saver:
+        app = create_app(
+            checkpointer=saver,
+            today=args.today,
+            model_screen=screen,  # type: ignore[arg-type]
+        )
+        print(f"Threads and queue state persist in {args.db}.")
+        uvicorn.run(app, host=args.host, port=args.port, log_level="info")
+    return EXIT_OK
+
+
 def _date(value: str) -> date:
     return date.fromisoformat(value)
 
@@ -184,7 +295,36 @@ def build_parser() -> argparse.ArgumentParser:
     health_cmd = corpus_sub.add_parser("health", help="staleness report")
     health_cmd.set_defaults(func=_cmd_corpus_health)
 
+    ask_cmd = subparsers.add_parser("ask", help="run one turn through the graph")
+    ask_cmd.add_argument("question")
+    ask_cmd.add_argument("--situation", type=Path, default=None)
+    _add_screen_flag(ask_cmd)
+    ask_cmd.set_defaults(func=_cmd_ask)
+
+    serve_cmd = subparsers.add_parser("serve", help="start the API")
+    serve_cmd.add_argument("--host", default="127.0.0.1")
+    serve_cmd.add_argument("--port", type=int, default=8000)
+    serve_cmd.add_argument(
+        "--db",
+        type=Path,
+        default=Path("wayfinder.sqlite"),
+        help="where paused threads live. A file, so the queue survives restarts",
+    )
+    _add_screen_flag(serve_cmd)
+    serve_cmd.set_defaults(func=_cmd_serve)
+
     return parser
+
+
+def _add_screen_flag(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--no-model-screen",
+        action="store_true",
+        help=(
+            "run with the deterministic crisis lexicon alone. ADR-0008 measured "
+            "that at 0.167 recall against a design gate of 0.99"
+        ),
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -197,6 +337,9 @@ def main(argv: list[str] | None = None) -> int:
     except PlanError as exc:
         print(f"plan engine refused to build: {exc}", file=sys.stderr)
         return EXIT_FAIL
+    except CannotEvaluateError as exc:
+        print(f"could not evaluate: {exc}", file=sys.stderr)
+        return EXIT_CANNOT_EVALUATE
     except (OSError, yaml.YAMLError) as exc:
         print(f"could not evaluate: {exc}", file=sys.stderr)
         return EXIT_CANNOT_EVALUATE

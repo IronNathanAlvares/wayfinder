@@ -156,6 +156,33 @@ the `effort` parameter with a 400, so the adapter omits it rather than sending a
 default. A screen that only works on one model tier is not a screen you can fall
 back with.
 
+### What the difference looks like on one turn
+
+Run live on 19 August 2026 through `wayfinder ask`, same input, same code, one
+line of configuration between them:
+
+> my landlord says we have to be out by tomorrow and i have my daughter with me
+
+With the model screen on, that is a crisis. The response is the Dublin Region
+Homeless Executive freephone, its opening hours, and the emergency number for
+when the freephone is closed.
+
+With the deterministic lexicon alone, it is classified as a determination and
+queued for a caseworker. The response is that a person will look at it, which is
+true and useless: an eviction landing tomorrow does not wait for Thursday.
+
+That is what 0.167 recall means in practice, and it is why both entry points
+refuse to start without the model screen unless told to in so many words.
+
+## Consequence for the entry points
+
+`wayfinder ask` and `wayfinder serve` exit 2 unless `ANTHROPIC_API_KEY` is set
+or `--no-model-screen` is passed, and opting out prints the measured recall on
+stderr on every run. The Docker image carries no opt-out at all.
+
+A finding this size cannot be left as a paragraph in a document. If the measured
+configuration is unsafe, the unsafe configuration should be awkward to reach.
+
 ## Rejected alternatives
 
 | Option | Why not |

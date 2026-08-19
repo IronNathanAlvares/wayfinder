@@ -1,0 +1,27 @@
+services:
+  wayfinder:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # Required. The container refuses to start without it, because the
+      # deterministic crisis screen alone caught 2 of 12 held-out crisis turns
+      # (ADR-0008) and starting quietly with that would be a safety claim the
+      # measurements do not support.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?set this, or run with --no-model-screen and read ADR-0008 first}
+    volumes:
+      # The caseworker queue. Paused threads outlive the container by design.
+      - wayfinder-threads:/data
+    healthcheck:
+      # Staleness, not liveness. A process that is up and serving a corpus
+      # nobody has checked in a year is the failure this system is most likely
+      # to have while looking fine, so that is what the healthcheck asks about.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/v1/corpus/health')"]
+      interval: 1h
+      timeout: 10s
+      retries: 2
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  wayfinder-threads:
