@@ -46,7 +46,13 @@ from wayfinder.eval.corpus import (
     load_corpus,
 )
 from wayfinder.eval.gate import EXIT_CANNOT_EVALUATE, EXIT_OK
-from wayfinder.eval.metrics import Score, lower_bound, score, trials_needed
+from wayfinder.eval.metrics import (
+    Score,
+    lower_bound,
+    mcnemar,
+    score,
+    trials_needed,
+)
 from wayfinder.safety.escalation import full_screen
 from wayfinder.safety.loader import SafetyDataError, load_lexicon
 from wayfinder.safety.models import CrisisLexicon
@@ -200,6 +206,40 @@ def _render(results: Sequence[Measurement], total_others: int, split: str) -> st
         f"confidence takes {needed}",
         f"consecutive successes, and this run measured {measured}.",
     ]
+    # Paired, because they saw the same items. Comparing totals throws the
+    # pairing away, and a rewrite whose gains and losses cancel reads as no
+    # change unless somebody looks underneath the average.
+    if len(results) > 1:
+        lines += ["", "Head to head, on the turns where they disagreed:"]
+        for i, left in enumerate(results):
+            for right in results[i + 1 :]:
+                lines.append(
+                    "  "
+                    + mcnemar(
+                        [m.text for m in left.misses],
+                        [m.text for m in right.misses],
+                        left=left.label,
+                        right=right.label,
+                    ).render()
+                )
+        categories = sorted(
+            {c for r in results for c in r.by_category if r.by_category}
+        )
+        for category in categories:
+            rows = []
+            for i, left in enumerate(results):
+                for right in results[i + 1 :]:
+                    paired = mcnemar(
+                        [m.text for m in left.misses if m.category == category],
+                        [m.text for m in right.misses if m.category == category],
+                        left=left.label,
+                        right=right.label,
+                    )
+                    if paired.significant:
+                        rows.append(f"    {paired.render()}")
+            if rows:
+                lines += [f"  {category}:", *rows]
+
     for r in results:
         if not r.by_category:
             continue

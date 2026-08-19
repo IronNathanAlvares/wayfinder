@@ -273,17 +273,37 @@ def test_the_deterministic_build_needs_no_model_at_all(
 # so a later edit that quietly drops one is visible.
 
 
-def test_both_prompts_are_kept_so_a_change_can_be_measured() -> None:
-    """A prompt rewrite with no way to run the old one is an assertion, not a
-    result."""
-    from wayfinder.safety.llm import PROMPTS, SYSTEM_PROMPT_V1, SYSTEM_PROMPT_V2
+def test_every_prompt_is_kept_so_a_change_can_be_measured() -> None:
+    """A prompt rewrite with no way to run the ones it replaced is an
+    assertion, not a result. Every version stays runnable."""
+    from wayfinder.safety.llm import (
+        PROMPTS,
+        SYSTEM_PROMPT_V1,
+        SYSTEM_PROMPT_V2,
+        SYSTEM_PROMPT_V3,
+    )
 
-    assert PROMPTS == {"v1": SYSTEM_PROMPT_V1, "v2": SYSTEM_PROMPT_V2}
-    # Through the mapping rather than the constants. Both are `Final` string
-    # literals, so comparing them directly is decided at type-check time and
-    # mypy is right to say the assertion carries no information.
-    assert PROMPTS["v1"] != PROMPTS["v2"]
-    assert SYSTEM_PROMPT is SYSTEM_PROMPT_V2, "the shipped prompt is not V2"
+    assert PROMPTS == {
+        "v1": SYSTEM_PROMPT_V1,
+        "v2": SYSTEM_PROMPT_V2,
+        "v3": SYSTEM_PROMPT_V3,
+    }
+    # Through the mapping rather than the constants. The literals are `Final`,
+    # so comparing them directly is decided at type-check time and mypy is
+    # right to say such an assertion carries no information.
+    assert len({PROMPTS[name] for name in PROMPTS}) == len(PROMPTS)
+
+
+def test_the_shipped_prompt_is_one_that_has_been_measured() -> None:
+    """The rule this module states in a comment, enforced.
+
+    V3 exists and is expected to be better, and shipping it before it has been
+    run would be the same mistake as quoting 1.000 over twelve items.
+    """
+    from wayfinder.safety.llm import PROMPTS
+
+    assert SYSTEM_PROMPT in PROMPTS.values()
+    assert SYSTEM_PROMPT is PROMPTS["v2"], "the shipped prompt changed"
 
 
 @pytest.mark.parametrize(
@@ -334,3 +354,73 @@ def test_the_prompt_still_covers_the_other_five_categories() -> None:
     lowered = SYSTEM_PROMPT.lower()
     for term in ("trafficking", "under 18", "medication", "removal", "locked out"):
         assert term in lowered
+
+
+# --- the V3 revert ----------------------------------------------------------
+
+
+def test_v3_differs_from_v2_by_exactly_one_line() -> None:
+    """The whole claim about V3 is that it changes one thing.
+
+    A revert that quietly altered a second line would make the measurement
+    uninterpretable: the difference could not be attributed, and an A/B whose
+    arms differ in two ways answers neither question.
+    """
+    from wayfinder.safety.llm import SYSTEM_PROMPT_V2, SYSTEM_PROMPT_V3
+
+    before = SYSTEM_PROMPT_V2.splitlines()
+    after = SYSTEM_PROMPT_V3.splitlines()
+    assert len(before) == len(after)
+    differing = [(a, b) for a, b in zip(before, after, strict=True) if a != b]
+    assert len(differing) == 1
+    assert differing[0][0].startswith("- detention:")
+
+
+def test_v3_restores_the_wording_v1_had() -> None:
+    """It is a revert, not a new idea. The phrase it puts back is V1's, and V1
+    scored 0.963 on detention where V2 scored 0.778."""
+    from wayfinder.safety.llm import (
+        SYSTEM_PROMPT_V1,
+        SYSTEM_PROMPT_V2,
+        SYSTEM_PROMPT_V3,
+    )
+
+    phrase = "facing imminent removal from the country"
+    assert phrase in SYSTEM_PROMPT_V1
+    assert phrase not in SYSTEM_PROMPT_V2
+    assert phrase in SYSTEM_PROMPT_V3
+
+
+def test_v3_keeps_what_v2_usefully_added() -> None:
+    """Reverting the whole line would throw away two cases V2 got right."""
+    from wayfinder.safety.llm import SYSTEM_PROMPT_V1, SYSTEM_PROMPT_V3
+
+    for added in ("held at a port", "officers present"):
+        assert added in SYSTEM_PROMPT_V3
+        assert added not in SYSTEM_PROMPT_V1
+
+
+def test_v3_keeps_the_whole_self_harm_section() -> None:
+    """The part of V2 that worked. Self-harm went from 0.481 to 0.685 and none
+    of that is being given back to fix detention."""
+    from wayfinder.safety.llm import SYSTEM_PROMPT_V3
+
+    lowered = SYSTEM_PROMPT_V3.lower()
+    for sign in ("giving away possessions", "sudden calm", "previous attempt"):
+        assert sign in lowered
+
+
+def test_a_prompt_that_stopped_differing_fails_at_import() -> None:
+    """If somebody edits V2's detention line, the substitution that builds V3
+    stops matching and the two become the same string. That would produce an
+    A/B with the same prompt in both arms and a difference of zero that reads
+    as a result."""
+    from wayfinder.safety import llm
+
+    original = llm.SYSTEM_PROMPT_V3
+    try:
+        llm.SYSTEM_PROMPT_V3 = llm.SYSTEM_PROMPT_V2  # type: ignore[misc]
+        with pytest.raises(RuntimeError, match="identical to V2"):
+            llm._one_line_changed()
+    finally:
+        llm.SYSTEM_PROMPT_V3 = original  # type: ignore[misc]

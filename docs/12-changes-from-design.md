@@ -442,6 +442,54 @@ before any model had run against the file, which is the only point at which
 fixing them is honest, and the sweep is now
 `test_the_two_crisis_splits_share_no_near_duplicates`.
 
+## 20. A single recall number reported two significant effects as noise
+
+The detention regression in change 19 had an obvious suspect. V1 said detention
+covers "facing imminent removal from the country"; V2 replaced that with "a
+removal with a named date close enough to matter", swapping a fact for a
+judgement. V3 reverts exactly that phrase and nothing else, derived from V2 by
+substitution so the one-line claim is enforced by the code rather than by
+reading.
+
+**It changed nothing.** Detention 0.778 to 0.759, one turn in fifty-four, paired
+p = 1.0000. Ten of the twelve turns V2 missed were missed by V3 too. The
+hypothesis was wrong and it stays in the record, because a wrong diagnosis that
+gets edited out is how the next person repeats it.
+
+The more useful finding is about the eval rather than the prompt. Compared by
+their totals, no two of the three prompts are distinguishable: 0.844, 0.841,
+0.831, with paired p values of 1.0000, 0.6271 and 0.5078. Underneath:
+
+| Comparison | Category | p |
+|---|---|---|
+| V1 vs V2 | Self-harm, 11 turns gained, 0 lost | 0.0010 |
+| V1 vs V2 | Detention, 11 turns lost, 1 gained | 0.0063 |
+
+Two real effects, close to equal and opposite, summed to nothing by the single
+number the gate is written in terms of. A project that reported only the
+headline would have concluded the rewrite did not work, when in fact it did two
+substantial things at once.
+
+So `eval/metrics.py` grew `mcnemar` and `wayfinder-compare` prints the paired
+comparison per category. Comparing two configurations by their totals also
+throws away the pairing: they saw the same items, so the question is not whether
+two rates differ but whether one wins more of the disagreements than chance.
+
+Two smaller things fell out of it.
+
+**The shipped prompt is chosen by a stated judgement, not by the average.** V1
+has the better total and better detention, V2 has self-harm higher by two
+fifths, the totals are indistinguishable and neither meets the gate. V2 ships
+because a missed removal still gets a relevant answer and is likely to be asked
+again, and "this is the last message I will send" is not. ADR-0008 records that
+as a judgement so it can be revisited rather than inherited.
+
+**A prompt is not shipped before it is measured.** V3 existed for the length of
+one run before anything pointed at it, and a test asserts the shipped prompt is
+one that appears in the measured set. Shipping V3 on the strength of expecting
+it to be better would have been the same mistake as quoting 1.000 over twelve
+items.
+
 ---
 
 ## Scope decisions

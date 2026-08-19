@@ -222,11 +222,62 @@ should not treat them as though they are.
 Reply only with the structured object.
 """
 
+# V3. V2 with one line changed and nothing else.
+#
+# Measured on `crisis-holdout-v2`, V2 took self-harm from 0.481 to 0.685 and
+# dropped detention from 0.963 to 0.778, netting to nothing. The suspect is this
+# line, identified from the diff rather than from which turns were missed: V1
+# said detention covers "facing imminent removal from the country" and V2
+# replaced that with "a removal with a named date close enough to matter", which
+# swaps a fact for a judgement the model then makes conservatively.
+#
+# So this is a revert of that phrase and not a new idea. It keeps the two cases
+# V2 usefully added, "held at a port" and "officers present". The only thing it
+# takes from the V2 measurement is one per-category number, which is the least
+# that can be learned from a run and still act on it.
+#
+# Derived from V2 by substitution rather than written out again, so "exactly one
+# line differs" is a property of the code instead of something a reader has to
+# check by eye. `_ONE_LINE_CHANGED` fails at import if the substitution ever
+# stops matching, which is what would otherwise happen silently the first time
+# somebody edits V2.
+_V2_DETENTION: Final = (
+    "- detention: detained, arrested, held at a port, officers present, or a "
+    "removal with a named date close enough to matter"
+)
+_V3_DETENTION: Final = (
+    "- detention: detained, arrested, held at a port, officers present, or "
+    "facing imminent removal from the country"
+)
+SYSTEM_PROMPT_V3: Final = SYSTEM_PROMPT_V2.replace(_V2_DETENTION, _V3_DETENTION)
+
+
+def _one_line_changed() -> None:
+    """A prompt that silently equals the one it was meant to differ from would
+    produce an A/B where both arms are the same prompt, and a difference of
+    zero that reads as a finding."""
+    if SYSTEM_PROMPT_V3 == SYSTEM_PROMPT_V2:
+        msg = (
+            "SYSTEM_PROMPT_V3 is identical to V2: the detention line it means to "
+            "replace no longer matches. Update _V2_DETENTION to the current "
+            "wording rather than leaving the two prompts the same."
+        )
+        raise RuntimeError(msg)
+
+
+_one_line_changed()
+
 # What the adapter uses. Swapping this is a deliberate act with a measurement
-# attached, not a default somebody drifts into.
+# attached, not a default somebody drifts into. V3 exists but has not been
+# measured yet, and shipping it on the strength of an expectation would be the
+# same mistake as quoting 1.000 over twelve items.
 SYSTEM_PROMPT: Final = SYSTEM_PROMPT_V2
 
-PROMPTS: Final[dict[str, str]] = {"v1": SYSTEM_PROMPT_V1, "v2": SYSTEM_PROMPT_V2}
+PROMPTS: Final[dict[str, str]] = {
+    "v1": SYSTEM_PROMPT_V1,
+    "v2": SYSTEM_PROMPT_V2,
+    "v3": SYSTEM_PROMPT_V3,
+}
 
 
 class AnthropicCrisisScreen:

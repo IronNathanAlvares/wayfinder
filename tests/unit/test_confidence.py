@@ -206,3 +206,68 @@ def test_the_two_crisis_splits_share_no_near_duplicates() -> None:
         for ratio in [difflib.SequenceMatcher(None, b, near[0]).ratio()]
     ]
     assert not too_close, too_close[:5]
+
+
+# --- comparing two configurations --------------------------------------------
+
+
+def test_a_configuration_compared_with_itself_shows_no_difference() -> None:
+    from wayfinder.eval.metrics import mcnemar
+
+    missed = ["a", "b", "c"]
+    result = mcnemar(missed, missed)
+    assert result.only_left_missed == 0
+    assert result.p_value == 1.0
+    assert not result.significant
+
+
+def test_only_the_disagreements_count() -> None:
+    """Turns both configurations got right, and turns both got wrong, say
+    nothing about which is better. Including them would dilute the test toward
+    finding no difference."""
+    from wayfinder.eval.metrics import mcnemar
+
+    shared = [str(i) for i in range(500)]
+    lean = mcnemar([*shared, "x"], [*shared])
+    bare = mcnemar(["x"], [])
+    assert lean.p_value == bare.p_value
+
+
+def test_a_lopsided_disagreement_is_significant() -> None:
+    """Eleven turns caught by one and not the other, one the other way. This is
+    the detention regression, and it has to come out significant or the test is
+    not doing its job."""
+    from wayfinder.eval.metrics import mcnemar
+
+    result = mcnemar([f"lost{i}" for i in range(11)], ["gained"])
+    assert result.p_value == pytest.approx(0.0063, abs=0.0005)
+    assert result.significant
+
+
+def test_an_even_disagreement_is_not_significant() -> None:
+    """Seventeen against eighteen. The overall V1-to-V2 comparison, which looks
+    like a change and is not."""
+    from wayfinder.eval.metrics import mcnemar
+
+    result = mcnemar([f"a{i}" for i in range(17)], [f"b{i}" for i in range(18)])
+    assert result.p_value == 1.0
+    assert not result.significant
+
+
+def test_the_test_is_two_sided() -> None:
+    """Which configuration is better is not known in advance, and a one-sided
+    test would report a regression as significant only in the direction
+    somebody hoped for."""
+    from wayfinder.eval.metrics import mcnemar
+
+    forwards = mcnemar([f"x{i}" for i in range(11)], ["y"])
+    backwards = mcnemar(["y"], [f"x{i}" for i in range(11)])
+    assert forwards.p_value == backwards.p_value
+
+
+def test_a_difference_of_one_turn_proves_nothing() -> None:
+    """Detention 0.778 against 0.759 is one turn in fifty-four, which is what
+    the failed revert amounted to."""
+    from wayfinder.eval.metrics import mcnemar
+
+    assert not mcnemar(["a"], []).significant

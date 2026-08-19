@@ -19,7 +19,7 @@ in the design rather than in the test.
 
 Start with [`HANDOFF.md`](HANDOFF.md), and see
 [`docs/12-changes-from-design.md`](docs/12-changes-from-design.md) for the
-nineteen things building this proved wrong about the design.
+twenty things building this proved wrong about the design.
 
 Standalone project. Nothing else needs to exist for it to run.
 
@@ -195,18 +195,27 @@ So the prompt was rewritten from the clinical taxonomy, and validated on a
 second held-out split written for the purpose, because a prompt written by
 somebody who has seen a split's failures cannot be judged on that split.
 
-| On 500 fresh items | Prompt V1 | Prompt V2 |
-|---|---|---|
-| Self-harm | 0.481 | **0.685** |
-| Detention | **0.963** | 0.778 |
-| Overall | 0.844 | 0.841 |
+| On 500 fresh items | V1 | V2 clinical | V3 revert |
+|---|---|---|---|
+| Self-harm | 0.481 | **0.685** | 0.667 |
+| Detention | **0.963** | 0.778 | 0.759 |
+| Overall | 0.844 | 0.841 | 0.831 |
 
 **It improved the category it was aimed at by a fifth and broke a different one
-by a fifth.** The overall number did not move. That is the honest result of the
-fix, and the reason it is in the README rather than buried: a rewrite that
-trades one category for another looks like progress in every summary that only
-reports an average. What it actually calls for is in
-[ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md).
+by a fifth.** Paired over the same items, both effects are significant
+(p = 0.001 and p = 0.006) and they nearly cancel, so the overall number moved by
+three thousandths and no two prompts are distinguishable on it at all.
+
+That is the reason this is in the README rather than buried. **A single recall
+number reported both of those real effects as noise.** The gate is written as a
+single recall number. `wayfinder-compare` now prints a paired McNemar test per
+category so it cannot happen silently again.
+
+V3 was a one-line revert of the wording suspected of causing the detention
+regression. It changed nothing (p = 1.0), so that diagnosis was wrong, and it is
+kept in the record rather than edited out. The remaining explanation is that the
+prompt gives self-harm twenty-five lines and detention one. What that calls for
+is in [ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md).
 
 **What exists.** The plan engine, a twenty-task Irish corpus across eight
 verified sources, BM25 retrieval, the three-layer safety classifier, the crisis
@@ -301,7 +310,7 @@ Each is enforced structurally and each has a test. See
 | [09 Test and eval plan](docs/09-test-and-eval-plan.md) | Corpus, gates, topology tests |
 | [10 Risk and ethics](docs/10-risk-and-ethics.md) | Who can be harmed, and what stops it |
 | [11 Interview pitch](docs/11-interview-pitch.md) | Pitch, demo, likely questions |
-| [12 Changes from the design](docs/12-changes-from-design.md) | The nineteen things building it proved wrong |
+| [12 Changes from the design](docs/12-changes-from-design.md) | The twenty things building it proved wrong |
 | [ADRs](docs/adr/) | Eight decision records |
 
 ---

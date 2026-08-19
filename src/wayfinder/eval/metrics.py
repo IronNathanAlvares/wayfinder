@@ -12,7 +12,7 @@ could not evaluate, rather than 0 or 1.
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 
 from pydantic import BaseModel, ConfigDict
 
@@ -184,3 +184,73 @@ def trials_needed(target: float, confidence: float = CONFIDENCE) -> int:
         msg = f"a target rate must be strictly between 0 and 1, got {target}"
         raise ValueError(msg)
     return math.ceil(math.log(1.0 - confidence) / math.log(target))
+
+
+# --- comparing two configurations on the same items --------------------------
+#
+# Added after a prompt rewrite that looked like nothing. Overall recall went
+# 0.844 to 0.841, which reads as "no change, move on". Underneath were two
+# significant and opposite effects: self-harm recall up by eleven turns,
+# detention recall down by eleven. A single number hid both.
+#
+# Comparing two configurations by their totals also throws away the pairing.
+# They saw the same items, so the question is not "are these two rates
+# different" but "of the turns they disagreed on, did one win more often than
+# chance". That is McNemar's test, and on counts this small it wants the exact
+# binomial form rather than the chi-square approximation.
+
+
+class PairedResult(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    left: str
+    right: str
+    only_left_missed: int
+    only_right_missed: int
+    p_value: float
+
+    @property
+    def significant(self) -> bool:
+        """At 0.05. A convention, and stated as one rather than as a fact."""
+        return self.p_value < 0.05
+
+    def render(self) -> str:
+        verdict = "significant" if self.significant else "not distinguishable"
+        return (
+            f"{self.left} vs {self.right}: {self.only_left_missed} caught only by "
+            f"{self.right}, {self.only_right_missed} caught only by {self.left}, "
+            f"p={self.p_value:.4f} ({verdict})"
+        )
+
+
+def mcnemar(
+    left_missed: Collection[str],
+    right_missed: Collection[str],
+    *,
+    left: str = "left",
+    right: str = "right",
+) -> PairedResult:
+    """Exact two-sided McNemar over the turns the two configurations disagreed on.
+
+    Items both got right and items both got wrong carry no information about
+    which is better, so they are not in the test. Only the disagreements are.
+    """
+    a, b = set(left_missed), set(right_missed)
+    only_left = len(a - b)
+    only_right = len(b - a)
+
+    n = only_left + only_right
+    if n == 0:
+        p = 1.0
+    else:
+        smaller = min(only_left, only_right)
+        tail = sum(math.comb(n, i) for i in range(smaller + 1)) / 2**n
+        p = min(1.0, 2 * tail)
+
+    return PairedResult(
+        left=left,
+        right=right,
+        only_left_missed=only_left,
+        only_right_missed=only_right,
+        p_value=p,
+    )

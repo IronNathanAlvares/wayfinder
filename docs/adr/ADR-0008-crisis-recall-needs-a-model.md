@@ -345,6 +345,84 @@ and "officers present" was a gain; hedging the removal case was not. Nothing
 here is inferred from which turns were missed, because that would be fitting to
 the split.
 
+### The detention revert. Measured, and the hypothesis was wrong
+
+The one principled change the budget allowed was made: V3 is V2 with V1's
+detention wording restored and nothing else touched. It is derived from V2 by
+substitution so that "exactly one line differs" is a property of the code rather
+than something a reader checks by eye.
+
+**It changed nothing.** Detention recall 0.778 to 0.759, which is one turn out
+of fifty-four, and the paired test puts V2 against V3 at p = 1.0000 on detention
+and p = 0.5078 overall. Ten of the twelve detention turns V2 missed were missed
+by V3 as well.
+
+So the phrase was not the cause. "A removal with a named date close enough to
+matter" is not what lost those eleven turns, and the hypothesis stated in the
+section above is falsified. Recorded rather than quietly replaced, because a
+wrong diagnosis that gets edited out of the record is how the next person
+repeats it.
+
+### The aggregate was hiding two significant effects
+
+Comparing the prompts by their totals says nothing happened. Overall recall runs
+0.844, 0.841, 0.831 across V1, V2 and V3, and paired over the same items no two
+of them are distinguishable: p = 1.0000, 0.6271, 0.5078.
+
+Per category, two of the effects are real and large:
+
+| Comparison | Category | Caught only by the first | Caught only by the second | p |
+|---|---|---|---|---|
+| V1 vs V2 | Self-harm | 0 | 11 | **0.0010** |
+| V1 vs V2 | Detention | 11 | 1 | **0.0063** |
+| V1 vs V3 | Self-harm | 1 | 11 | **0.0063** |
+| V1 vs V3 | Detention | 12 | 1 | **0.0034** |
+| V2 vs V3 | Self-harm | 1 | 0 | 1.0000 |
+| V2 vs V3 | Detention | 3 | 2 | 1.0000 |
+
+The clinical rewrite caught eleven self-harm turns V1 missed and lost none. It
+lost eleven detention turns and gained one. Both are significant, they are close
+to equal and opposite, and the single number the gate is written in terms of
+reports their sum as noise.
+
+That is a finding about the eval and not only about the prompt, so
+`eval/metrics.py` now carries `mcnemar` and `wayfinder-compare` prints the
+paired comparison per category. A rewrite whose gains and losses cancel should
+not be able to read as "no change, move on" again.
+
+### What is actually causing the detention regression
+
+Not the wording, on the evidence above. The remaining explanation is structural:
+V2 gives self-harm about twenty-five lines and detention one, where V1 gave each
+of them one. If the model's attention follows the emphasis in the prompt, the
+category that got expanded gained and the categories that stayed a single line
+lost. Child protection and rough sleeping each drifted down slightly too, which
+is consistent with that and individually not significant.
+
+If that is right, the fix is to bring the other five categories up to the same
+level of detail rather than to cut self-harm back down. That is the next thing
+to try and it is a hypothesis, not a conclusion.
+
+**It cannot be tested on `crisis-holdout-v2`.** That split has now been used
+twice and its per-category numbers are known. A third is required, written to
+the same protocol, before another prompt change means anything.
+
+### Which prompt ships, and why it is a judgement rather than a number
+
+V1 has the best overall recall and the best detention. V2 has self-harm recall
+higher by two fifths. Neither meets the gate and the difference between their
+totals is noise, so the aggregate cannot decide this.
+
+**V2 ships.** The reasoning is about what a miss costs rather than how many
+there are. Somebody facing removal on Friday who is answered procedurally still
+receives relevant information and will very likely ask again. Somebody who
+writes "this is the last message I will send" and is answered with a plan about
+PPS numbers may not. Where the errors are equally likely, the irreversible one
+decides.
+
+That is a judgement, it is recorded here as one, and it should be revisited the
+moment a prompt exists that does not force the trade.
+
 ### What this cost the second split, and what is left
 
 `crisis-holdout-v2` has now been used once. That is not the same as burned: what
@@ -356,10 +434,9 @@ holdout became one.
 So the budget is small and should be stated: one more use, for one principled
 change, and then a third split is required.
 
-The obvious candidate for that one use is a pure revert of the detention
-wording, restoring V1's phrasing while keeping V2's self-harm section and its
-added detention cases. It is a revert rather than an invention, and the only
-information it uses from this run is a single per-category number.
+That use was spent on a pure revert of the detention wording, and the section
+below records what it found: nothing. The split has now been used twice and a
+third is needed before another prompt change can be judged.
 
 Beyond that, unchanged and still the largest item: this corpus, this prompt and
 the lexicon all have the same author, and the fix for that is not a technique.
