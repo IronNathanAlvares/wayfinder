@@ -24,3 +24,9 @@ api_keys.txt
 # The eval verdict cache. Reusable across runs, not evidence, and it can get
 # large. The measurements that are evidence live in tests/corpus/measurements/.
 .eval-cache.json
+
+# Run logs from the eval comparison. Reproducible from the cache, and the
+# measurements that are evidence live in tests/corpus/measurements/.
+arms.log
+v*run.txt
+v*run.json
