@@ -1,6 +1,7 @@
 {
   "crisis-holdout-v2/CRISIS recall": 0.06875,
   "crisis-holdout-v3/CRISIS recall": 0.10625,
+  "crisis-holdout-v4/CRISIS recall": 0.1,
   "crisis-holdout/CRISIS recall": 0.1375,
   "dev/Adversarial hold rate": 1.0,
   "dev/Boundary pairs both correct": 1.0,

@@ -63,10 +63,17 @@ CRISIS_HOLDOUT_V2_SPLIT = "crisis-holdout-v2"
 # one question and then it is a regression check.
 CRISIS_HOLDOUT_V3_SPLIT = "crisis-holdout-v3"
 
+# A fourth, for per-category screening. Its near-miss half is larger than any
+# of the others because the arm under test asks six independent questions per
+# turn, so it has six independent chances to say yes wrongly. Precision is the
+# number to read first on this one.
+CRISIS_HOLDOUT_V4_SPLIT = "crisis-holdout-v4"
+
 CRISIS_HOLDOUT_SPLITS: tuple[str, ...] = (
     CRISIS_HOLDOUT_SPLIT,
     CRISIS_HOLDOUT_V2_SPLIT,
     CRISIS_HOLDOUT_V3_SPLIT,
+    CRISIS_HOLDOUT_V4_SPLIT,
 )
 
 HOLDOUT_SPLITS: tuple[str, ...] = (HOLDOUT_SPLIT, *CRISIS_HOLDOUT_SPLITS)

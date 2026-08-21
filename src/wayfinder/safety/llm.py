@@ -589,8 +589,8 @@ def _default_client(timeout: float) -> Any:
     return anthropic.Anthropic(timeout=timeout, max_retries=1)
 
 
-def _read(response: Any) -> tuple[ModelVerdict, CrisisCategory | None]:
-    """Parse the constrained response.
+def _payload(response: Any) -> dict[str, Any]:
+    """The parsed body, or an exception.
 
     Anything unexpected raises. `full_screen` turns that into a visibly
     degraded screen, which is the honest outcome: we did not screen this turn,
@@ -608,7 +608,7 @@ def _read(response: Any) -> tuple[ModelVerdict, CrisisCategory | None]:
         msg = "the model returned no text block to parse"
         raise ValueError(msg)
 
-    payload = json.loads(text)
+    payload: dict[str, Any] = json.loads(text)
 
     # A missing `crisis` field is a malformed response, not a negative one.
     # Reading absence as False would turn every schema failure into a silent
@@ -616,6 +616,17 @@ def _read(response: Any) -> tuple[ModelVerdict, CrisisCategory | None]:
     if "crisis" not in payload:
         msg = f"the model response has no `crisis` field: {sorted(payload)}"
         raise ValueError(msg)
+    return payload
+
+
+def _read_bool(response: Any) -> bool:
+    """For the per-category screen, where the category is fixed by the call."""
+    return bool(_payload(response)["crisis"])
+
+
+def _read(response: Any) -> tuple[ModelVerdict, CrisisCategory | None]:
+    """Parse the constrained response into a verdict and a category."""
+    payload = _payload(response)
     if not payload["crisis"]:
         return (ModelVerdict.NO_OPINION, None)
 

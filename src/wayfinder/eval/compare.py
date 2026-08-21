@@ -44,7 +44,7 @@ from typing import Any
 
 from wayfinder.eval.cache import CachedScreen
 from wayfinder.eval.corpus import (
-    CRISIS_HOLDOUT_V3_SPLIT,
+    CRISIS_HOLDOUT_V4_SPLIT,
     HOLDOUT_SPLITS,
     EvalError,
     LabelledTurn,
@@ -183,6 +183,11 @@ GATE = 0.99
 # which one it measured rather than leaving a reader to guess.
 DEFAULT_PROMPT = "v5"
 
+# Not a prompt but an arm, and it belongs on the same flag because that is what
+# makes it comparable: one run, the same items, arms named in the same place.
+# It carries V4's sections one per call rather than six in one.
+PER_CATEGORY = "per-category"
+
 
 def _render(results: Sequence[Measurement], total_others: int, split: str) -> str:
     lines = [
@@ -273,7 +278,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--corpus", type=Path, default=CORPUS)
     parser.add_argument(
         "--split",
-        default=CRISIS_HOLDOUT_V3_SPLIT,
+        default=CRISIS_HOLDOUT_V4_SPLIT,
         choices=HOLDOUT_SPLITS,
         help="which held-out split to measure. Only held-out splits are "
         "offered: measuring the dev splits would report the tuning",
@@ -311,9 +316,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--prompt",
         action="append",
         default=None,
-        help="which system prompt to measure. Repeat to compare prompts on the "
-        "same items in one run, which is the only way to attribute a difference "
-        "to the prompt rather than to the day",
+        help="which arm to measure: a system prompt by name, or "
+        f"'{PER_CATEGORY}' for one call per category. Repeat to compare arms on "
+        "the same items in one run, which is the only way to attribute a "
+        "difference to the arm rather than to the day",
     )
     args = parser.parse_args(argv)
 
@@ -332,6 +338,26 @@ def main(argv: Sequence[str] | None = None) -> int:
     results = [measure(turns, lexicon, label="deterministic only")]
 
     models = args.model or []
+
+    try:
+        from wayfinder.safety.llm import PROMPTS, AnthropicCrisisScreen
+    except RuntimeError as exc:
+        print(f"could not evaluate: {exc}", file=sys.stderr)
+        return EXIT_CANNOT_EVALUATE
+
+    # Before the key check, because a mistyped arm name is wrong whether or not
+    # a key is present, and reporting the missing key first sends somebody to
+    # fix their environment when the problem is their command line.
+    prompts = args.prompt or [DEFAULT_PROMPT]
+    available = [*sorted(PROMPTS), PER_CATEGORY]
+    unknown = [name for name in prompts if name not in available]
+    if unknown:
+        print(
+            f"could not evaluate: no such arm {unknown}. Available: {available}",
+            file=sys.stderr,
+        )
+        return EXIT_CANNOT_EVALUATE
+
     if models and not os.environ.get("ANTHROPIC_API_KEY"):
         print(
             "could not evaluate: ANTHROPIC_API_KEY is not set, so the model "
@@ -342,31 +368,31 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(_render(results, others, args.split))
         return EXIT_CANNOT_EVALUATE
 
-    try:
-        from wayfinder.safety.llm import PROMPTS, AnthropicCrisisScreen
-    except RuntimeError as exc:
-        print(f"could not evaluate: {exc}", file=sys.stderr)
-        return EXIT_CANNOT_EVALUATE
-
-    prompts = args.prompt or [DEFAULT_PROMPT]
-    unknown = [name for name in prompts if name not in PROMPTS]
-    if unknown:
-        print(
-            f"could not evaluate: no such prompt {unknown}. "
-            f"Available: {sorted(PROMPTS)}",
-            file=sys.stderr,
-        )
-        return EXIT_CANNOT_EVALUATE
-
     for model_id in models:
         for prompt_name in prompts:
             try:
-                effort = None if args.effort == "none" else args.effort
-                screen: Any = AnthropicCrisisScreen(
-                    model=model_id,
-                    effort=effort,
-                    system_prompt=PROMPTS[prompt_name],
-                )
+                screen: Any
+                if prompt_name == PER_CATEGORY:
+                    from wayfinder.safety.per_category import (
+                        PROMPTS as CATEGORY_PROMPTS,
+                    )
+                    from wayfinder.safety.per_category import PerCategoryScreen
+
+                    screen = PerCategoryScreen(model=model_id)
+                    # All six, so editing any one of them invalidates the cache.
+                    # Keying on the arm's name would let a changed section read
+                    # last week's verdicts.
+                    cache_key = "".join(
+                        CATEGORY_PROMPTS[c] for c in sorted(CATEGORY_PROMPTS, key=str)
+                    )
+                else:
+                    effort = None if args.effort == "none" else args.effort
+                    screen = AnthropicCrisisScreen(
+                        model=model_id,
+                        effort=effort,
+                        system_prompt=PROMPTS[prompt_name],
+                    )
+                    cache_key = PROMPTS[prompt_name]
             except RuntimeError as exc:
                 print(f"could not evaluate: {exc}", file=sys.stderr)
                 return EXIT_CANNOT_EVALUATE
@@ -374,10 +400,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             cached: CachedScreen | None = None
             if args.cache:
                 cached = CachedScreen(
-                    screen,
-                    path=args.cache,
-                    model=model_id,
-                    prompt=PROMPTS[prompt_name],
+                    screen, path=args.cache, model=model_id, prompt=cache_key
                 )
                 screen = cached
             try:

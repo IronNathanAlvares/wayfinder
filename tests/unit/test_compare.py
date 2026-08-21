@@ -105,7 +105,7 @@ def test_the_baseline_runs_without_a_key(
     # `baseline.json`, which fails a build when it moves; asserting it here as
     # well would mean two places to update and one of them forgotten.
     assert "/320)" in out, "the default run measured the wrong split, or nothing"
-    assert "crisis-holdout-v3" in out
+    assert "crisis-holdout-v4" in out
 
 
 def test_the_default_split_is_the_one_sized_to_certify_the_gate(
@@ -117,7 +117,7 @@ def test_the_default_split_is_the_one_sized_to_certify_the_gate(
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     main(["--corpus", str(CORPUS)])
     out = capsys.readouterr().out
-    assert "crisis-holdout-v3 split" in out
+    assert "crisis-holdout-v4 split" in out
     assert "/320)" in out, "the default split cannot certify the gate"
 
 
@@ -129,6 +129,27 @@ def test_the_smaller_mixed_split_can_still_be_asked_for(
     out = capsys.readouterr().out
     assert "holdout split" in out
     assert "/12)" in out
+
+
+def test_an_unknown_arm_is_could_not_evaluate(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Arms are named on the command line, and a typo that silently measured
+    the default would report one configuration under another's name."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    code = main(["--corpus", str(CORPUS), "--model", "m", "--prompt", "v9"])
+    assert code == EXIT_CANNOT_EVALUATE
+    assert "no such arm" in capsys.readouterr().err
+
+
+def test_per_category_is_offered_as_an_arm_alongside_the_prompts(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """It belongs on the same flag as the prompts, because that is what makes
+    it comparable: one run, the same items, arms named in one place."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    main(["--corpus", str(CORPUS), "--model", "m", "--prompt", "nope"])
+    assert "per-category" in capsys.readouterr().err
 
 
 def test_a_dev_split_cannot_be_measured_by_this_tool(
