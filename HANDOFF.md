@@ -185,8 +185,7 @@ Carried over because they worked on the previous project.
 
 Ordered by how much it matters, not by how hard it is.
 
-**1. The crisis screen misses about one turn in ten, and the misses are
-self-harm.** The held-out crisis corpus is now 320 crisis turns and 156 near
+**1. The crisis screen misses about one turn in eleven, and the gate is 0.99.** The held-out crisis corpus is now 320 crisis turns and 156 near
 misses, which is large enough to certify the 0.99 gate. Measured against it,
 `claude-haiku-4-5` behind the lexicon scores **0.897, lower bound 0.865**. The
 gate is not met.
@@ -202,23 +201,30 @@ a second split, `crisis-holdout-v2`, written for the purpose. **Self-harm recall
 went from 0.481 to 0.685 and detention fell from 0.963 to 0.778, so the overall
 number did not move.** Precision held: 13 false positives against 14.
 
-That budget has been spent. V3 reverted the detention wording and **changed
-nothing** (p = 1.0 against V2), so the wording was not the cause. The remaining
-explanation is structural: the prompt gives self-harm about twenty-five lines
-and detention one, and attention appears to follow the emphasis. If that is
-right the fix is to bring the other five categories up to the same detail rather
-than cut self-harm back.
+That was tested on a third split and **the hypothesis holds.** Giving detention
+its own section took it from 0.796 to 1.000, every one of 54 turns, p = 0.001.
+Expanding the other four as well then cost self-harm, p = 0.016. Attention is a
+budget: each category gains what the others pay for. The aggregate still rises,
+so expansion is a real gain, just not a free one.
 
-**That hypothesis cannot be tested on `crisis-holdout-v2`.** It has been used
-twice and its per-category numbers are known. Write a third split to the same
-protocol first. Do not run a series of A/B rounds against v2, which is how the
-first holdout stopped being one.
+Precision did not move at all: 10 false positives out of 180 in every arm, with
+45 of those near misses written to be detention-adjacent and routine. The screen
+got better rather than louder, which is the only reason the recall numbers mean
+anything.
 
-**V2 ships, and that is a judgement rather than a number.** V1 has the better
-total and the better detention; the totals are not distinguishable and neither
-meets the gate, so the choice is about which miss costs more. Somebody answered
-procedurally about a removal will very likely ask again. Somebody who writes
-"this is the last message I will send" may not.
+**V5 ships**, expanding detention only. It gains detention significantly over V2
+and loses nothing significantly. V4 expands everything, scores higher overall,
+and is not shipped: it pays for the extra with a significant self-harm loss, and
+self-harm is the category that cannot be asked twice.
+
+**All three splits are now spent.** v1 and v2 answered two questions each and v3
+answered one. Write a fourth before measuring another prompt change.
+
+**The next question is not a prompt.** Three rounds put the ceiling around 0.9
+and showed the categories competing for one call's attention. Screening each
+category in its own call would remove the competition, at six times the cost and
+latency, and latency is part of this screen's safety story. That is the trade to
+measure next.
 
 Getting a corpus written by somebody who did not write the rules is still the
 highest-value item available and still not something testing substitutes for.

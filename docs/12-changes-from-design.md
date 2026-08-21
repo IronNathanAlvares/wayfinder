@@ -490,6 +490,53 @@ one that appears in the measured set. Shipping V3 on the strength of expecting
 it to be better would have been the same mistake as quoting 1.000 over twelve
 items.
 
+## 21. Attention is a budget, and the categories were competing for it
+
+The detention regression was not the wording. It was the shape of the prompt:
+self-harm had twenty-five lines and its own heading, every other category had a
+bullet. A third held-out split, 320 crisis turns and 180 near misses, tested that
+with two arms built from V2 by substitution. V5 expands detention only. V4
+expands the other four as well.
+
+| | V1 | V2 | V5 | V4 |
+|---|---|---|---|---|
+| Detention | 0.926 | 0.796 | **1.000** | **1.000** |
+| Self-harm | 0.389 | **0.778** | 0.685 | 0.648 |
+| Overall | 0.853 | 0.881 | 0.906 | **0.925** |
+| Fired on 180 near misses | 10 | 10 | 10 | 10 |
+
+Giving detention a section of its own took it to every one of 54 turns, 11
+caught only by V5 and none the other way, p = 0.0010. Expanding the other four
+then cost self-harm, 7 turns to none, p = 0.0156. **Each category gains what the
+others pay for**, and the aggregate rises anyway, so expansion is a real net gain
+that is not free.
+
+Three things this settled that are worth separating.
+
+**The control worked, and it was the point of the split.** Forty-five of the 180
+near misses are detention-adjacent and routine: a flight booked for a holiday, a
+letter confirming a renewal, an officer who checked a card and waved somebody
+through. If detention recall had risen because the screen started calling every
+dated letter an emergency, those would have risen with it. Precision was
+identical in all four arms. Detention went 0.796 to 1.000 with no additional
+false positive at all.
+
+**V5 ships and V4 does not, despite V4's better total.** V4 buys its extra recall
+with a significant self-harm loss, and self-harm is the category where a miss
+cannot be asked twice. The aggregate has already been caught in this project
+hiding two real effects, and it does not get to decide this either.
+
+**The diagnostic arm was worth its cost.** Running V4 alone would have shown a
+better number and left the reason unknown, and the next change would have been
+guesswork again. V5 is what turned "the prompt got better" into "attention is a
+budget", which is a fact about the approach rather than about this prompt.
+
+The practical consequence is that the remaining distance to the 0.99 gate is
+unlikely to come from writing more prompt. If the competition is an artefact of
+one call holding six categories, screening each in its own call removes it, at
+six times the cost and latency. That is the next measurement and it needs a
+fourth split, because all three are now spent.
+
 ---
 
 ## Scope decisions

@@ -12,10 +12,15 @@ Run it with a key set in the environment:
 `--save` is not optional in spirit. A full run costs money and the terminal
 scrolls, and the misses are the half of the result worth having.
 
-It calls the API once per item per model. The default split is
-`crisis-holdout`, which holds 476 turns, so a full run against one model is 476
-requests. `--limit` bounds that while you are checking the plumbing, and
-`--split holdout` measures the smaller mixed split instead.
+It calls the API once per item per model, minus the turns the deterministic
+lexicon already resolves. The default split is `crisis-holdout-v3`, 500 turns of
+which 458 reach the model. `--limit` bounds that while you are checking the
+plumbing.
+
+**All three crisis splits have been spent.** v1 and v2 answered two questions
+each and v3 answered one, and their per-category numbers are known. A prompt
+change measured on any of them now is measured by somebody who knows where they
+hurt. The next real question needs a fourth split written to the same protocol.
 
 Bounding it is not free. A limited run measures fewer items, so the confidence
 bound it prints is weaker, and the runner prints the bound rather than the bare
@@ -39,7 +44,7 @@ from typing import Any
 
 from wayfinder.eval.cache import CachedScreen
 from wayfinder.eval.corpus import (
-    CRISIS_HOLDOUT_SPLIT,
+    CRISIS_HOLDOUT_V3_SPLIT,
     HOLDOUT_SPLITS,
     EvalError,
     LabelledTurn,
@@ -176,7 +181,7 @@ GATE = 0.99
 
 # The prompt the adapter ships with. Named here so a run with no --prompt says
 # which one it measured rather than leaving a reader to guess.
-DEFAULT_PROMPT = "v2"
+DEFAULT_PROMPT = "v5"
 
 
 def _render(results: Sequence[Measurement], total_others: int, split: str) -> str:
@@ -268,7 +273,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--corpus", type=Path, default=CORPUS)
     parser.add_argument(
         "--split",
-        default=CRISIS_HOLDOUT_SPLIT,
+        default=CRISIS_HOLDOUT_V3_SPLIT,
         choices=HOLDOUT_SPLITS,
         help="which held-out split to measure. Only held-out splits are "
         "offered: measuring the dev splits would report the tuning",

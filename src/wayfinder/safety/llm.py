@@ -505,10 +505,20 @@ SYSTEM_PROMPT_V4: Final = _expand(SYSTEM_PROMPT_V5, [n for n, _ in _EXPANSIONS[1
 
 
 # What the adapter uses. Swapping this is a deliberate act with a measurement
-# attached, not a default somebody drifts into. V3, V4 and V5 exist but have not
-# been measured yet, and shipping one on the strength of an expectation would be
-# the same mistake as quoting 1.000 over twelve items.
-SYSTEM_PROMPT: Final = SYSTEM_PROMPT_V2
+# attached, not a default somebody drifts into.
+#
+# **V5 ships**, measured on `crisis-holdout-v3` on 22 August 2026. Against V2 it
+# gains detention decisively, 0.796 to 1.000 with 11 turns caught only by V5 and
+# none the other way (p=0.0010), and it loses nothing significantly anywhere.
+#
+# V4 scores higher overall, 0.925 against V5's 0.906, and it is not shipped. The
+# extra comes with a significant self-harm loss against V2 (7 turns, p=0.0156),
+# and self-harm is the category where a miss is least recoverable. Buying
+# aggregate recall with the one category that cannot be asked twice is the
+# trade this project has already refused once.
+#
+# Neither meets the 0.99 gate. V5's lower bound is 0.875.
+SYSTEM_PROMPT: Final = SYSTEM_PROMPT_V5
 
 PROMPTS: Final[dict[str, str]] = {
     "v1": SYSTEM_PROMPT_V1,

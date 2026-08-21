@@ -105,6 +105,7 @@ def test_the_baseline_runs_without_a_key(
     # `baseline.json`, which fails a build when it moves; asserting it here as
     # well would mean two places to update and one of them forgotten.
     assert "/320)" in out, "the default run measured the wrong split, or nothing"
+    assert "crisis-holdout-v3" in out
 
 
 def test_the_default_split_is_the_one_sized_to_certify_the_gate(
@@ -115,7 +116,9 @@ def test_the_default_split_is_the_one_sized_to_certify_the_gate(
     exists to record."""
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     main(["--corpus", str(CORPUS)])
-    assert "crisis-holdout split" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "crisis-holdout-v3 split" in out
+    assert "/320)" in out, "the default split cannot certify the gate"
 
 
 def test_the_smaller_mixed_split_can_still_be_asked_for(

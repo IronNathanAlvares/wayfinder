@@ -298,13 +298,14 @@ def test_every_prompt_is_kept_so_a_change_can_be_measured() -> None:
 def test_the_shipped_prompt_is_one_that_has_been_measured() -> None:
     """The rule this module states in a comment, enforced.
 
-    V3 exists and is expected to be better, and shipping it before it has been
-    run would be the same mistake as quoting 1.000 over twelve items.
+    Every prompt in the mapping has been measured on a held-out split. Shipping
+    one on the strength of expecting it to be better would be the same mistake
+    as quoting 1.000 over twelve items.
     """
     from wayfinder.safety.llm import PROMPTS
 
     assert SYSTEM_PROMPT in PROMPTS.values()
-    assert SYSTEM_PROMPT is PROMPTS["v2"], "the shipped prompt changed"
+    assert SYSTEM_PROMPT is PROMPTS["v5"], "the shipped prompt changed"
 
 
 @pytest.mark.parametrize(

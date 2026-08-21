@@ -423,6 +423,89 @@ decides.
 That is a judgement, it is recorded here as one, and it should be revisited the
 moment a prompt exists that does not force the trade.
 
+### The emphasis hypothesis holds. Measured 22 August 2026
+
+`crisis-holdout-v3`, 320 crisis turns and 180 near misses, written before any
+prompt was run against it. Two arms, both built from V2 by substitution:
+
+- **V5** expands detention only. Its bullet becomes a pointer and it gains a
+  section of its own, the treatment self-harm already had.
+- **V4** expands the remaining four as well.
+
+V5 is the arm that makes the answer readable. Expanding everything at once would
+have produced a number and no reason.
+
+| | V1 | V2 | V5 | V4 |
+|---|---|---|---|---|
+| Detention | 0.926 | 0.796 | **1.000** | **1.000** |
+| Self-harm | 0.389 | **0.778** | 0.685 | 0.648 |
+| Violence | 0.925 | 0.887 | 0.887 | 0.962 |
+| Rough sleeping | 0.906 | 0.868 | 0.925 | 0.962 |
+| Child protection | 0.981 | 0.981 | 0.981 | 0.981 |
+| Medical | 1.000 | 0.981 | 0.962 | 1.000 |
+| **Overall** | 0.853 | 0.881 | 0.906 | **0.925** |
+| **95% lower bound** | 0.817 | 0.847 | 0.875 | **0.896** |
+| **Fired on 180 near misses** | 10 | 10 | 10 | 10 |
+
+**Expanding detention alone fixed detention completely.** 0.796 to 1.000, every
+one of the 54 turns. Paired, 11 turns caught only by V5 and none the other way,
+p = 0.0010. The regression really was emphasis, and giving the category its own
+section undid it. It also beat V1's 0.926, so this is not merely a restoration.
+
+**The effect runs in both directions, which is the finding.** Expanding the
+other four cost self-harm: V2 to V4 loses 7 self-harm turns and gains none,
+p = 0.0156. Attention behaves like a budget. A category gains what the others
+pay for.
+
+**It is not zero-sum, though.** Overall recall rises monotonically across the
+ladder and V1 to V4 is 25 turns to 2, p = 0.0000. Expanding is a real net gain.
+It is simply not free.
+
+**Precision did not move at all: 10 false positives out of 180 for every arm.**
+That is the control the whole experiment rested on. Forty-five of those near
+misses are detention-adjacent and were written for exactly this moment: routine
+questions mentioning a flight, a letter, an officer, an office. Detention recall
+went from 0.796 to 1.000 without a single additional false positive, so the
+screen got better rather than louder. Had those risen together, the result would
+have been worthless.
+
+### V5 ships, and V4 does not
+
+V4 has the better aggregate. It is not shipped.
+
+Against V2, V5 gains detention significantly and loses nothing significantly
+anywhere. V4 gains a little more overall and pays for it with a significant
+self-harm loss. Self-harm is the category where a miss is least recoverable:
+somebody answered procedurally about a removal will very likely ask again, and
+somebody who writes "this is the last message I will send" may not.
+
+Buying aggregate recall with the one category that cannot be asked twice is the
+trade this project has already refused once, and the aggregate is the statistic
+that has already been caught hiding two real effects.
+
+The gate is 0.99. V5's bound is 0.875. **Still not met.**
+
+### Where the ceiling is, and what would move it
+
+Three rounds have now established the shape of the problem. Detection of implied
+crisis is a prompting problem and prompting solved a large part of it: 0.106
+deterministic, 0.853 with the original prompt, 0.906 now. But the arms also
+showed the categories competing for a fixed pool of attention, which means the
+remaining distance to 0.99 is unlikely to come from writing more prompt.
+
+The implication worth testing is that the competition is an artefact of asking
+one call to hold six categories at once. Screening each category in its own call
+would remove the competition entirely, at six times the cost and latency. That
+is a real trade against a screen whose latency is part of its safety story, and
+it is the next thing to measure.
+
+**It needs a fourth split.** All three are spent: v1 and v2 answered two
+questions each, v3 has answered one, and their per-category numbers are known.
+
+And unchanged after three rounds, still the largest item and still not something
+a technique can fix: the same person wrote the lexicon, every prompt and all
+three corpora.
+
 ### What this cost the second split, and what is left
 
 `crisis-holdout-v2` has now been used once. That is not the same as burned: what
