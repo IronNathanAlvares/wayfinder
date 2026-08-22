@@ -19,7 +19,7 @@ in the design rather than in the test.
 
 Start with [`HANDOFF.md`](HANDOFF.md), and see
 [`docs/12-changes-from-design.md`](docs/12-changes-from-design.md) for the
-twenty-two things building this proved wrong about the design.
+twenty-three things building this proved wrong about the design.
 
 Standalone project. Nothing else needs to exist for it to run.
 
@@ -245,11 +245,37 @@ Four rounds, four held-out splits, two thousand items. The first change, putting
 a model behind the lexicon, was worth an enormous amount: 0.10 to 0.85. Nothing
 since has moved the number out of the 0.85 to 0.93 band.
 
-**The gate is 0.99, the bound is 0.858, and the honest reading is that this
-approach has a ceiling near 0.9 that neither wording nor call structure moves.**
-What that leaves is in [ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md):
-a stronger model, repeated sampling, or designing the rest of the system around
-a screen that misses roughly one crisis turn in nine.
+Repeated sampling was the last cheap lever, and the prediction was committed
+before the run: if the misses were random, three samples would take 0.884 to
+0.998 and clear the gate; if they were systematic, three samples would buy
+nothing. **Three samples gained two turns.**
+
+The three samples are cached separately, so the reason is recoverable for free:
+
+| | |
+|---|---|
+| Verdicts that moved at all across three samples | 7 of 410 |
+| Non-crisis verdicts that ever moved | **0 of 122** |
+| Crisis turns missed by all three samples | **35** |
+
+Thirty-five misses are deterministic, so the ceiling of *infinite* resampling is
+exactly the 285 of 320 that three samples already reached. The lever is finished.
+
+**Twenty-five turns are missed by every configuration ever measured.** Six
+configurations, four held-out splits, two thousand items. The best possible
+union of everything built scores 0.922 against a gate that allows three misses
+in 320. The residue is almost entirely self-harm, and includes this:
+
+> "i tried in the direct provision centre and they moved me and never mentioned it again"
+
+A previous attempt is the strongest single predictor of a further one, and every
+version of this screen reads that sentence as somebody describing their history.
+
+**So the 0.99 gate is not reachable this way, and that is now a measurement
+rather than an impression.** What follows is in
+[ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md): test a stronger
+model, and stop designing around a screen that meets a gate nobody here can
+build.
 
 **What exists.** The plan engine, a twenty-task Irish corpus across eight
 verified sources, BM25 retrieval, the three-layer safety classifier, the crisis
@@ -344,7 +370,7 @@ Each is enforced structurally and each has a test. See
 | [09 Test and eval plan](docs/09-test-and-eval-plan.md) | Corpus, gates, topology tests |
 | [10 Risk and ethics](docs/10-risk-and-ethics.md) | Who can be harmed, and what stops it |
 | [11 Interview pitch](docs/11-interview-pitch.md) | Pitch, demo, likely questions |
-| [12 Changes from the design](docs/12-changes-from-design.md) | The twenty-two things building it proved wrong |
+| [12 Changes from the design](docs/12-changes-from-design.md) | The twenty-three things building it proved wrong |
 | [ADRs](docs/adr/) | Eight decision records |
 
 ---

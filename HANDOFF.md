@@ -231,16 +231,34 @@ recall from 0.10 to 0.85. Everything since has moved it between 0.85 and 0.93
 and never near 0.99, across four held-out splits and two thousand items. The
 ceiling is a property of the approach, not of any prompt.
 
-What is left, in order and none of them a prompt:
+**Repeated sampling was tried and is exhausted.** Three samples gained two
+turns, p = 0.50. The reason is in the stability data: only 1.7 percent of
+verdicts move at all, non-crisis verdicts never moved once across 122 turns, and
+35 of 288 crisis turns are missed by every sample. The ceiling of infinite
+resampling is exactly what three samples already reached.
 
-1. A stronger model. Every round after the first used `claude-haiku-4-5`.
-2. Repeated sampling with a union. The screen is not deterministic, and three
-   samples unioned would convert that variance into recall.
-3. Accepting that 0.99 is not reachable this way and designing around a screen
-   that misses roughly one crisis turn in nine. That is a product decision and
-   the measurements now support putting it on the table.
+**Twenty-five turns are missed by every configuration ever measured**, and the
+best union of all of them scores 0.922 against a gate that allows three misses
+in 320. The residue is almost all self-harm and includes a disclosure of a
+previous attempt, which is the strongest predictor there is.
 
-All four splits are spent. A fifth is needed before measuring another change.
+Two things are left and the project should do both.
+
+1. **Test a stronger model.** Everything after round one used
+   `claude-haiku-4-5`. It is the only untried lever that could move a ceiling
+   set by what the model understands rather than by how it is asked. Needs a
+   fifth split: all four are spent.
+
+2. **Stop designing around a screen that meets the gate.** The 0.99 in
+   `03-requirements.md` was written before anything was measured and four rounds
+   say it describes a system nobody here can build. What this system has is a
+   screen at 0.89 that reliably misses disclosures of a previous attempt. The
+   design should be honest about it: make the crisis directory reachable without
+   the screen firing, put a route to it in every refusal and every plan, and put
+   the numbers on the page.
+
+The second is a product decision rather than an engineering one, and it is the
+one four rounds have been avoiding.
 
 Getting a corpus written by somebody who did not write the rules is still the
 highest-value item available and still not something testing substitutes for.

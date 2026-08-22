@@ -587,6 +587,53 @@ system around a screen that misses roughly one crisis turn in nine.
 The last of those is a product decision the design has been avoiding, and the
 measurements now support putting it on the table.
 
+## 23. Resampling is exhausted, and the 0.99 gate is not reachable
+
+The screen is not deterministic, so a union over N samples converts variance
+into recall. `RepeatedScreen` does that, and the prediction was committed before
+the run: stochastic misses would take 0.884 to 0.998 at N=3 and clear the gate;
+systematic ones would buy nothing.
+
+**Three samples gained two turns**, 0.884 to 0.891, paired p = 0.5000.
+
+Because each sample is cached separately, the reason is recoverable for nothing:
+
+| | |
+|---|---|
+| Verdicts that moved at all | 7 of 410 |
+| Non-crisis verdicts that ever moved | 0 of 122 |
+| Crisis turns caught by all three samples | 246 of 288 |
+| Crisis turns caught by none | **35** |
+
+The ceiling of infinite resampling is exactly the 285 of 320 that three samples
+reached. The theoretical precision cost did not appear either, and the same
+table says why: the model is not uncertain about what is not a crisis, it is
+confidently wrong about a particular set of crisis turns.
+
+**Twenty-five turns are missed by every arm ever measured.** Intersecting the
+four arms costs nothing and gives the empirical ceiling of everything built:
+0.922, against a gate that allows three misses in 320. The residue is almost all
+self-harm and includes "i tried in the direct provision centre and they moved me
+and never mentioned it again", which is a disclosure of a previous attempt.
+
+So the gate is not reachable this way, and after four splits, six
+configurations and two thousand items that is a measurement rather than an
+impression. ADR-0008 now says what follows: test a stronger model, and stop
+designing around a screen that meets a gate nobody here can build.
+
+Two smaller things fell out of it.
+
+**A cache key bug caught by checking rather than by the bill.** Adding a sample
+salt hashed an empty salt as an empty string, which changed every existing
+digest and would have silently re-paid for 483 cached verdicts on the first run.
+An empty salt is now excluded from the digest and a test recomputes the
+historical three-part key.
+
+**The degraded rule earned its keep.** The first union run had two turns where
+one sample failed, and the runner reported could-not-evaluate rather than a
+number, exactly as the exit-code convention requires. Because failures are never
+cached, the re-run retried only those two.
+
 ---
 
 ## Scope decisions
