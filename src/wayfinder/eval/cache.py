@@ -33,15 +33,28 @@ from wayfinder.safety.models import CrisisCategory
 FLUSH_EVERY: Final = 10
 
 
-def _key(model: str, prompt: str, text: str) -> str:
+def _key(model: str, prompt: str, text: str, salt: str = "") -> str:
     """Everything that can change the verdict, and nothing that cannot.
 
     The prompt is hashed in full rather than named, so editing a prompt without
     renaming it cannot silently reuse the old prompt's answers.
+
+    `salt` exists for repeated sampling, where the same model, prompt and turn
+    are deliberately asked more than once and each answer has to be kept apart.
+
+    An empty salt is left out of the digest entirely rather than hashed as an
+    empty string, so it produces the same key as before this parameter existed
+    and the first sample of a repeated run reuses what a single-sample run
+    already paid for. Hashing it unconditionally invalidated every entry in the
+    cache, which was worth about a thousand re-paid API calls and was caught by
+    checking rather than by noticing the bill.
     """
     digest = hashlib.sha256()
     for part in (model, prompt, text):
         digest.update(part.encode("utf-8"))
+        digest.update(b"\x00")
+    if salt:
+        digest.update(salt.encode("utf-8"))
         digest.update(b"\x00")
     return digest.hexdigest()
 
@@ -54,7 +67,16 @@ class CachedScreen:
     later measurement.
     """
 
-    __slots__ = ("_hits", "_inner", "_misses", "_model", "_path", "_prompt", "_seen")
+    __slots__ = (
+        "_hits",
+        "_inner",
+        "_misses",
+        "_model",
+        "_path",
+        "_prompt",
+        "_salt",
+        "_seen",
+    )
 
     def __init__(
         self,
@@ -63,11 +85,13 @@ class CachedScreen:
         path: Path,
         model: str,
         prompt: str,
+        salt: str = "",
     ) -> None:
         self._inner = inner
         self._path = path
         self._model = model
         self._prompt = prompt
+        self._salt = salt
         self._seen: dict[str, list[Any]] = {}
         self._hits = 0
         self._misses = 0
@@ -85,7 +109,7 @@ class CachedScreen:
         return self._misses
 
     def __call__(self, text: str) -> tuple[ModelVerdict, CrisisCategory | None]:
-        key = _key(self._model, self._prompt, text)
+        key = _key(self._model, self._prompt, text, self._salt)
         cached = self._seen.get(key)
         if cached is not None:
             self._hits += 1

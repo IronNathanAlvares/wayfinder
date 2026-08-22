@@ -38,7 +38,7 @@ import argparse
 import json
 import os
 import sys
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -61,6 +61,7 @@ from wayfinder.eval.metrics import (
 from wayfinder.safety.escalation import full_screen
 from wayfinder.safety.loader import SafetyDataError, load_lexicon
 from wayfinder.safety.models import CrisisLexicon
+from wayfinder.safety.repeated import RepeatedScreen
 from wayfinder.safety.taxonomy import QuestionClass
 
 CORPUS = Path(__file__).resolve().parents[3] / "tests" / "corpus"
@@ -187,6 +188,20 @@ DEFAULT_PROMPT = "v5"
 # makes it comparable: one run, the same items, arms named in the same place.
 # It carries V4's sections one per call rather than six in one.
 PER_CATEGORY = "per-category"
+
+# Repeated sampling of a named prompt, written `union-3:v4`. Not a prompt
+# either, and on the same flag for the same reason.
+UNION_PREFIX = "union-"
+
+
+def _is_union(name: str, prompts: Mapping[str, str]) -> tuple[int, str] | None:
+    """Parse `union-3:v4` into (3, "v4"), or None if it is not a union arm."""
+    if not name.startswith(UNION_PREFIX) or ":" not in name:
+        return None
+    count, _, base = name[len(UNION_PREFIX) :].partition(":")
+    if not count.isdigit() or int(count) < 1 or base not in prompts:
+        return None
+    return int(count), base
 
 
 def _render(results: Sequence[Measurement], total_others: int, split: str) -> str:
@@ -349,8 +364,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     # a key is present, and reporting the missing key first sends somebody to
     # fix their environment when the problem is their command line.
     prompts = args.prompt or [DEFAULT_PROMPT]
-    available = [*sorted(PROMPTS), PER_CATEGORY]
-    unknown = [name for name in prompts if name not in available]
+    available = [*sorted(PROMPTS), PER_CATEGORY, f"{UNION_PREFIX}N:<prompt>"]
+    unknown = [
+        name
+        for name in prompts
+        if name not in {*PROMPTS, PER_CATEGORY} and not _is_union(name, PROMPTS)
+    ]
     if unknown:
         print(
             f"could not evaluate: no such arm {unknown}. Available: {available}",
@@ -372,6 +391,47 @@ def main(argv: Sequence[str] | None = None) -> int:
         for prompt_name in prompts:
             try:
                 screen: Any
+                union = _is_union(prompt_name, PROMPTS)
+                if union is not None:
+                    samples, base = union
+                    inner: list[Any] = [
+                        AnthropicCrisisScreen(
+                            model=model_id,
+                            effort=None if args.effort == "none" else args.effort,
+                            system_prompt=PROMPTS[base],
+                        )
+                        for _ in range(samples)
+                    ]
+                    if args.cache:
+                        # One cache entry per sample. The first uses the empty
+                        # salt, so it reuses whatever a single-sample run of the
+                        # same prompt already paid for.
+                        inner = [
+                            CachedScreen(
+                                s,
+                                path=args.cache,
+                                model=model_id,
+                                prompt=PROMPTS[base],
+                                salt="" if i == 0 else str(i),
+                            )
+                            for i, s in enumerate(inner)
+                        ]
+                    # Cached per sample already. Wrapping the union as well
+                    # would store the union verdict under a key that hides how
+                    # many samples produced it.
+                    screen = RepeatedScreen(inner)
+                    results.append(
+                        measure(
+                            turns,
+                            lexicon,
+                            label=f"{model_id} + {prompt_name}",
+                            model=screen,
+                        )
+                    )
+                    for s in inner:
+                        if isinstance(s, CachedScreen):
+                            s.flush()
+                    continue
                 if prompt_name == PER_CATEGORY:
                     from wayfinder.safety.per_category import (
                         PROMPTS as CATEGORY_PROMPTS,

@@ -8,6 +8,7 @@ process dies partway.
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -159,3 +160,41 @@ def test_verdicts_are_flushed_before_the_run_finishes(tmp_path: Path) -> None:
         cache(f"turn {i}")
 
     assert path.is_file(), "nothing was written until the run ended"
+
+
+def test_an_empty_salt_does_not_change_the_key(tmp_path: Path) -> None:
+    """Adding the salt parameter must not invalidate what is already cached.
+
+    Hashing an empty salt as an empty string changes every digest, which would
+    silently re-pay for a thousand calls the next time anything ran. Pinned
+    against a literal so a future refactor of the key cannot do it again.
+    """
+    from wayfinder.eval.cache import _key
+
+    assert _key("m", "p", "t") == _key("m", "p", "t", "")
+    assert _key("m", "p", "t") != _key("m", "p", "t", "1")
+    assert _key("m", "p", "t", "1") != _key("m", "p", "t", "2")
+    # The historical three-part digest, recomputed rather than pasted, so a
+    # refactor of the key cannot quietly invalidate an existing cache again.
+    historical = hashlib.sha256()
+    for part in ("m", "p", "t"):
+        historical.update(part.encode())
+        historical.update(bytes([0]))
+    assert _key("m", "p", "t") == historical.hexdigest()
+
+
+def test_samples_of_the_same_turn_are_kept_apart(tmp_path: Path) -> None:
+    """Repeated sampling asks the same model the same question deliberately.
+    Without the salt the second sample would read the first one's answer and
+    the union would be over one verdict repeated N times."""
+    inner = Counting()
+    first = CachedScreen(inner, path=tmp_path / "c.json", model="m", prompt="p")
+    second = CachedScreen(
+        inner, path=tmp_path / "c.json", model="m", prompt="p", salt="1"
+    )
+    first("same turn")
+    first.flush()
+    second("same turn")
+
+    assert inner.calls == 2
+    assert second.hits == 0
