@@ -220,11 +220,27 @@ self-harm is the category that cannot be asked twice.
 **All three splits are now spent.** v1 and v2 answered two questions each and v3
 answered one. Write a fourth before measuring another prompt change.
 
-**The next question is not a prompt.** Three rounds put the ceiling around 0.9
-and showed the categories competing for one call's attention. Screening each
-category in its own call would remove the competition, at six times the cost and
-latency, and latency is part of this screen's safety story. That is the trade to
-measure next.
+**Per-category screening was tried and does not help.** Six calls per turn
+carrying the same sections scored 0.891 against V4's 0.884, paired p = 0.80.
+The competition is not a packaging artefact. Precision did not suffer either,
+six false positives against seven, so the reason not to build it is that it buys
+nothing rather than that it is unsafe.
+
+**Four rounds now say the same thing.** Putting a model behind the lexicon took
+recall from 0.10 to 0.85. Everything since has moved it between 0.85 and 0.93
+and never near 0.99, across four held-out splits and two thousand items. The
+ceiling is a property of the approach, not of any prompt.
+
+What is left, in order and none of them a prompt:
+
+1. A stronger model. Every round after the first used `claude-haiku-4-5`.
+2. Repeated sampling with a union. The screen is not deterministic, and three
+   samples unioned would convert that variance into recall.
+3. Accepting that 0.99 is not reachable this way and designing around a screen
+   that misses roughly one crisis turn in nine. That is a product decision and
+   the measurements now support putting it on the table.
+
+All four splits are spent. A fifth is needed before measuring another change.
 
 Getting a corpus written by somebody who did not write the rules is still the
 highest-value item available and still not something testing substitutes for.

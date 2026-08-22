@@ -469,6 +469,85 @@ went from 0.796 to 1.000 without a single additional false positive, so the
 screen got better rather than louder. Had those risen together, the result would
 have been worthless.
 
+### Per-category screening does not help. Measured 22 August 2026
+
+If the categories were competing for one call's attention, giving each its own
+call removes the competition by construction. `crisis-holdout-v4` tested that:
+320 crisis turns and 200 near misses, the near-miss half larger than any earlier
+split because six independent questions per turn means six independent chances
+to say yes wrongly.
+
+The per-category arm carries V4's sections one per call, sliced out of V4 at
+import rather than retyped, so the comparison isolates packaging from content.
+
+| On 520 items | V5 shipped | V4 one call | Per-category |
+|---|---|---|---|
+| Detention | 0.907 | 0.907 | 0.963 |
+| Self-harm | 0.648 | 0.611 | 0.648 |
+| Violence | 0.849 | 0.925 | 0.943 |
+| Child protection | 0.906 | 0.981 | 0.943 |
+| Rough sleeping | 0.830 | 0.887 | 0.849 |
+| Medical | 1.000 | 1.000 | 1.000 |
+| **Overall** | 0.856 | 0.884 | **0.891** |
+| **95% lower bound** | 0.820 | 0.851 | 0.858 |
+| **Fired on 200 near misses** | 7 | 7 | **6** |
+
+**It is not better. Paired against V4 it is p = 0.8036**, nine turns caught only
+by the per-category screen and seven only by V4. No category shows a
+significant difference either. Six times the requests, no measurable gain.
+
+The hypothesis is falsified. The competition between categories is not an
+artefact of one call being asked to hold six of them, because removing that
+constraint entirely changes nothing.
+
+Both structures beat the shipped prompt, per-category at p = 0.0433 and V4 at
+p = 0.0636. That difference is the expanded sections, which V4 and the
+per-category arm share. It is content, not packaging.
+
+**The precision risk did not materialise, and that is worth recording
+separately.** Six independent chances to escalate produced six false positives
+against the single call's seven. Anyone reaching for this design can stop
+worrying about that particular failure; the reason not to build it is that it
+buys nothing, not that it is dangerous.
+
+One correction to what the previous section said this would cost. Each
+per-category prompt carries one section rather than six, so the token cost is
+about twice a single call's rather than six times, and the six run concurrently
+so the latency is close to one call's. The price is request count. That makes
+the negative result cheaper to accept, not more expensive.
+
+### Four rounds in, the lever is not the prompt and not the call structure
+
+| Round | What changed | Overall | Gate |
+|---|---|---|---|
+| Deterministic only | Hand-written lexicon | 0.10 to 0.14 | not met |
+| 1 | A model behind the lexicon | 0.85 to 0.90 | not met |
+| 2 | Self-harm rewritten from the clinical taxonomy | no aggregate change | not met |
+| 3 | Every category given equal emphasis | 0.925 best | not met |
+| 4 | One call per category | 0.891, indistinguishable from round 3 | not met |
+
+The first change was worth an enormous amount. Everything since has moved the
+number between 0.85 and 0.93 and never approached 0.99. Two thousand held-out
+items across four splits now say the same thing: **this approach has a ceiling
+around 0.9, and neither wording nor call structure moves it.**
+
+That is a finding about the design rather than about any prompt, so the next
+things to try are not prompts:
+
+1. **A stronger model.** Every round after the first used `claude-haiku-4-5`.
+   Opus was measured once, on twelve items, which established nothing.
+2. **Repeated sampling with a union.** The screen is not deterministic: the same
+   configuration scored 288 and then 287 on an earlier split. Three samples
+   unioned would convert that variance into recall, and it is the same
+   union logic the per-category arm already uses.
+3. **Accepting that 0.99 is not reachable this way**, and designing the rest of
+   the system around a screen that misses roughly one crisis turn in nine.
+   That is a product decision rather than an engineering one, and it is the
+   honest reading of four rounds.
+
+The third is the one the design has been avoiding, and the measurements now
+support putting it on the table.
+
 ### V5 ships, and V4 does not
 
 V4 has the better aggregate. It is not shipped.

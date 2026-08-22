@@ -537,6 +537,56 @@ one call holding six categories, screening each in its own call removes it, at
 six times the cost and latency. That is the next measurement and it needs a
 fourth split, because all three are now spent.
 
+## 22. Per-category screening buys nothing, and the ceiling is the approach
+
+Round three found the categories trading against each other and concluded that
+attention behaves like a budget. The obvious implication was that the budget is
+an artefact of one call being asked to hold six categories, so
+`PerCategoryScreen` asks each in its own call and takes the union. The sections
+are sliced out of `SYSTEM_PROMPT_V4` at import rather than retyped, so the
+comparison isolates packaging from content.
+
+On `crisis-holdout-v4`, 320 crisis turns and 200 near misses:
+
+| | V4 one call | Per-category |
+|---|---|---|
+| Overall | 0.884 | 0.891 |
+| Fired on 200 near misses | 7 | 6 |
+
+**Paired, p = 0.8036.** Nine turns caught only by the split screen, seven only
+by the single call, no significant difference in any category. Six times the
+requests for nothing.
+
+Three things worth separating.
+
+**The hypothesis is falsified, not merely unsupported.** Removing the constraint
+entirely changed nothing, so the competition seen in round three is not about
+one call holding six categories. What both structures share, and what beats the
+shipped prompt in each, is the expanded content.
+
+**The precision risk did not materialise.** Six independent chances to escalate
+produced fewer false positives than one call, not more. The 200 near misses were
+weighted evenly across all six boundaries specifically to catch that, and it did
+not happen. Anyone reaching for this design can stop worrying about it; the
+reason to skip it is that it does not pay.
+
+**The cost was overstated in the previous round's write-up.** Each per-category
+prompt carries one section rather than six, so tokens run at about twice a
+single call rather than six times, and the calls run concurrently so latency is
+close to one call's. Correcting that makes the negative result easier to accept
+rather than harder.
+
+The larger finding is about the approach. Putting a model behind the lexicon
+took crisis recall from 0.10 to 0.85. Four rounds since have moved it between
+0.85 and 0.93 and never near the 0.99 gate, across four held-out splits and two
+thousand written items. **Neither wording nor call structure moves it**, which
+makes the remaining options a stronger model, repeated sampling with a union, or
+accepting that the gate is not reachable this way and designing the rest of the
+system around a screen that misses roughly one crisis turn in nine.
+
+The last of those is a product decision the design has been avoiding, and the
+measurements now support putting it on the table.
+
 ---
 
 ## Scope decisions

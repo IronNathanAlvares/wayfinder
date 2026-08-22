@@ -19,7 +19,7 @@ in the design rather than in the test.
 
 Start with [`HANDOFF.md`](HANDOFF.md), and see
 [`docs/12-changes-from-design.md`](docs/12-changes-from-design.md) for the
-twenty-one things building this proved wrong about the design.
+twenty-two things building this proved wrong about the design.
 
 Standalone project. Nothing else needs to exist for it to run.
 
@@ -227,8 +227,29 @@ miss cannot be asked twice. That reasoning is recorded as a judgement in
 [ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md) so it can be
 revisited rather than inherited.
 
-The gate is 0.99 and the bound is 0.875. **Still not met**, and the three rounds
-suggest the rest will not come from writing more prompt.
+So the next thing tried was not a prompt. If the categories compete for one
+call's attention, screening each in its own call removes the competition by
+construction. On a fourth split, with six calls per turn carrying the same
+sections:
+
+| On 520 items | V4 one call | Per-category |
+|---|---|---|
+| Overall | 0.884 | 0.891 |
+| Fired on 200 near misses | 7 | 6 |
+
+**No better. Paired, p = 0.80.** Six times the requests for nothing measurable,
+and the hypothesis that packaging was the cause is falsified. The gain both
+share over the shipped prompt is the expanded content, not the structure.
+
+Four rounds, four held-out splits, two thousand items. The first change, putting
+a model behind the lexicon, was worth an enormous amount: 0.10 to 0.85. Nothing
+since has moved the number out of the 0.85 to 0.93 band.
+
+**The gate is 0.99, the bound is 0.858, and the honest reading is that this
+approach has a ceiling near 0.9 that neither wording nor call structure moves.**
+What that leaves is in [ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md):
+a stronger model, repeated sampling, or designing the rest of the system around
+a screen that misses roughly one crisis turn in nine.
 
 **What exists.** The plan engine, a twenty-task Irish corpus across eight
 verified sources, BM25 retrieval, the three-layer safety classifier, the crisis
@@ -323,7 +344,7 @@ Each is enforced structurally and each has a test. See
 | [09 Test and eval plan](docs/09-test-and-eval-plan.md) | Corpus, gates, topology tests |
 | [10 Risk and ethics](docs/10-risk-and-ethics.md) | Who can be harmed, and what stops it |
 | [11 Interview pitch](docs/11-interview-pitch.md) | Pitch, demo, likely questions |
-| [12 Changes from the design](docs/12-changes-from-design.md) | The twenty-one things building it proved wrong |
+| [12 Changes from the design](docs/12-changes-from-design.md) | The twenty-two things building it proved wrong |
 | [ADRs](docs/adr/) | Eight decision records |
 
 ---
