@@ -19,7 +19,7 @@ in the design rather than in the test.
 
 Start with [`HANDOFF.md`](HANDOFF.md), and see
 [`docs/12-changes-from-design.md`](docs/12-changes-from-design.md) for the
-twenty-three things building this proved wrong about the design.
+twenty-four things building this proved wrong about the design.
 
 Standalone project. Nothing else needs to exist for it to run.
 
@@ -271,11 +271,37 @@ in 320. The residue is almost entirely self-harm, and includes this:
 A previous attempt is the strongest single predictor of a further one, and every
 version of this screen reads that sentence as somebody describing their history.
 
-**So the 0.99 gate is not reachable this way, and that is now a measurement
-rather than an impression.** What follows is in
-[ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md): test a stronger
-model, and stop designing around a screen that meets a gate nobody here can
-build.
+At which point the obvious question was the one nobody had asked. Every round
+after the first had used `claude-haiku-4-5`, chosen because a round costs four
+hundred evaluation turns. Same prompt, same items, same lexicon in front, and
+only the model changed:
+
+| On 520 items | Haiku + V5 | **Opus 5 + V5** |
+|---|---|---|
+| **Self-harm** | 0.648 | **1.000 (54/54)** |
+| Violence | 0.849 | **1.000** |
+| Detention | 0.907 | **1.000** |
+| **Overall** | 0.856 | **0.975 (312/320)** |
+| 95% lower bound | 0.820 | **0.955** |
+| Fired on 200 near misses | 7 | 13 |
+
+Paired on identical items: **42 turns caught only by Opus, 4 only by Haiku,
+p = 0.0000.**
+
+**Four rounds of prompt engineering moved recall by 0.04. Changing the model
+moved it by 0.12**, took self-harm from 0.65 to every single item, and caught
+the turns the previous section called unreachable, including the disclosure of a
+previous attempt. It was never a prompting problem.
+
+So the conclusion one section up was wrong, and it is corrected rather than
+deleted in [ADR-0008](docs/adr/ADR-0008-crisis-recall-needs-a-model.md), because
+how it was reached is the useful part: **four rounds of varying everything
+except one variable produces a confident conclusion about the variable nobody
+moved.**
+
+The gate is still not met, and for a fourth distinct reason: the bound is 0.955,
+and **a perfect 320 out of 320 on this split would only bound at 0.9907.**
+Certifying 0.99 now needs a bigger corpus rather than a better screen.
 
 **What exists.** The plan engine, a twenty-task Irish corpus across eight
 verified sources, BM25 retrieval, the three-layer safety classifier, the crisis
@@ -370,7 +396,7 @@ Each is enforced structurally and each has a test. See
 | [09 Test and eval plan](docs/09-test-and-eval-plan.md) | Corpus, gates, topology tests |
 | [10 Risk and ethics](docs/10-risk-and-ethics.md) | Who can be harmed, and what stops it |
 | [11 Interview pitch](docs/11-interview-pitch.md) | Pitch, demo, likely questions |
-| [12 Changes from the design](docs/12-changes-from-design.md) | The twenty-three things building it proved wrong |
+| [12 Changes from the design](docs/12-changes-from-design.md) | The twenty-four things building it proved wrong |
 | [ADRs](docs/adr/) | Eight decision records |
 
 ---

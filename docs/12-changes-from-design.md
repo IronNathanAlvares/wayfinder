@@ -634,6 +634,58 @@ one sample failed, and the runner reported could-not-evaluate rather than a
 number, exactly as the exit-code convention requires. Because failures are never
 cached, the re-run retried only those two.
 
+## 24. The model was the lever, and change 23 was wrong
+
+Change 23 concluded that "this approach has a ceiling around 0.9" and that the
+0.99 gate "is not reachable this way". It is corrected here rather than edited
+out, because how it was reached is the more useful part.
+
+Every round from the first onward used `claude-haiku-4-5`, chosen because a
+round costs four hundred evaluation turns and Haiku is a fifth the price. Four
+rounds then varied prompts, call structure and sampling, found a flat line
+between 0.85 and 0.93, and concluded something about the approach. **It was a
+statement about Haiku written as a statement about the approach.**
+
+Same prompt, same 520 items, same lexicon in front, only the model different:
+
+| | Recall | Bound | Fired on 200 near misses |
+|---|---|---|---|
+| Haiku + V5 | 0.856 | 0.820 | 7 |
+| **Opus 5 + V5** | **0.975 (312/320)** | **0.955** | 13 |
+
+Paired: 42 turns caught only by Opus, 4 only by Haiku, p = 0.0000. **Self-harm
+goes from 0.648 to 1.000, every one of 54.** The turns change 23 listed as
+missed by every arm ever measured, including a disclosure of a previous
+attempt, are caught. It was never a prompting problem.
+
+Three things worth separating.
+
+**The run was designed around the budget rather than the other way round.** With
+$4.53 available and Opus at $0.0116 a call, the full split cost $5.59. So the
+first run was a 301-turn subset chosen to answer the question rather than to
+fill a table: all 46 turns Haiku missed, a 60-turn regression control, and all
+195 near misses so precision stayed directly comparable. It came back 41 of 46
+with one regression in sixty, which was enough to justify completing the split
+when more credit arrived. A one-call probe first measured real token usage, so
+the estimate was measured rather than guessed.
+
+**Precision is the cost and it is real.** Thirteen false positives against
+seven. Roughly double, still 93.5 percent, and cheap in a screen whose whole
+asymmetry argument is that a false positive costs somebody a list of helplines
+they did not need.
+
+**The gate is still unmet, for a fourth distinct reason.** Not the approach, not
+the corpus size for detection, but the arithmetic: a perfect 320 of 320 bounds
+at only 0.9907, so 0.99 needs roughly a thousand items at Opus's rate. That is a
+corpus problem now, which is a much better problem than the one change 23
+described.
+
+`DEFAULT_MODEL` has been `claude-opus-5` since it was written, so nothing about
+what ships changed. What changed is that it is measured rather than assumed.
+
+The lesson worth keeping: **when several rounds of varying everything produce a
+flat line, check what was held constant.**
+
 ---
 
 ## Scope decisions

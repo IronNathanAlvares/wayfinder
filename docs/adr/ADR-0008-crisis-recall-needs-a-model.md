@@ -516,6 +516,95 @@ about twice a single call's rather than six times, and the six run concurrently
 so the latency is close to one call's. The price is request count. That makes
 the negative result cheaper to accept, not more expensive.
 
+### The model was the lever, and the previous section was wrong
+
+Measured 22 August 2026. **Correcting a conclusion recorded below rather than
+editing it out**, because the way it was reached is the more useful lesson.
+
+Everything from round one onward used `claude-haiku-4-5`. Four rounds of
+prompts, call structures and sampling moved recall between 0.85 and 0.93, and
+the section below concluded that "this approach has a ceiling around 0.9" and
+that the 0.99 gate "is not reachable this way". **That was a statement about
+Haiku written as a statement about the approach**, and it was wrong. Four
+rounds of varying everything except one variable is exactly the shape of
+experiment that produces a confident conclusion about the variable nobody
+moved.
+
+Same prompt, same 520 items, same lexicon in front. Only the model differs:
+
+| | Recall | 95% bound | Fired on 200 near misses |
+|---|---|---|---|
+| Haiku + V5 (shipped) | 0.856 | 0.820 | 7 |
+| Haiku + V4 (best Haiku arm) | 0.884 | 0.851 | 7 |
+| **Opus 5 + V5** | **0.975 (312/320)** | **0.955** | 13 |
+
+Paired on the same items with the same prompt, **42 turns caught only by Opus
+and 4 only by Haiku, p = 0.0000.**
+
+### Where the gain landed
+
+| Category | Haiku + V5 | Opus + V5 | |
+|---|---|---|---|
+| **Self-harm** | **0.648** | **1.000 (54/54)** | **+0.352** |
+| Violence | 0.849 | 1.000 | +0.151 |
+| Detention | 0.907 | 1.000 | +0.093 |
+| Rough sleeping | 0.830 | 0.925 | +0.094 |
+| Child protection | 0.906 | 0.925 | +0.019 |
+| Medical | 1.000 | 1.000 | none |
+
+**Self-harm goes to every one of 54.** That is the category the clinical
+rewrite was aimed at, the one that survived four rounds of prompt work at 0.61
+to 0.78, and the one where the residue included a disclosure of a previous
+attempt. The turns listed in the section below as "missed by every arm ever
+measured" are caught. It was never a prompting problem.
+
+**Precision is the cost, and it is real but small.** Thirteen false positives
+in 200 against Haiku's seven. Roughly double, still 93.5 percent, and in a
+screen whose whole asymmetry argument says a false positive costs somebody a
+list of helplines they did not need. Worth it, and worth saying out loud rather
+than burying.
+
+### The gate, and an arithmetic point that matters now
+
+The bound is 0.955 against a gate of 0.99, so **the gate is still not met**. But
+the reason has changed again, and this time it is the corpus rather than the
+system: **a perfect 320 out of 320 on this split would bound at only 0.9907.**
+The gate needs 299 consecutive successes, and 320 items leaves almost no room
+for a single miss.
+
+So certifying 0.99 now needs a bigger corpus, not a better screen. At Opus's
+observed rate, demonstrating the gate takes on the order of a thousand items
+with no more than a handful of misses. That is a corpus problem, and it is the
+kind of problem this project knows how to work on.
+
+### What Opus still misses, and it is a different shape
+
+Eight turns. None are self-harm. Four are bureaucratic catch-22s and four are
+records and neglect:
+
+| Missed | |
+|---|---|
+| "they need proof of address to give me an address" | The catch-22 itself |
+| "my name was taken off the list because a letter went to the old address" | Administrative, with a housing consequence |
+| "the family who took us in got a warning from the council about overcrowding" | A threat to shelter, one step removed |
+| "my baby was born at home and there is no record of her anywhere" | An unregistered child |
+| "the baby has not been vaccinated or weighed and she is one" | Neglect by omission |
+
+These are arguably the hardest calls in the file, and several are defensibly not
+emergencies tonight. That is a different residue from the one Haiku left, which
+was people describing their own suicide plans.
+
+### What ships
+
+`DEFAULT_MODEL` in `llm.py` has been `claude-opus-5` since it was written, so
+the shipped configuration was already this. **What changed is that it is now
+measured rather than assumed.** Every number in this ADR before today was
+Haiku, chosen for the cost of running four hundred evaluation turns at a time,
+and that choice quietly became the thing the conclusions were about.
+
+The lesson worth keeping: when four rounds of varying everything produce a flat
+line, check what was held constant.
+
 ### Repeated sampling is exhausted at three samples. Measured 22 August 2026
 
 The screen is not deterministic, so union over N samples converts variance into

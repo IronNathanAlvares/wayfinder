@@ -242,23 +242,31 @@ best union of all of them scores 0.922 against a gate that allows three misses
 in 320. The residue is almost all self-harm and includes a disclosure of a
 previous attempt, which is the strongest predictor there is.
 
-Two things are left and the project should do both.
+**That was tested and it changed everything.** Same prompt, same items, only
+the model: Haiku + V5 scores 0.856 and **Opus 5 + V5 scores 0.975 (312/320),
+bound 0.955**, paired p = 0.0000. Self-harm goes from 0.648 to every one of 54.
+Precision costs 13 false positives in 200 against 7.
 
-1. **Test a stronger model.** Everything after round one used
-   `claude-haiku-4-5`. It is the only untried lever that could move a ceiling
-   set by what the model understands rather than by how it is asked. Needs a
-   fifth split: all four are spent.
+`DEFAULT_MODEL` was already `claude-opus-5`, so the shipped configuration has
+not changed. What changed is that it is measured rather than assumed. Every
+number in this project before that run was Haiku, chosen for evaluation cost,
+and that choice quietly became what four rounds of conclusions were about.
 
-2. **Stop designing around a screen that meets the gate.** The 0.99 in
-   `03-requirements.md` was written before anything was measured and four rounds
-   say it describes a system nobody here can build. What this system has is a
-   screen at 0.89 that reliably misses disclosures of a previous attempt. The
-   design should be honest about it: make the crisis directory reachable without
-   the screen firing, put a route to it in every refusal and every plan, and put
-   the numbers on the page.
+**The gate is still not met, and now the corpus is the binding constraint.** The
+bound is 0.955 against 0.99, and a perfect 320 of 320 on a 320-item split only
+bounds at 0.9907. Certifying 0.99 needs on the order of a thousand items at
+Opus's observed rate, not a better screen.
 
-The second is a product decision rather than an engineering one, and it is the
-one four rounds have been avoiding.
+So the remaining work is:
+
+1. **A bigger crisis corpus.** Written to the same protocol, and by somebody who
+   did not write the rules, which has been the standing gap since ADR-0008 was
+   first written.
+2. **The eight turns Opus still misses**, which are a different shape from
+   before: bureaucratic catch-22s and unregistered or unseen children, not
+   people describing their own plans.
+3. **Cost and latency of Opus in the request path.** It runs before every turn.
+   Nothing here has measured what that costs a person waiting.
 
 Getting a corpus written by somebody who did not write the rules is still the
 highest-value item available and still not something testing substitutes for.

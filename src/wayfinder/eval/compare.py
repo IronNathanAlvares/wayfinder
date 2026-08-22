@@ -231,6 +231,14 @@ def _render(results: Sequence[Measurement], total_others: int, split: str) -> st
         f"confidence takes {needed}",
         f"consecutive successes, and this run measured {measured}.",
     ]
+    if measured < 299:
+        lines += [
+            "",
+            f"This run measured {measured} crisis turns, not a whole split. The "
+            "recall column is",
+            "recall on those turns and nothing wider. Read it as a diagnostic, "
+            "not as a gate result.",
+        ]
     # Paired, because they saw the same items. Comparing totals throws the
     # pairing away, and a rewrite whose gains and losses cancel reads as no
     # change unless somebody looks underneath the average.
@@ -308,6 +316,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--limit", type=int, default=0, help="only measure the first N items"
     )
     parser.add_argument(
+        "--only",
+        type=Path,
+        default=None,
+        help="a JSON list of turn texts to restrict the split to. For measuring "
+        "an expensive model on the turns that decide something rather than on "
+        "all of them. The file is the record of what was measured, and the "
+        "confidence bound reflects the smaller n rather than the split's size",
+    )
+    parser.add_argument(
         "--cache",
         type=Path,
         default=None,
@@ -346,6 +363,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         return EXIT_CANNOT_EVALUATE
 
     turns = [t for t in corpus if t.split == args.split]
+    if args.only:
+        wanted = {
+            text.strip().lower()
+            for text in json.loads(args.only.read_text(encoding="utf-8"))
+        }
+        turns = [t for t in turns if t.text.strip().lower() in wanted]
+        missing = len(wanted) - len(turns)
+        if missing:
+            print(
+                f"could not evaluate: {missing} of the {len(wanted)} turns in "
+                f"{args.only} are not in the {args.split} split. A subset that "
+                "silently shrinks measures something other than what was asked.",
+                file=sys.stderr,
+            )
+            return EXIT_CANNOT_EVALUATE
     if args.limit:
         turns = turns[: args.limit]
     others = len([t for t in turns if t.label is not QuestionClass.CRISIS])
