@@ -64,6 +64,11 @@ All sixteen changes are in
 ```
 
 ```
+site/           the demo site. Static, no dependencies, no network requests
+scripts/        the demo script and the site data generator
+```
+
+```
 src/wayfinder/
 ├─ plan/        the DAG engine. No I/O, no framework, no model
 ├─ safety/      three ordered layers, plus the optional model screen

@@ -204,3 +204,50 @@ def test_the_shipped_data_directory_is_the_one_under_test() -> None:
     """Guards against the fixtures quietly pointing at a toy corpus."""
     data = Path(__file__).parents[2] / "src" / "wayfinder" / "corpus" / "data"
     assert (data / "tasks" / "ireland.yaml").exists()
+
+
+def test_a_planning_turn_answers_with_the_plan_rather_than_a_refusal(run: Any) -> None:
+    """Found by building the demo site, which is a bad way to find it.
+
+    "I have just arrived, what do I do?" is the question this whole project
+    exists to answer. It built a plan with six startable tasks and then answered
+    "I do not have a source I trust for that", because retrieval searched the
+    question text, that text carries no matchable terms, and verification then
+    withdrew the answer for having no citations.
+
+    A planning turn is not a search. The sources are the sources of the tasks
+    the plan already chose.
+    """
+    result = run("I have just arrived, what do I do?", AMARA)
+    answer = result["answer"]
+
+    assert "do not have a source" not in answer.text
+    assert answer.citations, "a plan was built and then answered without sources"
+
+    frontier = result["plan"].frontier_order
+    cited = {span.task_id for span in answer.citations}
+    assert cited <= set(frontier), "cited a task that is not in the plan"
+    assert len(cited) >= 3, "only a fraction of the frontier reached the answer"
+
+
+def test_the_planning_answer_follows_the_plan_ordering(run: Any) -> None:
+    """The ordering is the product. An answer that lists the same tasks in
+    relevance order would throw away the thing the plan engine computed."""
+    result = run("what should I do first?", AMARA)
+    citations = result["answer"].citations
+    if not citations:
+        pytest.skip("this phrasing did not route to planning")
+
+    frontier = list(result["plan"].frontier_order)
+    seen = [s.task_id for s in citations]
+    assert seen == sorted(seen, key=frontier.index)
+
+
+def test_a_procedural_turn_still_searches_rather_than_planning(run: Any) -> None:
+    """The plan-aware branch must not swallow the ordinary path. A procedural
+    question has a plan in state too, and it should still be answered from the
+    question rather than from the frontier."""
+    result = run("how do I open a bank account", AMARA)
+    titles = {span.title for span in result["answer"].citations}
+    assert titles, "a procedural question lost its citations"
+    assert any("bank" in t.lower() for t in titles), titles

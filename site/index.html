@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en-IE">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wayfinder — an ordered plan, and a refusal to answer what needs a person</title>
+<meta name="description" content="A LangGraph agent team that turns &quot;I have just arrived in Ireland, what do I do?&quot; into an ordered plan with prerequisites. Every statement carries a dated citation. Any question needing a judgement about someone's entitlements goes to a human caseworker.">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="#top">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">Wayfinder</span>
+    </a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#plan">The plan</a>
+      <a href="#ask">Ask it</a>
+      <a href="#handoff">The handoff</a>
+      <a href="#limits">Limits</a>
+      <a href="#measured">Measured</a>
+    </nav>
+    <button id="theme" class="theme" type="button" aria-label="Switch colour theme">
+      <span class="theme-dot" aria-hidden="true"></span>
+      <span id="theme-label">Auto</span>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ───────────────────────────── hero ───────────────────────────── -->
+<section id="top" class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Portfolio project &middot; LangGraph &middot; Ireland</p>
+    <h1>
+      An ordered plan with prerequisites, and a refusal to answer
+      the questions that need a person.
+    </h1>
+    <p class="lede">
+      Somebody who has just arrived faces about forty administrative tasks across
+      housing, healthcare, schooling, welfare and legal status. They are spread
+      across agencies that do not talk to each other, and they have hard
+      prerequisites nobody tells you about. Getting the order wrong costs weeks.
+    </p>
+
+    <dl class="stats" id="hero-stats"></dl>
+
+    <p class="note">
+      Everything on this page was produced by running the real system and
+      recording what it said. Nothing here is a mockup, and nothing here
+      is written by hand.
+      <a href="#how">How that works, and what it leaves out.</a>
+    </p>
+  </div>
+</section>
+
+<!-- ───────────────────────────── the plan ───────────────────────────── -->
+<section id="plan" class="band">
+  <div class="wrap">
+    <h2>The plan is a graph, not a list</h2>
+    <p class="section-lede">
+      Ask a general model what to do after arriving and you get a competent
+      bulleted list that is close to useless, because it does not tell you which
+      items you cannot start yet and what specifically unblocks them. Here the
+      ordering is <em>computed</em> from a dependency graph, so it is the same
+      every time and it can be checked.
+    </p>
+
+    <div class="persona">
+      <p>
+        <strong>Amara</strong> arrived on 1 August 2026 and applied for
+        protection three days later. She is sleeping rough while she waits for
+        accommodation, and she has a seven-year-old with her.
+      </p>
+      <div class="tabs" role="tablist" aria-label="Point in time">
+        <button role="tab" id="tab-weekOne" aria-controls="panel-plan" aria-selected="true" data-plan="weekOne">Two weeks in</button>
+        <button role="tab" id="tab-sixWeeksLater" aria-controls="panel-plan" aria-selected="false" data-plan="sixWeeksLater">Six weeks later</button>
+      </div>
+    </div>
+
+    <div id="panel-plan" role="tabpanel" aria-labelledby="tab-weekOne">
+      <div class="columns" id="plan-columns"></div>
+      <div id="plan-diff" class="diff" hidden></div>
+      <div id="plan-questions" class="questions"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── ask it ───────────────────────────── -->
+<section id="ask" class="band alt">
+  <div class="wrap">
+    <h2>Every question takes one of five routes</h2>
+    <p class="section-lede">
+      The route is decided before anything is generated. Two of the five never
+      reach a language model at all: a crisis is answered from a dated directory
+      of real phone numbers, and a question about somebody's entitlements is
+      handed to a named caseworker.
+    </p>
+
+    <div class="ask-grid">
+      <div class="ask-list" role="tablist" aria-orientation="vertical" aria-label="Example questions" id="ask-list"></div>
+      <div class="ask-panel" id="ask-panel" role="tabpanel" tabindex="0"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── handoff ───────────────────────────── -->
+<section id="handoff" class="band">
+  <div class="wrap">
+    <h2>The handoff is the product</h2>
+    <p class="section-lede">
+      This is the part the design optimises for. An entitlement question stops
+      the graph, and what reaches the caseworker is the question, a short summary
+      of the situation and nothing else. She answers once. The system relays her
+      words rather than restating them in its own voice, because doing that would
+      launder a person's judgement into machine confidence.
+    </p>
+    <div class="handoff" id="handoff-flow"></div>
+    <p class="note">
+      The pause is durable. It is a row in a database, not a variable in memory,
+      so a caseworker can answer on Thursday a question asked on Monday and the
+      process can restart in between. There is a test that kills the process
+      mid-pause and resumes it in a different one.
+    </p>
+  </div>
+</section>
+
+<!-- ───────────────────────────── limits ───────────────────────────── -->
+<section id="limits" class="band alt">
+  <div class="wrap">
+    <h2>What it will not do, and why that is structural</h2>
+    <p class="section-lede">
+      Each of these is enforced by the shape of the graph rather than by asking a
+      model nicely, and each has a test.
+    </p>
+
+    <div class="cards">
+      <article class="card">
+        <h3>No eligibility determinations</h3>
+        <p>
+          "Do I qualify for X?" is not answered. There is no edge in the compiled
+          graph from a determination question to a generated answer, and a test
+          deletes the human node and proves generation becomes unreachable.
+        </p>
+      </article>
+      <article class="card">
+        <h3>No generated content in a crisis</h3>
+        <p>
+          A crisis response is read out of a dated directory of verified numbers.
+          A model improvising during somebody's emergency is unacceptable, and a
+          model is not needed to read out a phone number.
+        </p>
+      </article>
+      <article class="card">
+        <h3>No claim without a dated source</h3>
+        <p>
+          Anything not resting on a cited span is removed rather than softened.
+          "You may be entitled to X" is still an entitlement claim, and it is
+          worse than silence because it sounds like permission to plan around it.
+        </p>
+      </article>
+      <article class="card">
+        <h3>No refusal that leaves you stuck</h3>
+        <p>
+          Every refusal names somebody else who can help, with a real number.
+          Somebody refused and given nothing goes and asks a system with no such
+          scruples, and gets a confident wrong answer instead.
+        </p>
+      </article>
+    </div>
+
+    <details class="topology">
+      <summary>The compiled graph, drawn from the real thing</summary>
+      <p class="note">
+        Read off the compiled LangGraph rather than sketched. Determination
+        questions reach composition only through <code>handoff</code>; crisis and
+        decline are terminal.
+      </p>
+      <div id="topology"></div>
+    </details>
+  </div>
+</section>
+
+<!-- ───────────────────────────── measured ───────────────────────────── -->
+<section id="measured" class="band">
+  <div class="wrap">
+    <h2>The number the project actually turns on</h2>
+    <p class="section-lede">
+      The crisis screen has to catch somebody saying they have nowhere to sleep,
+      or that they have taken something, when they never use those words. It was
+      measured on a held-out corpus of 320 crisis turns and 200 near misses,
+      written before anything was run against it.
+    </p>
+
+    <div class="chart" id="chart"></div>
+
+    <div class="findings">
+      <article class="finding">
+        <h3>A hand-written pattern list is not enough</h3>
+        <p>
+          It scores <strong>1.000</strong> on the corpus it was tuned against and
+          <strong>0.100</strong> on a held-out one. The design assumed a
+          deterministic screen could reach 0.99. That assumption was tested and
+          it is false.
+        </p>
+      </article>
+      <article class="finding">
+        <h3>Four rounds of prompt work moved it by 0.04</h3>
+        <p>
+          Rewriting the self-harm section from the published clinical taxonomy,
+          giving every category equal emphasis, screening each category in its
+          own call, and unioning three samples. Between them: 0.85 to 0.93.
+        </p>
+      </article>
+      <article class="finding">
+        <h3>Changing the model moved it by 0.12</h3>
+        <p>
+          Same prompt, same items. Self-harm recall went from
+          <strong>0.648</strong> to <strong>every one of 54 items</strong>. Four
+          rounds of varying everything except the model had produced a confident
+          conclusion about the model nobody moved.
+        </p>
+      </article>
+    </div>
+
+    <div class="caveats">
+      <h3>What these numbers are not</h3>
+      <ul>
+        <li>
+          <strong>The gate is still unmet.</strong> The 95&nbsp;percent lower
+          bound is 0.955 against a target of 0.99. A perfect 320 out of 320 on a
+          320-item split would bound at only 0.9907, so certifying 0.99 needs a
+          corpus about three times this size.
+        </li>
+        <li>
+          <strong>The corpus has one author.</strong> The same person wrote the
+          pattern list, every prompt and all four held-out splits. That is the
+          largest limitation here and no procedure fixes it. It needs a few
+          hundred real messages, or a couple of hours from somebody who has read
+          them.
+        </li>
+        <li>
+          <strong>Recall is not the only cost.</strong> The stronger model fires
+          on 13 of 200 near misses against the weaker model's 7. Roughly double.
+          Worth it in a screen whose whole asymmetry is that a false positive
+          costs somebody a list of helplines they did not need, but worth saying.
+        </li>
+      </ul>
+    </div>
+
+    <details class="misses">
+      <summary>The eight turns the shipped screen still misses</summary>
+      <div id="misses"></div>
+    </details>
+  </div>
+</section>
+
+<!-- ───────────────────────────── how this page works ───────────────────────────── -->
+<section id="how" class="band alt">
+  <div class="wrap">
+    <h2>How this page works, and its security</h2>
+    <p class="section-lede">
+      This is a recording, and it is built so that it cannot be anything else.
+    </p>
+
+    <div class="cards">
+      <article class="card">
+        <h3>It makes no network requests</h3>
+        <p>
+          Not one, after the page loads. The data is a JavaScript file, not a
+          fetch, so the Content-Security-Policy can set
+          <code>connect-src 'none'</code>. The page cannot send anything anywhere,
+          which is checkable in any browser's network tab.
+        </p>
+      </article>
+      <article class="card">
+        <h3>No API key exists here</h3>
+        <p>
+          No model is called from this page, so there is no key to leak, no
+          endpoint to abuse and no per-visitor cost. The screening that produced
+          these results ran offline against a held-out corpus.
+        </p>
+      </article>
+      <article class="card">
+        <h3>No dependencies, no build step</h3>
+        <p>
+          Hand-written HTML, CSS and JavaScript. No framework, no bundler, no
+          package manager, so there is no third-party supply chain to audit and
+          nothing that can be compromised upstream.
+        </p>
+      </article>
+      <article class="card">
+        <h3>Nothing about you is collected</h3>
+        <p>
+          No analytics, no cookies, no fonts or scripts from anybody else's
+          server. The only thing stored is your light or dark preference, in
+          <code>localStorage</code>, on your own machine.
+        </p>
+      </article>
+      <article class="card">
+        <h3>Content is inserted as text</h3>
+        <p>
+          Every value from the data file reaches the page through
+          <code>textContent</code> rather than <code>innerHTML</code>, so a
+          string containing markup renders as characters instead of executing.
+          Belt and braces given the data is generated, but it costs nothing.
+        </p>
+      </article>
+      <article class="card">
+        <h3>Headers are set, not assumed</h3>
+        <p>
+          <code>vercel.json</code> in the repository sets the CSP alongside HSTS,
+          <code>X-Content-Type-Options</code>, <code>Referrer-Policy</code>, a
+          restrictive <code>Permissions-Policy</code>, and
+          <code>frame-ancestors 'none'</code> against clickjacking.
+        </p>
+      </article>
+    </div>
+
+    <div class="caveats">
+      <h3>What this page deliberately does not show</h3>
+      <ul>
+        <li>
+          <strong>The crisis example is one the pattern list catches.</strong>
+          The recordings run with no model, so the turn shown is a direct one.
+          The measurements section is where the hard cases live, and it says
+          plainly that the pattern list alone catches about one in ten.
+        </li>
+        <li>
+          <strong>No live input.</strong> You cannot type your own question,
+          because answering it would need a model call, a key, and a per-visitor
+          cost. A live version would also need authentication on the caseworker
+          queue, which does not exist yet.
+        </li>
+        <li>
+          <strong>This is not a deployed service.</strong> It is a portfolio
+          project. Nobody's real circumstances have ever been through it, and the
+          ethics document in the repository is explicit about the distance
+          between the two.
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <p>
+      Wayfinder &middot; a portfolio project by Nathan Alvares.
+      <a href="https://github.com/IronNathanAlvares/wayfinder" rel="noopener noreferrer">Source and design documents on GitHub</a>.
+    </p>
+    <p class="foot-note" id="foot-note"></p>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

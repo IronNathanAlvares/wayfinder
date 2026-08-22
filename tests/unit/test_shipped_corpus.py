@@ -20,6 +20,7 @@ from wayfinder.corpus.models import Corpus, StalenessBand
 from wayfinder.plan.builder import build_plan
 from wayfinder.plan.refs import ArtefactKind, artefact_kind
 from wayfinder.plan.situation import Accommodation, ProtectionStage, Situation
+from wayfinder.retrieval.index import Index
 
 BUILT_ON = date(2026, 8, 18)
 
@@ -141,3 +142,39 @@ def test_shipped_task_files_parse_as_lists_of_mappings() -> None:
         loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
         assert isinstance(loaded, list)
         assert all(isinstance(record, dict) for record in loaded)
+
+
+# --- retrieving by task rather than by query ---------------------------------
+
+
+def test_spans_for_returns_the_tasks_asked_for_in_that_order() -> None:
+    """A planning turn's answer follows the plan's ordering, so retrieval has to
+    preserve the order it was given rather than impose a relevance one."""
+    today = date(2026, 8, 18)
+    index = Index(load_corpus(DEFAULT_CORPUS, today=today), today=today)
+
+    wanted = ["gp.register", "ppsn.apply", "school.enrol_primary"]
+    spans = index.spans_for(wanted)
+
+    assert [s.task_id for s in spans] == wanted
+
+
+def test_spans_for_gives_one_source_per_task_by_default() -> None:
+    """A task with three sources should not push the other tasks out of a
+    plan-shaped answer."""
+    today = date(2026, 8, 18)
+    index = Index(load_corpus(DEFAULT_CORPUS, today=today), today=today)
+
+    spans = index.spans_for(["ppsn.apply"])
+    assert len(spans) == 1
+    assert index.spans_for(["ppsn.apply"], limit_per_task=5)[0].task_id == "ppsn.apply"
+
+
+def test_spans_for_skips_a_task_it_has_no_source_for() -> None:
+    """Silently returning nothing for an unknown id is right: the alternative is
+    an answer that cites a task the corpus cannot support."""
+    today = date(2026, 8, 18)
+    index = Index(load_corpus(DEFAULT_CORPUS, today=today), today=today)
+
+    assert index.spans_for(["no.such.task"]) == ()
+    assert len(index.spans_for(["no.such.task", "ppsn.apply"])) == 1

@@ -686,6 +686,76 @@ what ships changed. What changed is that it is measured rather than assumed.
 The lesson worth keeping: **when several rounds of varying everything produce a
 flat line, check what was held constant.**
 
+## 25. The headline question was answered with a refusal
+
+Found by building the demo site, which is a bad way to find it.
+
+"I have just arrived, what do I do?" is the question this project exists to
+answer, and it is on the front page of the README. The graph classified it as
+planning, built a plan with six startable tasks in dependency order, and then
+replied **"I do not have a source I trust for that."**
+
+The trace says it plainly:
+
+```
+planner    6 startable, 12 blocked
+retrieve   0 span(s)
+compose    0 citation(s)
+verify     no citations, answer withdrawn
+```
+
+Retrieval searched the question text. "What do I do?" carries no terms worth
+matching, BM25 returned nothing, and verification then withdrew a perfectly good
+plan for having no citations. Every layer behaved exactly as designed and the
+result was useless.
+
+**A planning turn is not a search.** The plan engine has already decided which
+tasks apply and in what order, so `Index.spans_for` retrieves the sources of
+those tasks and `retrieve` uses it whenever a plan has a frontier. The answer is
+now the plan, each task carries its own dated source, and verification keeps all
+six lines.
+
+Three tests cover it: the answer names the frontier and carries citations, the
+citations follow the plan's ordering rather than a relevance score, and a
+procedural question still searches rather than being swallowed by the new
+branch.
+
+The lesson is about where the tests were pointed. `test_a_planning_turn_produces_a_plan_before_it_answers`
+asserted the plan existed and never read the answer, so the suite was green
+while the flagship path returned a refusal. Every test of that path checked
+state; none checked what a person would actually see.
+
+## 26. The demo site, and why it is a recording
+
+`site/` is a static page with no framework, no build step, no package manifest
+and no network requests after load. Everything on it, the plans, the five
+routes, the handoff, the graph diagram and the measurement chart, is generated
+by `scripts/build_site_data.py` running the real system. Nothing is written by
+hand and a test regenerates the file and fails if it differs, which is how the
+page is stopped from describing a system that has changed underneath it.
+
+The security posture follows from the architecture rather than being bolted on.
+Because the data ships as a JavaScript file rather than a fetch, the page makes
+no requests at all, so the Content-Security-Policy can set
+`connect-src 'none'`, `default-src 'none'` and `object-src 'none'` with no
+`unsafe-inline` anywhere. No model is called, so there is no key to leak, no
+endpoint to abuse and no per-visitor cost. No dependencies means no third-party
+supply chain. Every value reaches the DOM through `textContent`, and tests
+assert there is no `innerHTML`, no inline script, no inline handler and no
+external subresource in the whole site.
+
+Contrast was measured rather than eyeballed: every text pair clears WCAG 2.2 AA
+in both themes and most clears AAA, and one border colour was darkened after
+measuring at 1.6:1 where the state it carries needs 3:1. Status is never
+signalled by colour alone, because "can start" against "blocked" is exactly the
+red/green pairing colour-blind readers lose first, so every state carries an
+icon and a word as well.
+
+What the page deliberately does not do is take input. Answering a typed question
+needs a model call, a key and a per-visitor cost, and a live version would need
+authentication on the caseworker queue, which does not exist yet. The page says
+so rather than implying otherwise.
+
 ---
 
 ## Scope decisions

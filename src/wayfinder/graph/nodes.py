@@ -259,11 +259,25 @@ def supervisor(state: WayfinderState) -> Command[str]:
 
 def make_retrieve(deps: Deps) -> Node:
     def retrieve(state: WayfinderState) -> dict[str, object]:
-        domain = Domain(state.active_domain) if state.active_domain else None
-        spans = deps.index.search(state.current_question, domain=domain, limit=4)
+        """Search by the question, unless a plan has already answered it.
+
+        A planning turn arrives here with a frontier the plan engine computed,
+        and "what do I do?" has no terms worth matching, so a keyword search
+        returns nothing and verification then withdraws the whole answer for
+        having no citations. When there is a plan, the spans are the sources of
+        the tasks in it, which is both what the person asked for and properly
+        cited.
+        """
+        if state.plan is not None and state.plan.frontier_order:
+            spans = deps.index.spans_for(state.plan.frontier_order, limit_per_task=1)
+            detail = f"{len(spans)} span(s) for the plan frontier"
+        else:
+            domain = Domain(state.active_domain) if state.active_domain else None
+            spans = deps.index.search(state.current_question, domain=domain, limit=4)
+            detail = f"{len(spans)} span(s)"
         return {
             "retrieved": spans,
-            "trace": state.traced("retrieve", f"{len(spans)} span(s)"),
+            "trace": state.traced("retrieve", detail),
         }
 
     return retrieve

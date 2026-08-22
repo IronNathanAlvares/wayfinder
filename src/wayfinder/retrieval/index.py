@@ -234,6 +234,34 @@ class Index:
         scored.sort(key=lambda pair: (-pair[0], self._docs[pair[1]][0].id))
         return tuple(self._span(i, score) for score, i in scored[:limit])
 
+    def spans_for(
+        self,
+        task_ids: Sequence[str],
+        *,
+        limit_per_task: int = 1,
+    ) -> tuple[RetrievedSpan, ...]:
+        """The spans backing named tasks, in the order the tasks were given.
+
+        A planning turn is not a search. "What do I do?" carries no terms worth
+        matching, and the plan engine has already decided which tasks apply and
+        in what order. Retrieving by task id says exactly that, where a keyword
+        query over the same question returns nothing and composition then
+        withdraws a perfectly good plan for having no citations.
+
+        Ordering is the caller's, so the answer follows the plan's ordering
+        rather than a relevance score, and a score of 0.0 is recorded because
+        nothing here was ranked.
+        """
+        by_task: dict[str, list[int]] = {}
+        for i, (task, _source) in enumerate(self._docs):
+            by_task.setdefault(task.id, []).append(i)
+
+        spans: list[RetrievedSpan] = []
+        for task_id in task_ids:
+            for doc in by_task.get(task_id, ())[:limit_per_task]:
+                spans.append(self._span(doc, 0.0))
+        return tuple(spans)
+
     def _score(self, terms: Sequence[str], doc: int) -> float:
         frequencies = self._frequencies[doc]
         length = self._lengths[doc]

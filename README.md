@@ -19,7 +19,7 @@ in the design rather than in the test.
 
 Start with [`HANDOFF.md`](HANDOFF.md), and see
 [`docs/12-changes-from-design.md`](docs/12-changes-from-design.md) for the
-twenty-four things building this proved wrong about the design.
+twenty-six things building this proved wrong about the design.
 
 Standalone project. Nothing else needs to exist for it to run.
 
@@ -79,6 +79,19 @@ Python 3.12 and [uv](https://docs.astral.sh/uv/).
 uv sync --all-groups --all-extras
 uv run python scripts/demo.py
 ```
+
+Or open the demo site, which is the same thing with a face on it:
+
+```bash
+python -m http.server 4173 --directory site
+```
+
+It is static, it makes no network requests at all, and everything on it was
+produced by running the real system: `scripts/build_site_data.py` records the
+plans, the routes, the handoff and the measurements, and a test regenerates the
+file and fails if the page and the code have drifted apart. There is no API key
+anywhere in it, which is what lets its Content-Security-Policy say
+`connect-src 'none'`.
 
 That is the whole system in one run: a plan, a cited answer, an entitlement
 question pausing for a caseworker, the caseworker's answer coming back
@@ -396,7 +409,7 @@ Each is enforced structurally and each has a test. See
 | [09 Test and eval plan](docs/09-test-and-eval-plan.md) | Corpus, gates, topology tests |
 | [10 Risk and ethics](docs/10-risk-and-ethics.md) | Who can be harmed, and what stops it |
 | [11 Interview pitch](docs/11-interview-pitch.md) | Pitch, demo, likely questions |
-| [12 Changes from the design](docs/12-changes-from-design.md) | The twenty-four things building it proved wrong |
+| [12 Changes from the design](docs/12-changes-from-design.md) | The twenty-six things building it proved wrong |
 | [ADRs](docs/adr/) | Eight decision records |
 
 ---
