@@ -138,3 +138,211 @@ def test_serve_refuses_without_the_model_screen_too(
     code = main([*TODAY, "serve", "--db", str(tmp_path / "unused.sqlite")])
     assert code == EXIT_CANNOT_EVALUATE
     assert not (tmp_path / "unused.sqlite").exists(), "it started before checking"
+
+
+# --- minting a caseworker token ----------------------------------------------
+
+
+def test_minting_prints_the_token_once_and_the_digest_to_store(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The token is shown and never stored; only the digest is configured. That
+    is what makes a leaked configuration harmless."""
+    from wayfinder.api.auth import ENV_VAR, hash_token
+
+    assert main(["caseworker-token", "Clare Nolan, Irish Refugee Council"]) == EXIT_OK
+    out = capsys.readouterr().out
+
+    assert "Clare Nolan, Irish Refugee Council" in out
+    assert ENV_VAR in out
+
+    # The printed token and the printed digest must actually correspond, or
+    # somebody follows these instructions and cannot log in.
+    token = next(
+        line.strip()
+        for line in out.splitlines()
+        if line.startswith("    ") and "=" not in line and len(line.strip()) > 30
+    )
+    assert hash_token(token) in out
+
+
+def test_every_minted_token_differs(capsys: pytest.CaptureFixture[str]) -> None:
+    seen = set()
+    for _ in range(3):
+        main(["caseworker-token", "Somebody"])
+        seen.add(capsys.readouterr().out)
+    assert len(seen) == 3
+
+
+def test_minting_warns_against_sharing_a_token(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A shared token makes the name on a determination meaningless, and the
+    place somebody is most likely to consider sharing one is right here."""
+    main(["caseworker-token", "Somebody"])
+    assert "never share a token" in capsys.readouterr().out
+
+
+# --- serving with a registry --------------------------------------------------
+
+
+def test_serve_reads_a_caseworker_file(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The file option has to actually reach the app, or the queue is shut while
+    the operator believes it is open."""
+    import json
+
+    import uvicorn
+
+    from wayfinder.api.auth import mint_token
+
+    monkeypatch.setattr(uvicorn, "run", lambda app, **kw: None)
+    _, digest = mint_token()
+    registry = tmp_path / "caseworkers.json"
+    registry.write_text(
+        json.dumps([{"name": "Clare Nolan", "token_sha256": digest}]), encoding="utf-8"
+    )
+
+    code = main(
+        [
+            *TODAY,
+            "serve",
+            "--no-model-screen",
+            "--db",
+            str(tmp_path / "q.sqlite"),
+            "--caseworkers",
+            str(registry),
+        ]
+    )
+
+    assert code == EXIT_OK
+    assert "1 caseworker(s)" in capsys.readouterr().out
+
+
+def test_serve_says_at_startup_when_the_queue_is_closed(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Discovering a shut queue at the first 503 means discovering it when a
+    caseworker is already waiting on it."""
+    import uvicorn
+
+    from wayfinder.api.auth import ENV_VAR
+
+    monkeypatch.delenv(ENV_VAR, raising=False)
+    monkeypatch.setattr(uvicorn, "run", lambda app, **kw: None)
+
+    main([*TODAY, "serve", "--no-model-screen", "--db", str(tmp_path / "q.sqlite")])
+
+    out = capsys.readouterr().out
+    assert "queue is closed" in out
+    assert "caseworker-token" in out, "it said what was wrong but not how to fix it"
+
+
+def test_serve_refuses_to_start_on_an_unreadable_registry(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Exit 2, and before the checkpointer is opened.
+
+    Starting anyway would serve the applicant endpoints with the queue silently
+    shut, which looks identical to working until somebody escalates.
+    """
+    import uvicorn
+
+    monkeypatch.setattr(uvicorn, "run", lambda app, **kw: None)
+    db = tmp_path / "unused.sqlite"
+
+    code = main(
+        [
+            *TODAY,
+            "serve",
+            "--no-model-screen",
+            "--db",
+            str(db),
+            "--caseworkers",
+            str(tmp_path / "nope.json"),
+        ]
+    )
+
+    assert code == EXIT_CANNOT_EVALUATE
+    assert "caseworker registry" in capsys.readouterr().err
+    assert not db.exists(), "it opened the queue before checking the registry"
+
+
+def test_a_bad_registry_error_does_not_reach_the_terminal_with_a_token_in_it(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The same no-echo property as `load_caseworkers`, checked at the boundary
+    where it would actually end up in a shell history or a log."""
+    import json
+
+    secret = "super-secret-token-pasted-in-the-wrong-field"
+    registry = tmp_path / "caseworkers.json"
+    registry.write_text(
+        json.dumps([{"name": "Clare Nolan", "token_sha256": secret}]), encoding="utf-8"
+    )
+
+    main(
+        [
+            *TODAY,
+            "serve",
+            "--no-model-screen",
+            "--db",
+            str(tmp_path / "q.sqlite"),
+            "--caseworkers",
+            str(registry),
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert secret not in captured.err + captured.out
+
+
+# --- a missing optional extra -------------------------------------------------
+
+
+def test_serve_without_the_api_extra_says_which_flag_fixes_it(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Exit 2 and one line, not a ModuleNotFoundError stack.
+
+    `uv sync` installs neither extra on purpose, so the first command a new
+    reader runs can be the one that needs one. A traceback does not tell them
+    which flag to add.
+    """
+    import builtins
+
+    real_import = builtins.__import__
+
+    def no_uvicorn(name: str, *rest: Any) -> Any:
+        if name == "uvicorn":
+            raise ModuleNotFoundError("No module named 'uvicorn'")
+        return real_import(name, *rest)
+
+    monkeypatch.setattr(builtins, "__import__", no_uvicorn)
+
+    code = main(
+        [*TODAY, "serve", "--no-model-screen", "--db", str(tmp_path / "q.sqlite")]
+    )
+
+    assert code == EXIT_CANNOT_EVALUATE
+    err = capsys.readouterr().err
+    assert "uv sync --extra api" in err
+    assert "Traceback" not in err
+
+
+def test_the_model_screen_without_the_llm_extra_says_which_flag_fixes_it(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The `llm` package raises a good message, but as an unhandled RuntimeError
+    it still reached the terminal as a stack."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-not-real")
+    monkeypatch.setattr(
+        "wayfinder.safety.llm.AnthropicCrisisScreen",
+        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("needs anthropic")),
+    )
+
+    code = main([*TODAY, "ask", "what do I do first?"])
+
+    assert code == EXIT_CANNOT_EVALUATE
+    assert "uv sync --extra llm" in capsys.readouterr().err

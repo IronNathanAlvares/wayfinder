@@ -343,8 +343,9 @@
         <li>
           <strong>No live input.</strong> You cannot type your own question,
           because answering it would need a model call, a key, and a per-visitor
-          cost. A live version would also need authentication on the caseworker
-          queue, which does not exist yet.
+          cost. The caseworker queue a live version would expose is behind a
+          credential, but a thread id is not, so the applicant side is still not
+          something to point at real people.
         </li>
         <li>
           <strong>This is not a deployed service.</strong> It is a portfolio

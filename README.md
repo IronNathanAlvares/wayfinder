@@ -4,7 +4,7 @@ A LangGraph agent team that turns "I have just arrived, what do I do?" into an
 ordered plan with prerequisites, and refuses to answer the questions that need a
 human.
 
-**Status: M1 to M6 built. 409 tests, mypy strict, four import contracts.** A
+**Status: M1 to M6 built. 611 tests, mypy strict, four import contracts.** A
 question goes in through the CLI or the API, the safety layers classify it, a
 determination pauses the graph for a named caseworker, and the answer comes back
 with dated citations or with a refusal that names somebody who can help.
@@ -19,7 +19,7 @@ in the design rather than in the test.
 
 Start with [`HANDOFF.md`](HANDOFF.md), and see
 [`docs/12-changes-from-design.md`](docs/12-changes-from-design.md) for the
-twenty-six things building this proved wrong about the design.
+twenty-seven things building this proved wrong about the design.
 
 Standalone project. Nothing else needs to exist for it to run.
 
@@ -79,6 +79,9 @@ Python 3.12 and [uv](https://docs.astral.sh/uv/).
 uv sync --all-groups --all-extras
 uv run python scripts/demo.py
 ```
+
+Every command, Docker, the caseworker credentials and what is deliberately not
+secured are in [`docs/14-getting-started.md`](docs/14-getting-started.md).
 
 Or open the demo site, which is the same thing with a face on it:
 
@@ -162,11 +165,20 @@ ANTHROPIC_API_KEY=... docker compose up
 | `POST /v1/threads/{id}/turn` | Ask something. Answers, refuses, or pauses |
 | `GET /v1/threads/{id}/plan` | What can start now, what is waiting, what is unknown |
 | `DELETE /v1/threads/{id}` | Forget it. NG5, and it is expected to be used |
-| `GET /v1/queue` | Everything waiting on a caseworker, with the context to answer it |
-| `POST /v1/queue/{id}/respond` | A named person's answer, relayed rather than restated |
+| `GET /v1/queue` | **Signed in.** Everything waiting on a caseworker, with the context to answer it |
+| `POST /v1/queue/{id}/respond` | **Signed in.** A named person's answer, relayed rather than restated |
+| `GET /v1/whoami` | **Signed in.** What your token will sign a determination as |
 | `GET /v1/corpus/health` | **503** once a source has aged out of retrieval |
 
-Two of those are the point. The queue is the endpoint the design optimises for,
+The queue endpoints need a caseworker token, and the interesting part is not the
+lock. `answered_by` used to be free text in the request body, so anybody who
+could reach the endpoint could sign a determination with any name. ADR-0004
+rests on a determination being traceable to a named human, and a self-declared
+name is not that, so **the name now comes from the credential and the field is
+gone**. With nobody registered the queue returns 503 rather than opening, and no
+token is ever logged, echoed in an error, or returned in a response.
+
+Two of those endpoints are the point. The queue is the endpoint the design optimises for,
 because Clare the caseworker is the user whose time this project is actually
 trying to save. And corpus health returns 503 rather than a green page with a
 list of rotting sources on it, because staleness is the failure this system is
@@ -417,7 +429,8 @@ Each is enforced structurally and each has a test. See
 | [10 Risk and ethics](docs/10-risk-and-ethics.md) | Who can be harmed, and what stops it |
 | [11 Interview pitch](docs/11-interview-pitch.md) | Pitch, demo, likely questions |
 | [13 Deploying the site](docs/13-deploying-the-site.md) | The static demo, its headers, and why the API is not on Vercel |
-| [12 Changes from the design](docs/12-changes-from-design.md) | The twenty-six things building it proved wrong |
+| [12 Changes from the design](docs/12-changes-from-design.md) | The twenty-seven things building it proved wrong |
+| [14 Getting started](docs/14-getting-started.md) | Clone to running: every command, Docker, caseworker auth |
 | [ADRs](docs/adr/) | Eight decision records |
 
 ---

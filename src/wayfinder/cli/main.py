@@ -46,6 +46,21 @@ class CannotEvaluateError(Exception):
     """
 
 
+def _needs_extra(exc: Exception, extra: str, what: str) -> CannotEvaluateError:
+    """A missing optional dependency, said in one line instead of a traceback.
+
+    `uv sync` deliberately installs neither the web framework nor the model
+    client, because the plan engine and the safety layers are usable as a
+    library without them. The cost of that choice is that the first thing a new
+    reader runs can be the thing that needs one, and a `ModuleNotFoundError`
+    stack does not tell them which flag fixes it.
+    """
+    return CannotEvaluateError(
+        f"{what} needs the '{extra}' extra, which is not installed. "
+        f"Install it with: uv sync --extra {extra}"
+    )
+
+
 def _load_situation(path: Path) -> Situation:
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     return Situation.model_validate(raw)
@@ -185,9 +200,12 @@ def _crisis_screen(args: argparse.Namespace) -> object | None:
             "deterministic screen alone and accept what ADR-0008 measured."
         )
         raise CannotEvaluateError(msg)
-    from wayfinder.safety.llm import AnthropicCrisisScreen
+    try:
+        from wayfinder.safety.llm import AnthropicCrisisScreen
 
-    return AnthropicCrisisScreen()
+        return AnthropicCrisisScreen()
+    except (ModuleNotFoundError, RuntimeError) as exc:
+        raise _needs_extra(exc, "llm", "the model crisis screen") from exc
 
 
 def _cmd_ask(args: argparse.Namespace) -> int:
@@ -240,20 +258,77 @@ def _cmd_serve(args: argparse.Namespace) -> int:
     is built around lasts days. An in-memory one would lose every caseworker
     queue item on restart, which is the one failure this design cannot have.
     """
-    import uvicorn
+    try:
+        import uvicorn
 
-    from wayfinder.api import create_app
+        from wayfinder.api import create_app
+    except ModuleNotFoundError as exc:
+        raise _needs_extra(exc, "api", "the API") from exc
+
+    from wayfinder.api.auth import AuthError, load_caseworkers
     from wayfinder.graph.checkpoint import sqlite_checkpointer
 
     screen = _crisis_screen(args)
+
+    try:
+        staff = load_caseworkers(path=args.caseworkers)
+    except AuthError as exc:
+        # Exit 2. A registry that cannot be read is a configuration problem,
+        # not a verdict about anything, and starting anyway would open the API
+        # with the queue silently shut.
+        print(f"could not read the caseworker registry: {exc}", file=sys.stderr)
+        return EXIT_CANNOT_EVALUATE
+
     with sqlite_checkpointer(args.db) as saver:
         app = create_app(
             checkpointer=saver,
             today=args.today,
             model_screen=screen,  # type: ignore[arg-type]
+            caseworkers=staff,
         )
         print(f"Threads and queue state persist in {args.db}.")
+        # Said at startup rather than discovered at the first 503. Nobody
+        # registered is a working configuration for the applicant endpoints and
+        # a closed door for the queue, and that is worth knowing before a
+        # caseworker is waiting on it.
+        if staff.configured:
+            print(f"{len(staff)} caseworker(s) may open the queue.")
+        else:
+            print(
+                "No caseworkers are registered, so the queue is closed. "
+                'Mint one with `wayfinder caseworker-token "Name"` and set '
+                "WAYFINDER_CASEWORKERS, or pass --caseworkers."
+            )
         uvicorn.run(app, host=args.host, port=args.port, log_level="info")
+    return EXIT_OK
+
+
+def _cmd_caseworker_token(args: argparse.Namespace) -> int:
+    """Mint a caseworker token and print the line to configure.
+
+    Printed once and never stored. Only the digest goes into configuration, so
+    losing the token means minting another rather than recovering this one,
+    which is the property that makes a leaked config harmless.
+    """
+    from wayfinder.api.auth import ENV_VAR, mint_token
+
+    token, digest = mint_token()
+
+    print(f"Token for {args.name}. Copy it now, it is not stored anywhere:")
+    print()
+    print(f"    {token}")
+    print()
+    print("Add this caseworker to the registry and restart the API:")
+    print()
+    print(
+        f"    {ENV_VAR}='"
+        + json.dumps([{"name": args.name, "token_sha256": digest}])
+        + "'"
+    )
+    print()
+    print("To add somebody to an existing registry, put both entries in the")
+    print("same JSON list. Two people must never share a token: the name on a")
+    print("determination comes from the credential that posted it.")
     return EXIT_OK
 
 
@@ -295,6 +370,17 @@ def build_parser() -> argparse.ArgumentParser:
     health_cmd = corpus_sub.add_parser("health", help="staleness report")
     health_cmd.set_defaults(func=_cmd_corpus_health)
 
+    token_cmd = subparsers.add_parser(
+        "caseworker-token",
+        help="mint a token for somebody who may answer determinations",
+    )
+    token_cmd.add_argument(
+        "name",
+        help="the name this person's determinations will be signed with, "
+        "for example 'Clare Nolan, Irish Refugee Council'",
+    )
+    token_cmd.set_defaults(func=_cmd_caseworker_token)
+
     ask_cmd = subparsers.add_parser("ask", help="run one turn through the graph")
     ask_cmd.add_argument("question")
     ask_cmd.add_argument("--situation", type=Path, default=None)
@@ -309,6 +395,14 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("wayfinder.sqlite"),
         help="where paused threads live. A file, so the queue survives restarts",
+    )
+    serve_cmd.add_argument(
+        "--caseworkers",
+        type=Path,
+        default=None,
+        help="a JSON file of caseworkers, instead of $WAYFINDER_CASEWORKERS. "
+        "Easier to manage than a long environment variable once there is more "
+        "than one person",
     )
     _add_screen_flag(serve_cmd)
     serve_cmd.set_defaults(func=_cmd_serve)

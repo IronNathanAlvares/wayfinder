@@ -7,7 +7,7 @@ are easy to get wrong.
 
 ## Where things stand
 
-**M1 to M6 are built.** 409 tests, mypy strict across 74 source files, four
+**M1 to M6 are built.** 611 tests, mypy strict across 87 source files, four
 import-linter contracts kept, 93 percent coverage, green in CI. A question goes
 in through `wayfinder ask` or the API, gets classified, and comes back either as
 an answer with dated citations, as a phone number, as a refusal that names
@@ -295,11 +295,24 @@ deliberate ordering, since the citation rule is satisfied structurally by
 extraction and a model composer has to be evaluated against it rather than
 trusted, but it does mean the system does not yet write.
 
-**5. The API has no authentication.** `/v1/queue` exposes what people have said
-about their own circumstances to anybody who can reach the port. Fine for a
-local demo, disqualifying for anything else, and
-[`10-risk-and-ethics.md`](docs/10-risk-and-ethics.md) section 5 is the honest
-statement of that gap.
+**5. The applicant endpoints have no authentication, and thread ids are bearer
+capabilities.** The caseworker queue is done: it is behind a token, and the name
+on a determination now comes from that credential rather than from a free-text
+field in the body, which is the half that actually mattered (change 27 in
+`12-changes-from-design.md`). What is not done is the applicant side. Anybody
+holding a thread id can read that plan and post turns to it.
+
+That is a deliberate consequence of the applicant not having an account:
+requiring registration before somebody can find out where the nearest GP is
+defeats the point of the project. It does mean thread ids have to be unguessable
+random tokens issued by a front end, and no such front end exists. Nothing stops
+a caller choosing `amara` as an id today.
+
+Still missing around it: no TLS, no rate limiting, no revocation beyond editing
+the registry and restarting, and the SQLite file is not encrypted at rest.
+[`14-getting-started.md`](docs/14-getting-started.md) §11 is the full list and
+[`10-risk-and-ethics.md`](docs/10-risk-and-ethics.md) section 5 is the ethics
+statement of it.
 
 **6. SQLite only.** `sqlite_checkpointer` is the one implementation. Postgres is
 what the design assumes for deployment and the swap is small, but it is not

@@ -87,6 +87,10 @@ ignore = [
 "src/wayfinder/cli/*" = ["T20"]
 "src/wayfinder/eval/gate.py" = ["T20"]
 "src/wayfinder/eval/compare.py" = ["T20"]
+# `Depends(...)` and `Header(...)` in a parameter default is how FastAPI
+# declares a dependency. B008 is right in general and wrong here, and the
+# alternative it suggests would mean resolving auth inside every handler.
+"src/wayfinder/api/app.py" = ["B008"]
 # The demo exists to print. It is also the one place allowed to reach into the
 # graph the way a caller would, so it imports what it needs where it needs it.
 "scripts/demo.py" = ["T20"]

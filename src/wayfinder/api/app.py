@@ -22,9 +22,10 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import Depends, FastAPI, Header, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
 
+from wayfinder.api.auth import Caseworker, Caseworkers, load_caseworkers
 from wayfinder.corpus.loader import load_corpus
 from wayfinder.corpus.models import StalenessBand, staleness
 from wayfinder.graph.build import compile_graph
@@ -53,12 +54,18 @@ class SendTurn(BaseModel):
 
 
 class Respond(BaseModel):
-    """A caseworker's answer. The name is required, as everywhere else."""
+    """A caseworker's answer.
+
+    There is deliberately no `answered_by`. The name a determination is signed
+    with comes from the credential that posted it, so an answer cannot be
+    attributed to somebody who did not give it. `extra="forbid"` means a body
+    that still sends the old field is rejected loudly rather than having it
+    quietly ignored, which would look like it still worked.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     answer: str = Field(min_length=1)
-    answered_by: str = Field(min_length=1)
     source: str = ""
 
 
@@ -68,6 +75,7 @@ def create_app(
     checkpointer: Any = None,
     today: date | None = None,
     model_screen: ModelScreen | None = None,
+    caseworkers: Caseworkers | None = None,
 ) -> FastAPI:
     """Build the app.
 
@@ -88,6 +96,34 @@ def create_app(
         model_screen=model_screen,
     )
     graph = compile_graph(resolved, checkpointer=checkpointer)
+    staff = caseworkers if caseworkers is not None else load_caseworkers()
+
+    def signed_in(authorization: str = Header(default="")) -> Caseworker:
+        """The caseworker behind this request, or a 401.
+
+        Fails closed. With nobody registered the queue is shut rather than
+        open, because a misconfiguration that silently unlocks a door is worse
+        than one that stops the service: only one of them gets noticed.
+        """
+        if not staff.configured:
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "no caseworkers are configured, so the queue is closed. "
+                    "Set WAYFINDER_CASEWORKERS. See docs/14-getting-started.md."
+                ),
+            )
+
+        scheme, _, token = authorization.partition(" ")
+        person = staff.authenticate(token) if scheme.lower() == "bearer" else None
+        if person is None:
+            # Says a token was rejected and nothing about which, or why.
+            raise HTTPException(
+                status_code=401,
+                detail="a valid caseworker token is required",
+                headers={"WWW-Authenticate": 'Bearer realm="wayfinder"'},
+            )
+        return person
 
     app = FastAPI(
         title="Wayfinder",
@@ -207,7 +243,7 @@ def create_app(
     # --- the caseworker's endpoints -----------------------------------------
 
     @app.get("/v1/queue")
-    def queue() -> dict[str, Any]:
+    def queue(caseworker: Caseworker = Depends(signed_in)) -> dict[str, Any]:
         """Everything waiting on a person, with the context to answer it.
 
         Reads paused threads out of the checkpointer rather than a second store,
@@ -235,8 +271,17 @@ def create_app(
         return {"waiting": items}
 
     @app.post("/v1/queue/{thread_id}/respond")
-    def respond(thread_id: str, body: Respond) -> dict[str, Any]:
-        """Resume the graph with the caseworker's answer, attributed to them."""
+    def respond(
+        thread_id: str,
+        body: Respond,
+        caseworker: Caseworker = Depends(signed_in),
+    ) -> dict[str, Any]:
+        """Resume the graph with this caseworker's answer, signed with their name.
+
+        The name comes from the token rather than the body. A determination
+        that could be signed with any name is not the audit trail ADR-0004
+        assumes, and the whole handoff rests on it being one.
+        """
         from langgraph.types import Command
 
         if checkpointer is None:
@@ -244,7 +289,7 @@ def create_app(
 
         determination = HumanDetermination(
             answer=body.answer,
-            answered_by=body.answered_by,
+            answered_by=caseworker.name,
             answered_on=on,
             source=body.source,
         )
@@ -257,6 +302,16 @@ def create_app(
             "attributed_to": answer.attributed_to if answer else "",
             "text": answer.text if answer else "",
         }
+
+    @app.get("/v1/whoami")
+    def whoami(caseworker: Caseworker = Depends(signed_in)) -> dict[str, str]:
+        """What a token signs as, without spending it on a real answer.
+
+        Worth having because the name on a determination is not the poster's to
+        choose: somebody with a new token should be able to check what it will
+        put in the audit trail before they use it.
+        """
+        return {"name": caseworker.name}
 
     # --- operations ----------------------------------------------------------
 

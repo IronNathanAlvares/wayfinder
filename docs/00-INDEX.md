@@ -4,7 +4,7 @@
 **What it is:** A LangGraph agent team that turns "I have just arrived, what do I
 do?" into an ordered plan with prerequisites, and refuses to answer the questions
 that need a human.
-**Author:** Nathan Alvares · **Date:** 17 August 2026 · **Status:** M1 to M6 built, 413 tests green. See [`12-changes-from-design.md`](12-changes-from-design.md)
+**Author:** Nathan Alvares · **Date:** 17 August 2026 · **Status:** M1 to M6 built, 611 tests green. See [`12-changes-from-design.md`](12-changes-from-design.md)
 
 > **Standalone project.** No dependency on anything else. Nothing else needs to
 > exist for it to run.
@@ -20,7 +20,10 @@ that need a human.
 [`04-HLD.md`](04-HLD.md) → [`06-plan-graph-design.md`](06-plan-graph-design.md) →
 [`07-safety-and-escalation.md`](07-safety-and-escalation.md).
 
-**To build it:** [`HANDOFF.md`](../HANDOFF.md) first, then
+**To run it:** [`14-getting-started.md`](14-getting-started.md). Clone, install,
+every command, Docker, and the caseworker credentials.
+
+**To build on it:** [`HANDOFF.md`](../HANDOFF.md) first, then
 [`03-requirements.md`](03-requirements.md) → [`05-LLD.md`](05-LLD.md) →
 [`08-roadmap.md`](08-roadmap.md).
 
@@ -46,7 +49,8 @@ that need a human.
 | 10 | [Risk and ethics](10-risk-and-ethics.md) | Who can be harmed and what stops it |
 | 11 | [Interview pitch](11-interview-pitch.md) | How to explain it, demo it, and defend it |
 | 13 | [Deploying the site](13-deploying-the-site.md) | The static demo, its security headers, and why the API is not on Vercel |
-| 12 | [Changes from the design](12-changes-from-design.md) | **The twenty-six things building it proved wrong, and what replaced them** |
+| 14 | [Getting started](14-getting-started.md) | **Clone to running.** Every command, Docker, caseworker auth, and what is not secured |
+| 12 | [Changes from the design](12-changes-from-design.md) | **The twenty-seven things building it proved wrong, and what replaced them** |
 
 ## Decision records
 

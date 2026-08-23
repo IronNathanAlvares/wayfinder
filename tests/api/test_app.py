@@ -14,11 +14,21 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from tests.api.conftest import DATA, TODAY, build_deps, start
+from tests.api.conftest import (
+    AUTH,
+    CASEWORKER,
+    DATA,
+    OTHER,
+    OTHER_TOKEN,
+    TODAY,
+    TOKEN,
+    build_deps,
+    staff,
+    start,
+)
 from wayfinder.api import create_app
 from wayfinder.graph.checkpoint import sqlite_checkpointer
 
-CASEWORKER = "Clare Nolan, Irish Refugee Council"
 AMARA = {
     "arrival_date": "2026-08-01",
     "protection_application_date": "2026-08-04",
@@ -151,7 +161,7 @@ def test_the_queue_carries_the_question_and_the_context(client: TestClient) -> N
         "/v1/threads/q1/turn", json={"question": "do I qualify for a medical card?"}
     )
 
-    waiting = client.get("/v1/queue").json()["waiting"]
+    waiting = client.get("/v1/queue", headers=AUTH).json()["waiting"]
     assert [item["thread_id"] for item in waiting] == ["q1"]
     assert waiting[0]["asked"] == "do I qualify for a medical card?"
     assert waiting[0]["context"]["situation_summary"]
@@ -163,7 +173,7 @@ def test_the_queue_holds_only_threads_actually_paused(client: TestClient) -> Non
     client.post(
         "/v1/threads/answered/turn", json={"question": "how do I open a bank account"}
     )
-    assert client.get("/v1/queue").json()["waiting"] == []
+    assert client.get("/v1/queue", headers=AUTH).json()["waiting"] == []
 
 
 def test_answering_from_the_queue_attributes_the_answer_to_the_person(
@@ -181,15 +191,48 @@ def test_answering_from_the_queue_attributes_the_answer_to_the_person(
 
     body = client.post(
         "/v1/queue/q2/respond",
-        json={
-            "answer": "You need a habitual residence decision first.",
-            "answered_by": CASEWORKER,
-        },
+        json={"answer": "You need a habitual residence decision first."},
+        headers=AUTH,
     ).json()
 
     assert body["attributed_to"] == CASEWORKER
     assert CASEWORKER in body["text"]
-    assert client.get("/v1/queue").json()["waiting"] == [], "it stayed in the queue"
+    assert client.get("/v1/queue", headers=AUTH).json()["waiting"] == [], (
+        "it stayed in the queue"
+    )
+
+
+# --- who is allowed in, and whose name goes on the answer ---------------------
+
+
+def test_the_queue_is_shut_without_a_credential(client: TestClient) -> None:
+    """It carries what people have said about their own circumstances."""
+    response = client.get("/v1/queue")
+    assert response.status_code == 401
+    assert response.headers["WWW-Authenticate"].startswith("Bearer")
+
+
+def test_a_wrong_token_is_refused(client: TestClient) -> None:
+    response = client.get("/v1/queue", headers={"Authorization": "Bearer " + "x" * 48})
+    assert response.status_code == 401
+
+
+def test_a_rejection_says_nothing_about_why(client: TestClient) -> None:
+    """A 401 that distinguishes an unknown token from a malformed header hands
+    an attacker a way to probe. All three routes to failure say the same."""
+    unknown = client.get("/v1/queue", headers={"Authorization": "Bearer " + "x" * 48})
+    malformed = client.get("/v1/queue", headers={"Authorization": "Basic abc"})
+    missing = client.get("/v1/queue")
+
+    bodies = {r.json()["detail"] for r in (unknown, malformed, missing)}
+    assert len(bodies) == 1, bodies
+
+
+def test_a_token_never_comes_back_in_a_response(client: TestClient) -> None:
+    """Not in the error, not in a header, not anywhere it could be logged."""
+    response = client.get("/v1/queue", headers={"Authorization": f"Bearer {TOKEN}xx"})
+    assert TOKEN not in response.text
+    assert TOKEN not in str(response.headers)
 
 
 def test_an_answer_cannot_be_submitted_anonymously(client: TestClient) -> None:
@@ -198,10 +241,80 @@ def test_an_answer_cannot_be_submitted_anonymously(client: TestClient) -> None:
     client.post(
         "/v1/threads/q3/turn", json={"question": "am I entitled to child benefit?"}
     )
+    response = client.post("/v1/queue/q3/respond", json={"answer": "Yes you qualify."})
+    assert response.status_code == 401
+
+
+def test_the_name_on_a_determination_comes_from_the_token(client: TestClient) -> None:
+    """The point of the whole mechanism.
+
+    `answered_by` used to be free text in the body, so anybody who could reach
+    the endpoint could sign a determination with any name. ADR-0004 rests on a
+    determination being traceable to a named human, and a self-declared name is
+    not that.
+    """
+    start(client, "q4", **AMARA)
+    client.post(
+        "/v1/threads/q4/turn", json={"question": "am I entitled to child benefit?"}
+    )
+    body = client.post(
+        "/v1/queue/q4/respond",
+        json={"answer": "That needs a habitual residence decision."},
+        headers={"Authorization": f"Bearer {OTHER_TOKEN}"},
+    ).json()
+
+    assert body["attributed_to"] == OTHER
+    assert CASEWORKER not in body["text"], "signed as somebody who did not answer"
+
+
+def test_a_body_that_still_sends_a_name_is_rejected(client: TestClient) -> None:
+    """Loudly, rather than ignored. Somebody upgrading from the old shape should
+    be told the field is gone, not left believing it still works."""
+    start(client, "q5", **AMARA)
+    client.post(
+        "/v1/threads/q5/turn", json={"question": "am I entitled to child benefit?"}
+    )
     response = client.post(
-        "/v1/queue/q3/respond", json={"answer": "Yes you qualify.", "answered_by": ""}
+        "/v1/queue/q5/respond",
+        json={"answer": "Yes you qualify.", "answered_by": "Somebody Else"},
+        headers=AUTH,
     )
     assert response.status_code == 422
+
+
+def test_whoami_says_what_a_token_will_sign_as(client: TestClient) -> None:
+    """So a new caseworker can check the audit trail before writing to it."""
+    assert client.get("/v1/whoami", headers=AUTH).json() == {"name": CASEWORKER}
+    assert client.get("/v1/whoami").status_code == 401
+
+
+def test_with_nobody_configured_the_queue_is_shut_rather_than_open() -> None:
+    """Fail closed. A missing configuration must never mean open access."""
+    from wayfinder.api.auth import Caseworkers
+
+    app = create_app(deps=build_deps(), today=TODAY, caseworkers=Caseworkers([]))
+    with TestClient(app) as client:
+        for response in (
+            client.get("/v1/queue"),
+            client.get("/v1/queue", headers=AUTH),
+            client.post("/v1/queue/x/respond", json={"answer": "hello"}, headers=AUTH),
+        ):
+            assert response.status_code == 503
+            assert "no caseworkers are configured" in response.json()["detail"]
+
+
+def test_the_applicant_endpoints_are_not_behind_the_caseworker_lock(
+    client: TestClient,
+) -> None:
+    """Deliberate, and documented rather than hidden.
+
+    A thread id is currently a bearer capability: anybody holding one can read
+    that plan. That is a separate hole from this one, and it is named in
+    `docs/14-getting-started.md` and in the handoff notes rather than being
+    quietly left for somebody to find.
+    """
+    start(client, "open", **AMARA)
+    assert client.get("/v1/threads/open/plan").status_code == 200
 
 
 def test_the_queue_endpoints_refuse_to_run_without_durable_storage(
@@ -212,7 +325,10 @@ def test_the_queue_endpoints_refuse_to_run_without_durable_storage(
     An empty list would read as "nothing is waiting" rather than "this is not
     configured", and the difference matters to whoever is on call.
     """
-    assert stateless.get("/v1/queue").status_code == 503
+    assert stateless.get("/v1/queue", headers=AUTH).status_code == 503
+    # 401 before 503: an anonymous caller learns nothing about whether
+    # the service is configured.
+    assert stateless.get("/v1/queue").status_code == 401
 
 
 # --- operations --------------------------------------------------------------
@@ -268,7 +384,12 @@ def test_the_queue_survives_a_restart(tmp_path: Path) -> None:
     db = tmp_path / "restart.sqlite"
 
     with sqlite_checkpointer(db) as saver:
-        first = create_app(deps=build_deps(), checkpointer=saver, today=TODAY)
+        first = create_app(
+            deps=build_deps(),
+            checkpointer=saver,
+            today=TODAY,
+            caseworkers=staff(),
+        )
         with TestClient(first) as client:
             start(client, "r1", **AMARA)
             client.post(
@@ -278,17 +399,20 @@ def test_the_queue_survives_a_restart(tmp_path: Path) -> None:
 
     # The process is gone. Nothing is shared but the file.
     with sqlite_checkpointer(db) as saver:
-        second = create_app(deps=build_deps(), checkpointer=saver, today=TODAY)
+        second = create_app(
+            deps=build_deps(),
+            checkpointer=saver,
+            today=TODAY,
+            caseworkers=staff(),
+        )
         with TestClient(second) as client:
-            waiting = client.get("/v1/queue").json()["waiting"]
+            waiting = client.get("/v1/queue", headers=AUTH).json()["waiting"]
             assert [item["thread_id"] for item in waiting] == ["r1"]
 
             answered = client.post(
                 "/v1/queue/r1/respond",
-                json={
-                    "answer": "You need a habitual residence decision first.",
-                    "answered_by": CASEWORKER,
-                },
+                json={"answer": "You need a habitual residence decision first."},
+                headers=AUTH,
             ).json()
 
     assert answered["attributed_to"] == CASEWORKER
@@ -300,13 +424,23 @@ def test_a_situation_survives_a_restart(tmp_path: Path) -> None:
     db = tmp_path / "situation.sqlite"
 
     with sqlite_checkpointer(db) as saver:
-        app = create_app(deps=build_deps(), checkpointer=saver, today=TODAY)
+        app = create_app(
+            deps=build_deps(),
+            checkpointer=saver,
+            today=TODAY,
+            caseworkers=staff(),
+        )
         with TestClient(app) as client:
             start(client, "r2", **AMARA)
             client.post("/v1/threads/r2/turn", json={"question": "what do I do first?"})
 
     with sqlite_checkpointer(db) as saver:
-        app = create_app(deps=build_deps(), checkpointer=saver, today=TODAY)
+        app = create_app(
+            deps=build_deps(),
+            checkpointer=saver,
+            today=TODAY,
+            caseworkers=staff(),
+        )
         with TestClient(app) as client:
             plan = client.get("/v1/threads/r2/plan")
 
@@ -320,9 +454,14 @@ def test_the_queue_is_empty_rather_than_broken_on_a_fresh_database(
     """Listing a checkpointer that has never been written to is a real path:
     the first request after a deploy."""
     with sqlite_checkpointer(tmp_path / "fresh.sqlite") as saver:
-        app = create_app(deps=build_deps(), checkpointer=saver, today=TODAY)
+        app = create_app(
+            deps=build_deps(),
+            checkpointer=saver,
+            today=TODAY,
+            caseworkers=staff(),
+        )
         with TestClient(app) as client:
-            response = client.get("/v1/queue")
+            response = client.get("/v1/queue", headers=AUTH)
 
     assert response.status_code == 200
     assert response.json() == {"waiting": []}

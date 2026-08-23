@@ -280,15 +280,16 @@ time, since somebody editing YAML wants the whole list.
 | `POST` | `/v1/threads/{id}/turn` | Send a turn |
 | `GET` | `/v1/threads/{id}/plan` | Current plan: frontier, blocked, unblocking sets |
 | `DELETE` | `/v1/threads/{id}` | Forget the thread. NG5 |
-| `GET` | `/v1/queue` | Caseworker queue of pending determinations |
-| `POST` | `/v1/queue/{id}/respond` | Resume the graph with a determination |
+| `GET` | `/v1/queue` | Caseworker queue of pending determinations. **Signed in** |
+| `POST` | `/v1/queue/{id}/respond` | Resume the graph with a determination. **Signed in** |
+| `GET` | `/v1/whoami` | What a token signs as. **Signed in** |
 | `GET` | `/v1/corpus/health` | Staleness. **503** once a source has aged out |
 
 `/v1/corpus/health` is not an afterthought. Source staleness is the most likely
 silent failure in this system, and an endpoint that returns 200 with a list of
 rotting sources nobody reads is not an alarm. It returns 503.
 
-**Built, with three corrections to this table.**
+**Built, with four corrections to this table.**
 
 Turns are not streamed. A turn either completes or pauses at the handoff, and a
 paused turn has nothing to stream. Streaming would only make the wait feel
@@ -306,6 +307,15 @@ back empty after a redeploy while the graph was still paused on disk. See change
 Both `/v1/queue` endpoints return 503 when no checkpointer is configured. An
 empty list would read as "nothing is waiting" rather than "this is not set up",
 and the difference matters to whoever is on call.
+
+The queue endpoints are behind a caseworker credential, and the response body
+for `respond` lost its `answered_by` field. That field was free text, so the
+audit trail ADR-0004 depends on was self-declared: anybody who could reach the
+endpoint could sign a determination with any name. The name now comes from the
+credential that posted, and a body still sending the field is a 422 rather than
+being quietly ignored. With nobody registered the endpoints return 503 rather
+than opening. See change 27 in `12-changes-from-design.md`, and
+`14-getting-started.md` §6 for the operator's side of it.
 
 ---
 

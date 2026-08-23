@@ -752,9 +752,85 @@ red/green pairing colour-blind readers lose first, so every state carries an
 icon and a word as well.
 
 What the page deliberately does not do is take input. Answering a typed question
-needs a model call, a key and a per-visitor cost, and a live version would need
-authentication on the caseworker queue, which does not exist yet. The page says
-so rather than implying otherwise.
+needs a model call, a key and a per-visitor cost, so the page says it is a
+recording rather than implying otherwise. The caseworker queue a live version
+would expose is now behind authentication (change 27), but the applicant side
+is not, and §11 of `14-getting-started.md` says exactly what that leaves open.
+
+---
+
+## 27. The audit trail was self-declared
+
+`05-LLD.md` gives `POST /v1/queue/{id}/respond` a body of `answer`,
+`answered_by` and `source`, and the queue endpoints no authentication at all.
+Both were wrong, and the second is the less serious of the two.
+
+The obvious problem is that the queue carries what people have said about their
+own circumstances and anybody could read it. That is an ordinary missing lock.
+
+The problem underneath it is that `answered_by` was **free text supplied by the
+caller**. ADR-0004 is the immutable decision in this package, and the thing it
+rests on is that a determination is traceable to a named human who made it. A
+name typed into a JSON body by whoever posted is not that. Putting a lock on the
+door without fixing the signature would have produced a system where every
+determination is attributable to *somebody with a token* rather than to the
+person named on it, which is a subtly worse failure than an open queue, because
+it looks like an audit trail.
+
+So the field is gone. `Respond` carries `answer` and `source` only, and the name
+is read from the credential that posted. `extra="forbid"` means a client still
+sending `answered_by` gets a 422 rather than having it quietly ignored, since
+silent acceptance would leave somebody believing the old shape still worked.
+
+The rest follows from wanting the mechanism to be boring:
+
+- **Bearer tokens, stored as SHA-256 digests.** A leaked configuration does not
+  hand over working credentials. Comparison is constant-time, and a digest
+  offered as a token does not authenticate, so reading the deployment
+  environment does not let you replay what you find there.
+- **Fail closed.** With nobody registered the queue endpoints return 503 rather
+  than opening. A misconfiguration that silently disables a lock is worse than
+  one that stops the service, because only one of them gets noticed. `serve` now
+  says which case it is at startup instead of leaving it to the first 503.
+- **Nothing logs a token.** Not on success, not on failure, not in a
+  configuration error. That last one needed care: Pydantic's `ValidationError`
+  quotes the offending value, and the likeliest mistake in this configuration is
+  a real token pasted where its digest belongs, so passing that message through
+  would have written a live credential into a log. The error names the field and
+  the error type and nothing else. A test asserts it.
+- **The three 401 routes are byte-identical.** An unknown token, a malformed
+  header and a missing header all return the same body, so a rejection is not a
+  probe.
+
+`wayfinder caseworker-token "Name"` mints one and prints the configuration line.
+The token is shown once and never stored, so losing it means minting another,
+which is the property that makes the config harmless to leak.
+
+Two things turned up only by cloning the repository into an empty directory and
+following `14-getting-started.md` line by line, which is worth doing before
+claiming a document works.
+
+`uv sync` installs neither the web framework nor the model client, on purpose,
+because the plan engine and the safety layers are usable as a library without
+them. The cost is that the first command a new reader runs can be the one that
+needs an extra, and both failed with a raw `ModuleNotFoundError` stack rather
+than saying which flag fixes it. That is precisely what exit code 2 exists for,
+so both now return it with one line naming the `uv sync` invocation.
+
+And `wayfinder caseworker-token` needed FastAPI installed, to run code that uses
+`hashlib` and `secrets` and nothing else. `wayfinder/api/__init__.py` eagerly
+imported `create_app`, so importing `wayfinder.api.auth` loaded the whole HTTP
+surface. Setting a caseworker up happens before deciding how to serve the thing,
+so the export is lazy now and a test asserts `fastapi` is absent from
+`sys.modules` after importing the auth module.
+
+**What this deliberately does not cover** is the applicant side. Thread ids are
+bearer capabilities: anybody holding one can read that plan. Adding accounts
+there would mean asking somebody in an emergency accommodation queue to register
+before finding out where the nearest GP is, which defeats the point of the
+project. The consequence is that thread ids have to be unguessable random
+tokens, generated by a front end that does not exist yet. Named in
+`14-getting-started.md` §11 rather than left to be discovered.
 
 ---
 

@@ -9,6 +9,11 @@ services:
       # (ADR-0008) and starting quietly with that would be a safety claim the
       # measurements do not support.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?set this, or run with --no-model-screen and read ADR-0008 first}
+      # Who may open the caseworker queue, and whose name a determination is
+      # signed with. Deliberately not required here: the applicant endpoints
+      # work without it and the queue fails closed with a 503 that says what is
+      # missing. Mint entries with `wayfinder caseworker-token "Name"`.
+      WAYFINDER_CASEWORKERS: ${WAYFINDER_CASEWORKERS:-}
     volumes:
       # The caseworker queue. Paused threads outlive the container by design.
       - wayfinder-threads:/data

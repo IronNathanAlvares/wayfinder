@@ -92,6 +92,13 @@ of the following are optional:
 4. A complaints and correction route for somebody who was given wrong guidance.
 5. A data protection assessment, given the population and the categories of data.
 6. Independent review of the crisis lexicon by somebody who does this work.
+7. An access model for the applicant side. The caseworker queue is behind a
+   credential and a determination is signed with the name that credential is
+   registered to, which is the part ADR-0004 depends on. But a thread id is
+   currently a bearer capability, and the data behind it is what somebody in the
+   protection process has disclosed about their own circumstances. For this
+   population that is not a routine access-control gap, it is the category of
+   data where disclosure can reach the authorities somebody left.
 
 Listing these is not a plan to do them. It is being honest that a demo and a
 deployed service are different things, and that the gap between them is mostly

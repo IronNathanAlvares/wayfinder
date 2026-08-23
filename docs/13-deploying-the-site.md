@@ -169,9 +169,13 @@ that kills a process to prove the pause survives exactly that.
 
 Deploying the application for real needs, in order:
 
-1. **Authentication on the caseworker queue.** `/v1/queue` currently exposes
-   what people have said about their own circumstances to anybody who can reach
-   the port. This is the blocker, not a nicety.
+1. **An access model for the applicant side.** The caseworker queue is done: it
+   is behind a bearer token and a determination is signed with the name that
+   token is registered to rather than with whatever the body claimed. See
+   `14-getting-started.md` §6. What is not done is the applicant side, where a
+   thread id is a bearer capability and ids are caller-chosen. That is the
+   blocker, not a nicety, and it needs a front end that issues unguessable ids
+   plus TLS and rate limiting at the proxy.
 2. **A Postgres checkpointer.** `sqlite_checkpointer` is the only
    implementation. The swap is small and the deserialisation allowlist in
    `graph/checkpoint.py` has to come with it.
