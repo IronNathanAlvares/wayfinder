@@ -339,7 +339,8 @@ Certifying 0.99 now needs a bigger corpus rather than a better screen.
 verified sources, BM25 retrieval, the three-layer safety classifier, the crisis
 screen and its directory, the compiled LangGraph with a durable SQLite
 checkpointer, the human handoff, composition with a readability target, a CLI
-and a FastAPI surface with a caseworker queue.
+and a FastAPI surface with an authenticated caseworker queue where a
+determination is signed with the name its credential is registered to.
 
 **What no model touches.** The ordering, every safety layer below the model
 screen, and the crisis response. The ordering is derived from structure, so it

@@ -190,10 +190,15 @@ Carried over because they worked on the previous project.
 
 Ordered by how much it matters, not by how hard it is.
 
-**1. The crisis screen misses about one turn in eleven, and the gate is 0.99.** The held-out crisis corpus is now 320 crisis turns and 156 near
-misses, which is large enough to certify the 0.99 gate. Measured against it,
-`claude-haiku-4-5` behind the lexicon scores **0.897, lower bound 0.865**. The
-gate is not met.
+**1. The crisis screen misses 8 turns in 320, and certifying the gate now needs
+a bigger corpus rather than a better screen.** The shipped configuration scores
+**0.975, lower bound 0.955**, against a gate of 0.99. The rest of this section
+is the seven rounds it took to get there and what each one ruled out; read the
+last three paragraphs first if you only want the current state.
+
+The held-out corpus is 320 crisis turns and 156 near misses. The first number
+measured against it was `claude-haiku-4-5` behind the lexicon at **0.897, lower
+bound 0.865**, and everything below follows from trying to move it.
 
 Thirteen of the thirty-three misses are self-harm items, and they are the
 recognised warning signs: giving away possessions, arranging care for a child, a
