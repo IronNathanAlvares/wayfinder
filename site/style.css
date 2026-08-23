@@ -278,6 +278,64 @@ code {
   margin-top: 1.4rem;
 }
 
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 26rem);
+  gap: clamp(2rem, 4vw, 4rem);
+  align-items: center;
+}
+@media (max-width: 1000px) {
+  .hero-grid { grid-template-columns: 1fr; }
+  .hero-demo { max-width: 34rem; }
+}
+
+.hero-copy .lede { margin-bottom: 0; }
+
+/* The thesis of the whole project, stated as the thing itself rather than as a
+   claim about it: a question it will not answer, and where it went instead. */
+.hero-demo {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 1.3rem 1.4rem;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 0.85rem;
+}
+/* Grid items stretch by default and a chip that spans the card reads as a
+   banner rather than a label. */
+.hero-demo .chip { justify-self: start; }
+
+.hero-demo .asked {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  line-height: 1.35;
+  margin: 0;
+}
+.hero-demo .verdict { font-size: 0.92rem; color: var(--ink-2); margin: 0; }
+.hero-demo .payload {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.75rem;
+  margin: 0;
+  overflow-x: auto;
+}
+.hero-demo .who {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+  color: var(--ink-2);
+  border-top: 1px solid var(--line);
+  padding-top: 0.8rem;
+  margin: 0;
+}
+
 .stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -287,7 +345,6 @@ code {
   border-radius: var(--radius-lg);
   overflow: hidden;
   margin: 2.6rem 0 1.6rem;
-  max-width: 58rem;
 }
 
 .stat { background: var(--surface); padding: 1.15rem 1.3rem; margin: 0; }
@@ -490,6 +547,7 @@ code {
   box-shadow: 0 0 0 1px var(--accent);
   background: var(--surface);
 }
+.ask-item .chip { justify-self: start; }
 .ask-q { font-size: 0.95rem; line-height: 1.45; }
 
 .ask-panel {

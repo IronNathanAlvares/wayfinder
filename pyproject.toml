@@ -93,6 +93,7 @@ ignore = [
 # The site data generator prints what it wrote, and imports inside functions
 # to keep the optional-extra imports out of module scope.
 "scripts/build_site_data.py" = ["T20", "PLC0415"]
+"scripts/capture_screenshots.py" = ["T20", "S603"]
 # Curly quotes and dashes are the subject matter here, not a typo. Normalisation
 # exists precisely because they arrive from phone keyboards constantly.
 "src/wayfinder/safety/normalise.py" = ["RUF003"]

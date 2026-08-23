@@ -86,12 +86,19 @@ Or open the demo site, which is the same thing with a face on it:
 python -m http.server 4173 --directory site
 ```
 
-It is static, it makes no network requests at all, and everything on it was
-produced by running the real system: `scripts/build_site_data.py` records the
-plans, the routes, the handoff and the measurements, and a test regenerates the
-file and fails if the page and the code have drifted apart. There is no API key
-anywhere in it, which is what lets its Content-Security-Policy say
-`connect-src 'none'`.
+[![The demo site](docs/screenshots/01-full-light.png)](docs/screenshots/01-full-light.png)
+
+Static, no framework, no build step, and **no network requests at all** after
+the page loads. Everything on it was produced by running the real system:
+`scripts/build_site_data.py` records the plans, the five routes, the handoff,
+the compiled graph and the measurements, and a test regenerates the file and
+fails if the page and the code have drifted apart.
+
+There is no API key in it, because it calls no model, which is what lets the
+Content-Security-Policy set `connect-src 'none'` — the page has no way to send
+anything anywhere, and that is checkable in a network tab rather than promised.
+Deployment and the full security posture are in
+[`13-deploying-the-site.md`](docs/13-deploying-the-site.md).
 
 That is the whole system in one run: a plan, a cited answer, an entitlement
 question pausing for a caseworker, the caseworker's answer coming back
@@ -409,6 +416,7 @@ Each is enforced structurally and each has a test. See
 | [09 Test and eval plan](docs/09-test-and-eval-plan.md) | Corpus, gates, topology tests |
 | [10 Risk and ethics](docs/10-risk-and-ethics.md) | Who can be harmed, and what stops it |
 | [11 Interview pitch](docs/11-interview-pitch.md) | Pitch, demo, likely questions |
+| [13 Deploying the site](docs/13-deploying-the-site.md) | The static demo, its headers, and why the API is not on Vercel |
 | [12 Changes from the design](docs/12-changes-from-design.md) | The twenty-six things building it proved wrong |
 | [ADRs](docs/adr/) | Eight decision records |
 

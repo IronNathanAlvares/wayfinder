@@ -86,6 +86,13 @@
       /* Private mode, or storage disabled. Auto is a fine answer. */
     }
 
+    /* ?theme=dark wins over the stored choice, so a link can carry a theme and
+       a screenshot can capture the same page a visitor sees rather than a mode
+       that only exists for cameras. Not persisted: a shared link should not
+       silently change what somebody's next visit looks like. */
+    var asked = (/[?&]theme=([a-z]+)/.exec(window.location.search) || [])[1];
+    if (order.indexOf(asked) !== -1) current = asked;
+
     function apply() {
       if (current === "auto") document.documentElement.removeAttribute("data-theme");
       else document.documentElement.setAttribute("data-theme", current);
@@ -109,6 +116,35 @@
     apply();
   })();
 
+  /* ── the hero's artefact ────────────────────────────────────────────── */
+
+  (function heroDemo() {
+    var host = document.getElementById("hero-demo");
+    if (!host) return;
+
+    var turn = null;
+    for (var i = 0; i < D.turns.length; i++) {
+      if (D.turns[i].route === "determination") turn = D.turns[i];
+    }
+    if (!turn || !turn.escalation) return;
+
+    host.appendChild(chip("external", "Determination"));
+    host.appendChild(el("p", "asked", "“" + turn.question + "”"));
+    host.appendChild(
+      el("p", "verdict",
+        "Not answered, and nothing was generated. The graph stopped and handed " +
+        "it to a person. This is what reached her queue:")
+    );
+
+    var payload = el("pre", "payload");
+    payload.textContent = turn.escalation.situationSummary;
+    host.appendChild(payload);
+
+    var who = el("p", "who");
+    who.appendChild(el("span", null, "Waiting on " + D.handoff.caseworker));
+    host.appendChild(who);
+  })();
+
   /* ── hero statistics ────────────────────────────────────────────────── */
 
   (function heroStats() {
@@ -119,8 +155,8 @@
     var stats = [
       { label: "Tasks in the Irish corpus", value: String(D.corpusHealth.tasks), unit: "across four domains" },
       { label: "Sources, every one dated", value: String(D.corpusHealth.sources), unit: "checked " + D.corpusHealth.checkedOn },
-      { label: "Crisis recall, held out", value: opus.recall.toFixed(3), unit: "on " + opus.of + " unseen turns" },
-      { label: "Tests, mypy strict", value: "546", unit: "four import contracts" }
+      { label: "Crisis recall, held out", value: opus.recall.toFixed(3), unit: "on " + opus.of + " turns" },
+      { label: "Tests", value: "571", unit: "mypy strict, 4 contracts" }
     ];
 
     stats.forEach(function (s) {
@@ -162,7 +198,13 @@
           );
         }
         if (task.gatesDays > 0) {
-          meta.appendChild(el("span", null, task.gatesDays + " day wait once started"));
+          /* gated_wait is the longest downstream wait this task gates, not a
+             wait for the task itself. Saying "wait once started" reversed it,
+             and reversing it loses the whole point: this is the number that
+             says do it first because a long clock begins after it. */
+          meta.appendChild(
+            el("span", null, "starts a " + task.gatesDays + " day clock downstream")
+          );
         }
       } else if (kind === "waiting") {
         if (task.doFirst && task.doFirst.length) {
@@ -344,7 +386,10 @@
             var meta = el("span", "cite-meta");
             meta.appendChild(el("span", null, c.source));
             meta.appendChild(el("span", null, "checked " + c.lastVerified));
-            meta.appendChild(el("span", null, c.domain));
+            /* Bare "status" or "banking" next to a date reads as a stray
+               word. Naming it is the point anyway: retrieval is scoped to one
+               domain so a banking answer cannot cite a healthcare source. */
+            meta.appendChild(el("span", null, "domain: " + c.domain));
             box.appendChild(meta);
             var link = el("a", null, c.url);
             link.href = c.url;

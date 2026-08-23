@@ -252,3 +252,32 @@ def test_the_site_files_are_utf8_without_surprises(name: str) -> None:
     text = (SITE / name).read_text(encoding="utf-8")
     assert "\x00" not in text
     assert text.strip(), name
+
+
+# --- the screenshots -----------------------------------------------------------
+
+
+def test_the_screenshots_exist_and_cover_the_whole_page() -> None:
+    """A capture shorter than the document loses its tail silently.
+
+    The heights in `capture_screenshots.py` are fixed, so a page that grows past
+    one of them would keep producing a screenshot that simply stops partway and
+    nobody would notice from the file listing.
+    """
+    shots = ROOT / "docs" / "screenshots"
+    names = sorted(p.name for p in shots.glob("*.png"))
+    assert names == [
+        "01-full-light.png",
+        "02-full-dark.png",
+        "03-full-mobile.png",
+    ], names
+
+    for shot in shots.glob("*.png"):
+        # PNG dimensions live in the IHDR chunk: 8 byte signature, 4 byte
+        # length, 4 byte type, then width and height as big-endian uint32.
+        header = shot.read_bytes()[16:24]
+        width = int.from_bytes(header[:4], "big")
+        height = int.from_bytes(header[4:], "big")
+        assert width in (1440, 390), (shot.name, width)
+        assert height > 2000, (shot.name, height)
+        assert shot.stat().st_size > 20_000, f"{shot.name} looks blank"
