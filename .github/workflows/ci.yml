@@ -105,10 +105,19 @@ jobs:
             curl -sf http://127.0.0.1:8000/v1/corpus/health >/dev/null && break
             sleep 1
           done
-          curl -sf -X POST http://127.0.0.1:8000/v1/threads \
-            -H 'content-type: application/json' -d '{"thread_id":"ci"}'
-          curl -sf -X POST http://127.0.0.1:8000/v1/threads/ci/turn \
+          # The server mints the id and the caller cannot choose one, because
+          # the id is the only thing guarding the thread. So this has to carry
+          # it the way a real client does.
+          THREAD=$(curl -sf -X POST http://127.0.0.1:8000/v1/threads \
+            -H 'content-type: application/json' -d '{"situation":{}}' \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["thread_id"])')
+          test -n "$THREAD"
+          curl -sf -X POST "http://127.0.0.1:8000/v1/threads/$THREAD/turn" \
             -H 'content-type: application/json' \
             -d '{"question":"am I entitled to a medical card"}' \
             | grep -q waiting_for_a_person
+          # And a guessed id gets nothing. The container is the only place this
+          # runs against a real network stack rather than a test client.
+          test "$(curl -s -o /dev/null -w '%{http_code}' \
+            http://127.0.0.1:8000/v1/threads/ci/plan)" = 404
           docker rm -f wf
