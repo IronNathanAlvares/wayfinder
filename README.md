@@ -4,7 +4,7 @@ A LangGraph agent team that turns "I have just arrived, what do I do?" into an
 ordered plan with prerequisites, and refuses to answer the questions that need a
 human.
 
-**Status: M1 to M6 built. 645 tests, mypy strict, four import contracts.** A
+**Status: M1 to M6 built. 669 tests, mypy strict, four import contracts.** A
 question goes in through the CLI or the API, the safety layers classify it, a
 determination pauses the graph for a named caseworker, and the answer comes back
 with dated citations or with a refusal that names somebody who can help.
@@ -19,7 +19,7 @@ in the design rather than in the test.
 
 Start with [`HANDOFF.md`](HANDOFF.md), and see
 [`docs/12-changes-from-design.md`](docs/12-changes-from-design.md) for the
-twenty-eight things building this proved wrong about the design.
+twenty-nine things building this proved wrong about the design.
 
 Standalone project. Nothing else needs to exist for it to run.
 
@@ -61,6 +61,14 @@ being answered.
   Do the PPS number first. Four other things are waiting on it.
 
   Child benefit is blocked on a habitual residence decision.
+
+A task can also carry a **deadline**, which is not a wait. A wait is time you
+spend; a deadline is time you lose, and at the end of it the option is gone. A
+window whose clock has started outranks severity in the ordering, and **nothing
+in this system ever says a window has shut**: the strongest status is
+`may_have_closed`, and the sentence ends by telling somebody to ask rather than
+by telling them it is over. The start date came from their memory of a letter,
+and late applications are often accepted.
   That is decided by the Department of Social Protection, not by you
   and not by me. Here is how it is applied for, and here is who can
   help you with it.
@@ -375,8 +383,8 @@ short version: the held-out crisis corpus is 320 items and certifying a 0.99
 gate needs roughly a thousand, so the corpus is the binding constraint rather
 than the screen; the applicant side of the API has no accounts by design, which
 makes a thread id a capability to be looked after rather than a secret the
-server can protect; and tasks can express a wait but not a deadline, which is
-why a 60 day appeal window currently lives in prose.
+server can protect; and the crisis screen's residue is one nameable failure
+mode rather than assorted hard cases.
 
 ---
 
@@ -456,7 +464,7 @@ Each is enforced structurally and each has a test. See
 | [10 Risk and ethics](docs/10-risk-and-ethics.md) | Who can be harmed, and what stops it |
 | [11 Interview pitch](docs/11-interview-pitch.md) | Pitch, demo, likely questions |
 | [13 Deploying the site](docs/13-deploying-the-site.md) | The static demo, its headers, and why the API is not on Vercel |
-| [12 Changes from the design](docs/12-changes-from-design.md) | The twenty-eight things building it proved wrong |
+| [12 Changes from the design](docs/12-changes-from-design.md) | The twenty-nine things building it proved wrong |
 | [14 Getting started](docs/14-getting-started.md) | Clone to running: every command, Docker, caseworker auth |
 | [15 Latency and cost](docs/15-latency-and-cost.md) | What the screen costs in seconds and dollars |
 | [ADRs](docs/adr/) | Eight decision records |

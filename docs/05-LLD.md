@@ -289,7 +289,7 @@ time, since somebody editing YAML wants the whole list.
 silent failure in this system, and an endpoint that returns 200 with a list of
 rotting sources nobody reads is not an alarm. It returns 503.
 
-**Built, with five corrections to this table.**
+**Built, with six corrections to this table.**
 
 Turns are not streamed. A turn either completes or pauses at the handoff, and a
 paused turn has nothing to stream. Streaming would only make the wait feel
@@ -307,6 +307,11 @@ back empty after a redeploy while the graph was still paused on disk. See change
 Both `/v1/queue` endpoints return 503 when no checkpointer is configured. An
 empty list would read as "nothing is waiting" rather than "this is not set up",
 and the difference matters to whoever is on call.
+
+Tasks carry a `deadline` as well as a `typical_wait`, and the plan carries the
+computed state of each. `GET /v1/threads/{id}/plan` returns it on every task,
+null where there is none. A client must never render the status as expired:
+`may_have_closed` is the strongest value it can hold. See change 29.
 
 `POST /v1/threads` no longer takes a `thread_id`. The server mints it. An
 applicant has no account, so the id is the only thing guarding the thread, and

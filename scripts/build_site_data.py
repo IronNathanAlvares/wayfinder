@@ -28,6 +28,7 @@ from typing import Any
 
 import yaml
 
+from wayfinder.cli.render import _deadline_line
 from wayfinder.corpus.loader import load_corpus
 from wayfinder.corpus.models import StalenessBand, staleness
 from wayfinder.graph.build import compile_graph, edges_of
@@ -88,6 +89,19 @@ def span_as_dict(span: Any) -> dict[str, Any]:
 def plan_as_dict(plan: Plan) -> dict[str, Any]:
     titles = {item.task.id: item.task.title for item in plan.items}
     why = {item.task.id: item.task.why for item in plan.items}
+
+    def clock(task_id: str) -> dict[str, Any] | None:
+        """A closing window, rendered as the CLI renders it.
+
+        The sentence is reused rather than rewritten for the page, because the
+        wording carries a safety decision: nothing here ever says a window has
+        shut. Two copies of that rule would eventually disagree.
+        """
+        state = plan.deadlines.get(task_id)
+        if state is None:
+            return None
+        return {"status": state.status.value, "line": _deadline_line(state)}
+
     return {
         "startNow": [
             {
@@ -95,6 +109,7 @@ def plan_as_dict(plan: Plan) -> dict[str, Any]:
                 "title": titles[task_id],
                 "why": why[task_id],
                 "gatesDays": plan.gated_wait[task_id].days,
+                "deadline": clock(task_id),
                 "unblocks": len(
                     [t for t, route in plan.next_actions.items() if task_id in route]
                 ),
@@ -106,6 +121,7 @@ def plan_as_dict(plan: Plan) -> dict[str, Any]:
                 "id": item.task.id,
                 "title": item.task.title,
                 "why": item.task.why,
+                "deadline": clock(item.task.id),
                 "doFirst": [
                     titles.get(t, t) for t in plan.next_actions.get(item.task.id, ())
                 ],

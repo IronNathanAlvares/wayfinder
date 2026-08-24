@@ -78,12 +78,9 @@ patch here. The replanning output words this carefully in the meantime.
 - Retrieve the remaining blocked sources by another route, and record a real
   verification. Check the URL before recording a publisher as unreachable: one
   of the three was partly a stale link on our side.
-- **Give tasks a deadline, separately from `typical_wait`.** The 60 day appeal
-  window is currently a sentence inside `why`, because the task model has no way
-  to say "this expires". A wait and a deadline are opposite things: one is time
-  you spend, the other is time you lose, and only one of them ends with the door
-  shut. For a system about ordering and timing that is a real modelling gap, and
-  putting it in prose is a stopgap rather than a fix.
+- ~~Give tasks a deadline, separately from `typical_wait`.~~ **Done.** See
+  `plan/deadlines.py`. Windows whose clock has started outrank severity in the
+  frontier, and nothing in the system ever states that one has shut.
 - Expand to roughly forty tasks, including education and banking.
 - Give `accommodation.move_in` something to produce so that being housed reads
   as done rather than as no longer applicable.

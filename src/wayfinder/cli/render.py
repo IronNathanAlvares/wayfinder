@@ -15,6 +15,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from wayfinder.corpus.models import Corpus
+from wayfinder.plan.deadlines import DeadlineState, DeadlineStatus
 from wayfinder.plan.models import Prerequisite
 from wayfinder.plan.plan import Plan, PlanItem
 from wayfinder.plan.refs import ArtefactKind, artefact_kind, artefact_name
@@ -82,6 +83,47 @@ def _blocker_lines(corpus: Corpus, item: PlanItem, situation: Situation) -> list
     return lines
 
 
+def _deadline_line(state: DeadlineState) -> str:
+    """One sentence about a closing window, worded by how sure we are.
+
+    The wording carries the whole safety argument of `plan/deadlines.py`. The
+    strongest thing said here is "may have closed", followed by an instruction
+    to go and ask, because the cost of wrongly telling somebody their right has
+    expired is not comparable to the cost of a wasted phone call.
+    """
+    # Exact days, never `_humanise`. A statutory window of 60 days rendered as
+    # "about 9 weeks" is both wrong and dangerous: an approximation somebody
+    # rounds down costs them days they actually had, and rounding up costs them
+    # the appeal. Waits can be approximate. Deadlines cannot.
+    days = state.within.days
+    window = "1 day" if days == 1 else f"{days} days"
+
+    if state.status is DeadlineStatus.UNKNOWN_START:
+        return (
+            f"Time limit: {window} from {state.described_as}. "
+            "Tell a caseworker that date and they can say how long is left."
+        )
+
+    closes = state.closes_on.isoformat() if state.closes_on else ""
+    left = state.days_remaining if state.days_remaining is not None else 0
+
+    if state.status is DeadlineStatus.MAY_HAVE_CLOSED:
+        # Ends on the instruction, not on the bad news. The last clause is what
+        # a person skimming takes away, and "it is too late" is the one thing
+        # this must not leave them with.
+        return (
+            f"Time limit: {window} from {state.described_as}, which by our "
+            f"reckoning was up on {closes}. That date may be wrong, and late "
+            "ones are often still accepted. Ask a caseworker to check it."
+        )
+    if state.status is DeadlineStatus.CLOSING:
+        if left == 0:
+            return f"Time limit: today is the last day ({closes}). Do this first."
+        remaining = "1 day" if left == 1 else f"{left} days"
+        return f"Time limit: {remaining} left, closing {closes}. Do this first."
+    return f"Time limit: {window} from {state.described_as}, closing {closes}."
+
+
 def render_plan(plan: Plan, corpus: Corpus, situation: Situation) -> str:
     """The client-facing view: what to start, what is waiting, and on what."""
     out: list[str] = []
@@ -92,6 +134,9 @@ def render_plan(plan: Plan, corpus: Corpus, situation: Situation) -> str:
         out.append("Start now")
         for item in frontier:
             out.append(f"  {item.task.title}")
+            clock = plan.deadlines.get(item.task.id)
+            if clock is not None:
+                out.append(f"    {_deadline_line(clock)}")
             out.append(f"    {item.task.why}")
         out.append("")
 
@@ -111,6 +156,12 @@ def render_plan(plan: Plan, corpus: Corpus, situation: Situation) -> str:
         out.append("Not yet")
         for item in plan.blocked:
             out.append(f"  {item.task.title}")
+            clock = plan.deadlines.get(item.task.id)
+            if clock is not None:
+                # Said here too, and first. A window running down while somebody
+                # waits for the thing that unblocks it is the worst case there
+                # is, and burying it under the blockers is how it gets missed.
+                out.append(f"    {_deadline_line(clock)}")
             for line in _blocker_lines(corpus, item, situation):
                 out.append(f"    {line}")
 

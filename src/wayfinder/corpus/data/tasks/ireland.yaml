@@ -212,12 +212,17 @@
   domain: income
   why: >
     A refusal is not the end of it. You appeal to the Social Welfare Appeals
-    Office, which is independent of the office that refused you, and you have
-    60 days from the date of the decision to do it. The clock starts on the
-    letter, so do not leave it.
+    Office, which is independent of the office that refused you.
   requires:
     - document:ppsn
   typical_wait: P90D
+  # The window, as a window rather than a sentence. `typical_wait` above is how
+  # long the appeal takes once lodged; this is how long you have to lodge it,
+  # and they are opposite quantities. Citizens Information, read 24 August 2026.
+  deadline:
+    within: P60D
+    of: determination:habitual_residence
+    described_as: the date on the decision letter
   blocking_severity: important
   where:
     - source_id: citizensinformation.habitual_residence

@@ -869,6 +869,63 @@ that closed is guessing, not sharing.
 
 ---
 
+## 29. A wait and a deadline are opposite quantities, and the model had only one
+
+Tasks carried `typical_wait` and nothing else about time. Adding the 60 day
+social welfare appeal window in change 28 had nowhere to put it, so it went into
+`why` as a sentence, which is how the gap became visible.
+
+They are not variants of each other. A wait is time you spend: unpleasant,
+survivable, and useful for deciding what to start first because it says how much
+downstream work a task gates. A deadline is time you lose, and at the end of it
+the option is gone. Modelling the second as the first would have ranked a
+closing appeal window by how long an appeal takes to hear, which is exactly
+backwards.
+
+`Deadline` carries `within`, an artefact the clock runs `of`, and prose for how
+to say that artefact to a person. It runs from an artefact rather than from
+today because these windows start at an event: a refusal is issued, a letter is
+dated. `DeterminationRecord` already carried `recorded_on`, so the appeal window
+computes against a real date whenever the situation happens to know one.
+
+**The design decision worth defending is what happens when the window looks
+past.** There is no `CLOSED` status. The strongest thing this system will say is
+`MAY_HAVE_CLOSED`, and the sentence attached to it ends on "Ask a caseworker to
+check it" rather than on the bad news.
+
+The asymmetry is the whole argument. Telling somebody they may still have time
+when they do not costs a phone call. Telling somebody they are out of time when
+they are not costs them the thing itself. Those are not comparable, so the tie
+does not get split. Three things make it a live risk rather than a theoretical
+one: the start date comes from what somebody remembered or transcribed, late
+applications are frequently accepted at the deciding body's discretion, and a
+person reading this has every reason to believe a computer about a date.
+
+Two consequences follow, and both are tested because both are the kind of thing
+a later tidy-up would undo while looking like an improvement:
+
+- A task whose window may have closed is **never dropped and never demoted**. It
+  sorts to the very top, because if there is any chance it is live then it is
+  the most urgent thing on the page.
+- The deadline sentence is never approximated. `_humanise` renders 60 days as
+  "about 9 weeks", which is right for a wait and wrong for a statute: somebody
+  rounding that down loses days they actually had.
+
+An earlier draft of the wording ended "Ask before assuming it is too late." A
+test asserting the sentence must not end on a verdict caught it, because the
+last clause is what somebody skimming takes away.
+
+**Ordering changed too.** A window whose clock is running outranks
+`blocking_severity`. Severity is an editorial judgement about what it costs to
+be blocked, and it assumes the thing is still there to do later; a deadline
+breaks that assumption. It is a band above the existing bands rather than a
+weight blended into them, for the same reason severity already is one:
+lexicographic ordering needs no invented numbers. A window whose start is
+unknown does not rank at all, because there is no number to rank it by, and
+promoting it would push a critical task down for nothing.
+
+---
+
 ## Scope decisions
 
 **Two corpora.** `08-roadmap.md` puts reference personas in M1 and corpus

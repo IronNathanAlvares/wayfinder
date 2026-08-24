@@ -12,6 +12,7 @@ window.WAYFINDER = {
           "title": "Apply for your PPS number",
           "why": "Ask for this when you make your protection application. Almost everything in the welfare system needs it.\n",
           "gatesDays": 94,
+          "deadline": null,
           "unblocks": 8
         },
         {
@@ -19,6 +20,7 @@ window.WAYFINDER = {
           "title": "Enrol your child in primary school",
           "why": "Schools fill up from the spring. A place is easier to get before the year starts.\n",
           "gatesDays": 30,
+          "deadline": null,
           "unblocks": 0
         },
         {
@@ -26,6 +28,7 @@ window.WAYFINDER = {
           "title": "Ask IPAS for accommodation and get on the waiting list",
           "why": "IPAS works from a waiting list. They contact people by email. Being on that list, with an email they can reach, is the part you control.\n",
           "gatesDays": 0,
+          "deadline": null,
           "unblocks": 0
         },
         {
@@ -33,6 +36,7 @@ window.WAYFINDER = {
           "title": "Ask an ETB about free English classes",
           "why": "Ask the guidance counsellor at your local Education and Training Board. They know what is running near you. The classes are free.\n",
           "gatesDays": 21,
+          "deadline": null,
           "unblocks": 0
         },
         {
@@ -40,6 +44,7 @@ window.WAYFINDER = {
           "title": "Register for An Post Address Point",
           "why": "It is free and you can do it today. It gives you an address where post can reach you.\n",
           "gatesDays": 7,
+          "deadline": null,
           "unblocks": 0
         },
         {
@@ -47,6 +52,7 @@ window.WAYFINDER = {
           "title": "Register with a GP",
           "why": "A GP is the way in to the rest of the health system. You do not have to wait for the medical card to register.\n",
           "gatesDays": 0,
+          "deadline": null,
           "unblocks": 0
         }
       ],
@@ -55,6 +61,7 @@ window.WAYFINDER = {
           "id": "accommodation.move_in",
           "title": "Take up the accommodation you are offered",
           "why": "An offer comes by email. That is why checking your email every day matters more than it sounds.\n",
+          "deadline": null,
           "doFirst": [],
           "decidedElsewhere": [
             "determination:ipas_accommodation_offer"
@@ -64,6 +71,7 @@ window.WAYFINDER = {
           "id": "child_benefit.apply",
           "title": "Apply for child benefit",
           "why": "This is the payment most families ask about. Part of the decision is not yours to settle.\n",
+          "deadline": null,
           "doFirst": [
             "Apply for your PPS number"
           ],
@@ -75,6 +83,7 @@ window.WAYFINDER = {
           "id": "payment.weekly",
           "title": "Ask about the weekly payment",
           "why": "This is the payment most people ask about. You need your PPS number for it. You also need something that shows you are on the IPAS list.\n",
+          "deadline": null,
           "doFirst": [
             "Apply for your PPS number"
           ],
@@ -83,7 +92,11 @@ window.WAYFINDER = {
         {
           "id": "appeal.social_welfare",
           "title": "Appeal a social welfare refusal",
-          "why": "A refusal is not the end of it. You appeal to the Social Welfare Appeals Office, which is independent of the office that refused you, and you have 60 days from the date of the decision to do it. The clock starts on the letter, so do not leave it.\n",
+          "why": "A refusal is not the end of it. You appeal to the Social Welfare Appeals Office, which is independent of the office that refused you.\n",
+          "deadline": {
+            "status": "unknown_start",
+            "line": "Time limit: 60 days from the date on the decision letter. Tell a caseworker that date and they can say how long is left."
+          },
           "doFirst": [
             "Apply for your PPS number"
           ],
@@ -93,6 +106,7 @@ window.WAYFINDER = {
           "id": "medical_card.apply",
           "title": "Apply for a medical card",
           "why": "A medical card means you are seen without paying. Apply early. It does not come through straight away.\n",
+          "deadline": null,
           "doFirst": [
             "Apply for your PPS number"
           ],
@@ -102,6 +116,7 @@ window.WAYFINDER = {
           "id": "payment.additional_needs",
           "title": "Ask about an Additional Needs Payment",
           "why": "This is for one-off costs you cannot avoid. It is separate from the weekly payment. Being turned down for one does not settle the other.\n",
+          "deadline": null,
           "doFirst": [
             "Apply for your PPS number"
           ],
@@ -111,6 +126,7 @@ window.WAYFINDER = {
           "id": "work.labour_market_access",
           "title": "Apply for permission to work",
           "why": "There is a waiting period. It starts the day you applied. Once it has passed, you apply online.\n",
+          "deadline": null,
           "doFirst": [],
           "decidedElsewhere": []
         },
@@ -118,6 +134,7 @@ window.WAYFINDER = {
           "id": "further_education.enrol",
           "title": "Ask about a further education course",
           "why": "A level 5 course is the usual way in to higher education here. What you pay depends on whether you have permission to work.\n",
+          "deadline": null,
           "doFirst": [],
           "decidedElsewhere": []
         },
@@ -125,6 +142,7 @@ window.WAYFINDER = {
           "id": "address.welfare_statement",
           "title": "Ask the Community Welfare Service for a statement",
           "why": "A social welfare statement works as proof of address. It is a second way in if the post office option does not suit you.\n",
+          "deadline": null,
           "doFirst": [
             "Apply for your PPS number"
           ],
@@ -134,6 +152,7 @@ window.WAYFINDER = {
           "id": "bank.basic_account",
           "title": "Open a basic bank account",
           "why": "Payments cannot reach you without an account. A basic account is made for people who cannot meet the usual requirements.\n",
+          "deadline": null,
           "doFirst": [
             "Apply for your PPS number"
           ],
@@ -143,6 +162,7 @@ window.WAYFINDER = {
           "id": "medical_card.renew",
           "title": "Renew your medical card before it runs out",
           "why": "A card that runs out takes weeks to get back. In that time you pay for your own prescriptions.\n",
+          "deadline": null,
           "doFirst": [
             "Apply for your PPS number"
           ],
@@ -152,6 +172,7 @@ window.WAYFINDER = {
           "id": "thirdlevel.support",
           "title": "Ask about support for third level study",
           "why": "Most funding has a waiting period. It is worth knowing the exact date it opens to you.\n",
+          "deadline": null,
           "doFirst": [],
           "decidedElsewhere": []
         }
@@ -176,6 +197,7 @@ window.WAYFINDER = {
           "title": "Enrol your child in primary school",
           "why": "Schools fill up from the spring. A place is easier to get before the year starts.\n",
           "gatesDays": 30,
+          "deadline": null,
           "unblocks": 0
         },
         {
@@ -183,13 +205,18 @@ window.WAYFINDER = {
           "title": "Ask about the weekly payment",
           "why": "This is the payment most people ask about. You need your PPS number for it. You also need something that shows you are on the IPAS list.\n",
           "gatesDays": 0,
+          "deadline": null,
           "unblocks": 0
         },
         {
           "id": "appeal.social_welfare",
           "title": "Appeal a social welfare refusal",
-          "why": "A refusal is not the end of it. You appeal to the Social Welfare Appeals Office, which is independent of the office that refused you, and you have 60 days from the date of the decision to do it. The clock starts on the letter, so do not leave it.\n",
+          "why": "A refusal is not the end of it. You appeal to the Social Welfare Appeals Office, which is independent of the office that refused you.\n",
           "gatesDays": 90,
+          "deadline": {
+            "status": "unknown_start",
+            "line": "Time limit: 60 days from the date on the decision letter. Tell a caseworker that date and they can say how long is left."
+          },
           "unblocks": 0
         },
         {
@@ -197,6 +224,7 @@ window.WAYFINDER = {
           "title": "Ask an ETB about free English classes",
           "why": "Ask the guidance counsellor at your local Education and Training Board. They know what is running near you. The classes are free.\n",
           "gatesDays": 21,
+          "deadline": null,
           "unblocks": 0
         },
         {
@@ -204,6 +232,7 @@ window.WAYFINDER = {
           "title": "Open a basic bank account",
           "why": "Payments cannot reach you without an account. A basic account is made for people who cannot meet the usual requirements.\n",
           "gatesDays": 7,
+          "deadline": null,
           "unblocks": 0
         },
         {
@@ -211,6 +240,7 @@ window.WAYFINDER = {
           "title": "Register with a GP",
           "why": "A GP is the way in to the rest of the health system. You do not have to wait for the medical card to register.\n",
           "gatesDays": 0,
+          "deadline": null,
           "unblocks": 0
         },
         {
@@ -218,6 +248,7 @@ window.WAYFINDER = {
           "title": "Apply for a medical card",
           "why": "A medical card means you are seen without paying. Apply early. It does not come through straight away.\n",
           "gatesDays": 0,
+          "deadline": null,
           "unblocks": 1
         },
         {
@@ -225,6 +256,7 @@ window.WAYFINDER = {
           "title": "Ask about an Additional Needs Payment",
           "why": "This is for one-off costs you cannot avoid. It is separate from the weekly payment. Being turned down for one does not settle the other.\n",
           "gatesDays": 0,
+          "deadline": null,
           "unblocks": 0
         },
         {
@@ -232,6 +264,7 @@ window.WAYFINDER = {
           "title": "Ask the Community Welfare Service for a statement",
           "why": "A social welfare statement works as proof of address. It is a second way in if the post office option does not suit you.\n",
           "gatesDays": 7,
+          "deadline": null,
           "unblocks": 0
         }
       ],
@@ -240,6 +273,7 @@ window.WAYFINDER = {
           "id": "child_benefit.apply",
           "title": "Apply for child benefit",
           "why": "This is the payment most families ask about. Part of the decision is not yours to settle.\n",
+          "deadline": null,
           "doFirst": [],
           "decidedElsewhere": [
             "determination:habitual_residence"
@@ -249,6 +283,7 @@ window.WAYFINDER = {
           "id": "work.labour_market_access",
           "title": "Apply for permission to work",
           "why": "There is a waiting period. It starts the day you applied. Once it has passed, you apply online.\n",
+          "deadline": null,
           "doFirst": [],
           "decidedElsewhere": []
         },
@@ -256,6 +291,7 @@ window.WAYFINDER = {
           "id": "further_education.enrol",
           "title": "Ask about a further education course",
           "why": "A level 5 course is the usual way in to higher education here. What you pay depends on whether you have permission to work.\n",
+          "deadline": null,
           "doFirst": [],
           "decidedElsewhere": []
         },
@@ -263,6 +299,7 @@ window.WAYFINDER = {
           "id": "medical_card.renew",
           "title": "Renew your medical card before it runs out",
           "why": "A card that runs out takes weeks to get back. In that time you pay for your own prescriptions.\n",
+          "deadline": null,
           "doFirst": [
             "Apply for a medical card"
           ],
@@ -272,6 +309,7 @@ window.WAYFINDER = {
           "id": "thirdlevel.support",
           "title": "Ask about support for third level study",
           "why": "Most funding has a waiting period. It is worth knowing the exact date it opens to you.\n",
+          "deadline": null,
           "doFirst": [],
           "decidedElsewhere": []
         }

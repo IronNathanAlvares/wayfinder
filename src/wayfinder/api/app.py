@@ -240,9 +240,37 @@ def create_app(
 
         plan = build_plan(corpus.tasks, situation, today=on)
         titles = {i.task.id: i.task.title for i in plan.items}
+
+        def clock(task_id: str) -> dict[str, Any] | None:
+            """A closing window, or nothing. Never a claim that one has shut.
+
+            `status` is at worst `may_have_closed`, and a client must not render
+            it as expired: the start date came from somebody's memory of a
+            letter, and late applications are often accepted. See
+            `plan/deadlines.py` for why that asymmetry decides the wording.
+            """
+            state = plan.deadlines.get(task_id)
+            if state is None:
+                return None
+            return {
+                "status": state.status.value,
+                "within_days": state.within.days,
+                "runs_from": state.described_as,
+                "started_on": state.started_on.isoformat()
+                if state.started_on
+                else None,
+                "closes_on": state.closes_on.isoformat() if state.closes_on else None,
+                "days_remaining": state.days_remaining,
+            }
+
         return {
             "start_now": [
-                {"id": t, "title": titles[t], "gates_days": plan.gated_wait[t].days}
+                {
+                    "id": t,
+                    "title": titles[t],
+                    "gates_days": plan.gated_wait[t].days,
+                    "deadline": clock(t),
+                }
                 for t in plan.frontier_order
             ],
             "not_yet": [
@@ -255,6 +283,10 @@ def create_app(
                     # Named, never assessed. This is the field the whole design
                     # is built around.
                     "decided_by_somebody_else": list(i.determination_refs),
+                    # A blocked task can have a window running down while
+                    # somebody waits for the thing that unblocks it, which is
+                    # when it matters most.
+                    "deadline": clock(i.task.id),
                 }
                 for i in plan.blocked
             ],

@@ -156,6 +156,49 @@ class Prerequisite(BaseModel):
         return frozenset(out)
 
 
+class Deadline(BaseModel):
+    """A window that closes, which is not the same thing as a wait that passes.
+
+    `typical_wait` and this are opposite quantities and the corpus had only the
+    first. A wait is time you spend: it is unpleasant and it is survivable, and
+    the plan uses it to decide what to start first. A deadline is time you lose,
+    and at the end of it the door is shut. Modelling the second as the first
+    would rank a closing appeal window by how long the appeal takes, which is
+    exactly backwards.
+
+    The clock starts from an artefact rather than from today, because these
+    windows run from an event: a refusal is issued, a letter is dated. `of`
+    names that artefact and `described_as` is how to say it to somebody, since
+    "sixty days from determination:habitual_residence" is not a sentence anybody
+    should read.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    within: timedelta
+    of: ArtefactRef
+    described_as: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _runs_from_something_datable(self) -> Deadline:
+        if self.within <= timedelta(0):
+            msg = f"deadline `within` must be positive, got {self.within}"
+            raise ValueError(msg)
+
+        # An `elapsed:` or `task:` ref has no date attached to it in a
+        # situation, so a window hung off one could never be computed and would
+        # silently render as "we do not know when this started" forever.
+        kind = artefact_kind(self.of)
+        if kind not in {ArtefactKind.DETERMINATION, ArtefactKind.DOCUMENT}:
+            msg = (
+                f"deadline runs from {self.of}, which is a {kind.value}. A window "
+                "has to start from something a situation can carry a date for, so "
+                "that means a determination or a document."
+            )
+            raise ValueError(msg)
+        return self
+
+
 class Task(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -170,6 +213,11 @@ class Task(BaseModel):
     applies_when: Condition = ALWAYS
     where: tuple[SourceSpan, ...] = Field(min_length=1)
     typical_wait: timedelta | None = None
+
+    # A window that shuts, as opposed to `typical_wait`, which is a window you
+    # sit through. See `Deadline`.
+    deadline: Deadline | None = None
+
     blocking_severity: Severity
 
     @model_validator(mode="after")
@@ -206,6 +254,7 @@ class Task(BaseModel):
 
 
 __all__: Final = [
+    "Deadline",
     "Domain",
     "Prerequisite",
     "Severity",

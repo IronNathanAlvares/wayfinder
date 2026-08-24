@@ -48,7 +48,17 @@
     waiting: "M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z",
     external: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm13 14v-2a4 4 0 0 0-3-3.87",
     crisis: "M12 9v4m0 4h.01M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.7 3.86a2 2 0 0 0-3.4 0Z",
-    done: "M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4 12 14.01l-3-3"
+    done: "M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4 12 14.01l-3-3",
+    /* An hourglass for a window that is running, and the same alert triangle
+       the crisis chip uses for one that may already have run out. The chip
+       always carries an icon and a word as well as a colour, because "closing"
+       against "open" is exactly the red/amber pair a colour-blind reader
+       loses first. */
+    "deadline-open": "M6 2h12M6 22h12M6 2v6l6 4 6-4V2M6 22v-6l6-4 6 4v6",
+    "deadline-unknown_start": "M6 2h12M6 22h12M6 2v6l6 4 6-4V2M6 22v-6l6-4 6 4v6",
+    "deadline-closing": "M6 2h12M6 22h12M6 2v6l6 4 6-4V2M6 22v-6l6-4 6 4v6",
+    "deadline-may_have_closed":
+      "M12 9v4m0 4h.01M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.7 3.86a2 2 0 0 0-3.4 0Z"
   };
 
   function chip(kind, label) {
@@ -182,6 +192,13 @@
     );
     if (!columns) return;
 
+    function deadlineLabel(deadline) {
+      if (deadline.status === "may_have_closed") return "time limit: check the date";
+      if (deadline.status === "closing") return "time limit: closing";
+      if (deadline.status === "unknown_start") return "time limit applies";
+      return "time limit";
+    }
+
     function taskCard(task, kind) {
       var button = el("button", "task");
       button.type = "button";
@@ -190,6 +207,14 @@
       button.appendChild(el("span", "task-title", task.title));
 
       var meta = el("span", "task-meta");
+      /* A closing window goes in the meta row, first, in both columns. It is
+         the one fact on a card that can stop being true, and it never says a
+         window has shut: `may_have_closed` is the strongest status there is,
+         and the sentence comes from the same renderer the CLI uses so the two
+         cannot drift apart. */
+      if (task.deadline) {
+        meta.appendChild(chip("deadline-" + task.deadline.status, deadlineLabel(task.deadline)));
+      }
       if (kind === "ready") {
         if (task.unblocks > 0) {
           meta.appendChild(
@@ -218,6 +243,10 @@
 
       var why = el("span", "task-why");
       why.hidden = true;
+      /* The full sentence, above `why`, because it is the part that expires. */
+      if (task.deadline) {
+        why.appendChild(el("p", "task-deadline", task.deadline.line));
+      }
       if (task.why) why.appendChild(el("p", null, task.why));
       if (kind === "waiting" && task.decidedElsewhere && task.decidedElsewhere.length) {
         why.appendChild(

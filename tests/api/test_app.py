@@ -530,3 +530,49 @@ def test_an_unknown_thread_id_is_a_404_rather_than_an_empty_plan(
     """Guessing has to fail visibly rather than returning a blank plan that
     reads as a real but empty thread."""
     assert client.get("/v1/threads/not-a-real-id/plan").status_code == 404
+
+
+# --- closing windows over the API ---------------------------------------------
+
+
+def test_the_plan_carries_a_deadline_and_never_calls_it_closed(
+    client: TestClient,
+) -> None:
+    """A client rendering `status` must never be handed a value that means
+    expired. `may_have_closed` is the strongest one there is, because the start
+    date came from somebody's memory of a letter and late applications are
+    often accepted."""
+    thread = start(client, **AMARA)
+    body = client.get(f"/v1/threads/{thread}/plan").json()
+
+    entries = [
+        task
+        for section in ("start_now", "not_yet")
+        for task in body[section]
+        if task.get("deadline")
+    ]
+    assert entries, "no task in this plan carries a window, so this proves nothing"
+
+    for task in entries:
+        deadline = task["deadline"]
+        assert deadline["status"] in {
+            "unknown_start",
+            "open",
+            "closing",
+            "may_have_closed",
+        }
+        assert deadline["within_days"] > 0
+        assert deadline["runs_from"]
+
+
+def test_a_task_without_a_window_says_so_with_null_rather_than_omitting_it(
+    client: TestClient,
+) -> None:
+    """An absent key and a null are different to a client, and every task
+    carrying the field means a renderer never has to guess."""
+    thread = start(client, **AMARA)
+    body = client.get(f"/v1/threads/{thread}/plan").json()
+
+    for section in ("start_now", "not_yet"):
+        for task in body[section]:
+            assert "deadline" in task

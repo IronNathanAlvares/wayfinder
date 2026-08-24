@@ -499,6 +499,32 @@ code {
 .chip-external { color: var(--external); background: var(--external-soft); border-color: color-mix(in srgb, var(--external) 30%, transparent); }
 .chip-crisis { color: var(--crisis); background: var(--crisis-soft); border-color: color-mix(in srgb, var(--crisis) 30%, transparent); }
 
+/* A closing window. `closing` and `may_have_closed` borrow the crisis colour
+   because they are the states where the option itself disappears; the other two
+   borrow the waiting amber. Every one of them also carries an icon and a word,
+   so none of this is load-bearing on colour. */
+.chip-deadline-open,
+.chip-deadline-unknown_start {
+  color: var(--waiting);
+  background: var(--waiting-soft);
+  border-color: color-mix(in srgb, var(--waiting) 28%, transparent);
+}
+.chip-deadline-closing,
+.chip-deadline-may_have_closed {
+  color: var(--crisis);
+  background: var(--crisis-soft);
+  border-color: color-mix(in srgb, var(--crisis) 30%, transparent);
+}
+
+/* The full sentence inside an expanded card. It is the part that expires, so
+   it reads before the `why` and is set apart from it. */
+.task-deadline {
+  font-weight: 600;
+  color: var(--text);
+  border-left: 3px solid var(--waiting);
+  padding-left: 0.7rem;
+}
+
 .diff {
   margin-top: 1.4rem;
   background: var(--accent-soft);

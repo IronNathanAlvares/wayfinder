@@ -20,6 +20,7 @@ from collections.abc import Iterable, Sequence
 from datetime import date
 
 from wayfinder.plan.critical_path import gated_wait, rank_frontier
+from wayfinder.plan.deadlines import deadlines_for
 from wayfinder.plan.errors import CycleError
 from wayfinder.plan.models import Task
 from wayfinder.plan.plan import ItemStatus, Plan, PlanItem
@@ -59,16 +60,21 @@ def build_plan(
 
     startable = frozenset(i.task.id for i in items if i.status is ItemStatus.FRONTIER)
     gated = gated_wait(included, order)
+    # Computed over every included task, not only the frontier: a blocked task
+    # can have a window running down while somebody waits for the thing that
+    # unblocks it, and that is precisely when it matters most.
+    clocks = deadlines_for(included, situation, today=today)
     frontier_tasks = [i.task for i in items if i.status is ItemStatus.FRONTIER]
 
     return Plan(
         built_on=today,
         items=items,
-        frontier_order=rank_frontier(frontier_tasks, gated),
+        frontier_order=rank_frontier(frontier_tasks, gated, clocks),
         unblocking_route={t: tuple(sorted(r.tasks)) for t, r in routes.items()},
         next_actions={t: next_actions(r, startable) for t, r in routes.items()},
         unroutable={t: r.unroutable for t, r in routes.items() if r.unroutable},
         gated_wait={t: gated[t] for t in startable},
+        deadlines=clocks,
         waiting_on=count_waiting_on(routes, startable),
     )
 

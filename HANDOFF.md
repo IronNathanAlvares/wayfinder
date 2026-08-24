@@ -7,7 +7,7 @@ are easy to get wrong.
 
 ## Where things stand
 
-**M1 to M6 are built.** 645 tests, mypy strict across 89 source files, four
+**M1 to M6 are built.** 669 tests, mypy strict across 91 source files, four
 import-linter contracts kept, 93 percent coverage, green in CI. A question goes
 in through `wayfinder ask` or the API, gets classified, and comes back either as
 an answer with dated citations, as a phone number, as a refusal that names
@@ -291,7 +291,7 @@ So the remaining work is:
 Getting a corpus written by somebody who did not write the rules is still the
 highest-value item available and still not something testing substitutes for.
 
-**2. The remaining blocked sources, and a deadline field.**
+**2. The remaining blocked sources.**
 citizensinformation.ie **is now retrieved and cited** (24 August 2026). Its 403
 was real for a bare client, but the address in the design also 404s: the page
 moved. Worth remembering, because a source recorded as unreachable stops being
@@ -302,12 +302,13 @@ appeal has a 60 day window.
 gov.ie's operational guidelines still 403, and irishimmigration.ie still 404s at
 the design's URL. Under ADR-0005 those stay uncited.
 
-The modelling gap that surfaced is bigger than either: **tasks have
-`typical_wait` and no way to express a deadline.** The 60 day appeal window sits
-in prose inside `why` because there is nowhere else to put it. A wait and a
-deadline are opposite things, one is time you spend and the other is time you
-lose, and for a system whose premise is that timing matters that is a real hole
-in the model rather than a missing field.
+The modelling gap that surfaced is **closed**: tasks now carry a `deadline`
+beside `typical_wait`. A wait is time you spend and a deadline is time you lose,
+and only one ends with the door shut, so a window whose clock has started
+outranks severity in the frontier. Nothing in the system ever says a window has
+shut: `MAY_HAVE_CLOSED` is the strongest status, and it ends on an instruction
+to ask rather than on the bad news. See `plan/deadlines.py`, whose docstring is
+the argument for why.
 
 **3. The corpus is 20 tasks against a design that describes about 40.** Four
 domains are covered properly. Employment, and the transition after a protection

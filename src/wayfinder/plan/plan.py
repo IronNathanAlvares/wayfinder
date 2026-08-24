@@ -15,6 +15,7 @@ from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
+from wayfinder.plan.deadlines import DeadlineState
 from wayfinder.plan.models import Prerequisite, Task
 from wayfinder.plan.refs import ArtefactKind, TaskId, artefact_kind
 
@@ -94,6 +95,13 @@ class Plan(BaseModel):
 
     # Longest downstream waiting time gated by each frontier task.
     gated_wait: Mapping[TaskId, timedelta] = {}
+
+    # Closing windows, for every task that has one, whether or not its clock has
+    # started. A window whose start is unknown is still worth saying out loud:
+    # "60 days from the date on the letter" is actionable even when nobody has
+    # told us the date. Keyed by task id and computed here rather than by
+    # whatever renders the plan, so the claim can be tested.
+    deadlines: Mapping[TaskId, DeadlineState] = {}
 
     # How many blocked tasks each frontier task appears in the route for. This
     # is the "four other things are waiting on it" line, computed here rather

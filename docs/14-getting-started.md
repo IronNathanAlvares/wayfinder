@@ -76,7 +76,7 @@ below uses the `uv run` form, which works either way.
 uv run pytest -q
 ```
 
-645 tests, no network, no key, about two minutes. If this passes,
+669 tests, no network, no key, about three minutes. If this passes,
 everything in §4 and §5 will work.
 
 The corpus has its own integrity check, worth running separately because it is

@@ -4,7 +4,7 @@
 **What it is:** A LangGraph agent team that turns "I have just arrived, what do I
 do?" into an ordered plan with prerequisites, and refuses to answer the questions
 that need a human.
-**Author:** Nathan Alvares · **Date:** 17 August 2026 · **Status:** M1 to M6 built, 645 tests green. See [`12-changes-from-design.md`](12-changes-from-design.md)
+**Author:** Nathan Alvares · **Date:** 17 August 2026 · **Status:** M1 to M6 built, 669 tests green. See [`12-changes-from-design.md`](12-changes-from-design.md)
 
 > **Standalone project.** No dependency on anything else. Nothing else needs to
 > exist for it to run.
@@ -51,7 +51,7 @@ every command, Docker, and the caseworker credentials.
 | 13 | [Deploying the site](13-deploying-the-site.md) | The static demo, its security headers, and why the API is not on Vercel |
 | 14 | [Getting started](14-getting-started.md) | **Clone to running.** Every command, Docker, caseworker auth, and what is not secured |
 | 15 | [Latency and cost](15-latency-and-cost.md) | What the crisis screen costs in seconds and dollars, and what ADR-0008's choice of Opus actually buys |
-| 12 | [Changes from the design](12-changes-from-design.md) | **The twenty-eight things building it proved wrong, and what replaced them** |
+| 12 | [Changes from the design](12-changes-from-design.md) | **The twenty-nine things building it proved wrong, and what replaced them** |
 
 ## Decision records
 

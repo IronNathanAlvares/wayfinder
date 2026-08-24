@@ -21,6 +21,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from datetime import timedelta
 
+from wayfinder.plan.deadlines import DeadlineState
 from wayfinder.plan.models import Task
 from wayfinder.plan.refs import TaskId
 
@@ -64,27 +65,43 @@ def gated_wait(
 def rank_frontier(
     frontier: Sequence[Task],
     gated: Mapping[TaskId, timedelta],
+    deadlines: Mapping[TaskId, DeadlineState] | None = None,
 ) -> tuple[TaskId, ...]:
-    """Frontier order: severity band first, then gated calendar time within it.
+    """Frontier order: a running clock first, then severity, then gated time.
+
+    **A window that is actually closing outranks severity.** Severity is an
+    editorial judgement about what it costs to be blocked, and it assumes the
+    thing is still there to be done later. A deadline breaks that assumption:
+    the option disappears. A critical task deferred a week is a week late, and
+    an appeal deferred past its window is gone, so the two do not belong in the
+    same comparison.
+
+    Only a window whose clock has actually started can rank. Where the corpus
+    knows a rule and the situation does not carry a date, there is a real
+    window and no way to say how much of it is left, so it takes its ordinary
+    place rather than being ranked on a number nobody has.
+
+    This is a band above the existing bands rather than a weight blended into
+    them, for the same reason severity is a band: combining a judgement with a
+    computation needs invented numbers, and lexicographic ordering does not.
 
     Ranking on gated time alone puts a ten-day language class above a seven-day
     application for the card somebody needs to see a doctor. Both gate the same
     amount of downstream work, which is none, so the computation has nothing to
-    say and the ordering falls to an accident of duration.
-
-    Severity is an editorial judgement about what it costs to be blocked, and
-    gated time is computed. Using the judgement as the coarse band and the
-    computation as the ordering inside it keeps the two separable, and avoids
-    the invented numeric weights that combining them would need.
+    say and the ordering falls to an accident of duration. Severity is the
+    judgement that settles it.
     """
-    return tuple(
-        task.id
-        for task in sorted(
-            frontier,
-            key=lambda t: (
-                t.blocking_severity.rank,
-                -gated.get(t.id, ZERO).total_seconds(),
-                t.id,
-            ),
+    clocks = deadlines or {}
+
+    def key(task: Task) -> tuple[int, int, int, float, str]:
+        state = clocks.get(task.id)
+        running = state is not None and state.running
+        return (
+            0 if running else 1,
+            state.urgency if running and state is not None else 0,
+            task.blocking_severity.rank,
+            -gated.get(task.id, ZERO).total_seconds(),
+            task.id,
         )
-    )
+
+    return tuple(task.id for task in sorted(frontier, key=key))
