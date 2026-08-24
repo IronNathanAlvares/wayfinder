@@ -271,12 +271,22 @@ So the remaining work is:
 
 1. **A bigger crisis corpus.** Written to the same protocol, and by somebody who
    did not write the rules, which has been the standing gap since ADR-0008 was
-   first written.
-2. **The eight turns Opus still misses**, which are a different shape from
-   before: bureaucratic catch-22s and unregistered or unseen children, not
-   people describing their own plans.
-3. **Cost and latency of Opus in the request path.** It runs before every turn.
-   Nothing here has measured what that costs a person waiting.
+   first written. Whoever writes it needs telling what item 2 found, because a
+   split written the natural way will not contain the items that would move
+   anything.
+2. **The eight misses are one failure mode, and it now has a name.** All eight
+   fall in two of six categories, against 2.65 expected if they were spread at
+   random (Fisher exact p = 1.2e-4); the other four categories are perfect at
+   214 of 214. Not one of the eight describes danger. Every one describes a
+   process outcome in the process's own vocabulary: a council warning, a list,
+   an address requirement, a file. **The screen recognises danger described as
+   danger, including implied danger. It does not recognise danger described as
+   administration.** Analysis in ADR-0008; note that a prompt round targeting
+   this risks paying for it out of self-harm, per change 21.
+3. ~~Cost and latency of Opus.~~ **Done.** 2.24 s p50, $0.0102 per turn, and the
+   model is 99.87 percent of the wait. See
+   [`15-latency-and-cost.md`](docs/15-latency-and-cost.md). What is left is p99
+   and concurrency, which need load rather than a sample.
 
 Getting a corpus written by somebody who did not write the rules is still the
 highest-value item available and still not something testing substitutes for.

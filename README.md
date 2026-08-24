@@ -340,6 +340,16 @@ The gate is still not met, and for a fourth distinct reason: the bound is 0.955,
 and **a perfect 320 out of 320 on this split would only bound at 0.9907.**
 Certifying 0.99 now needs a bigger corpus rather than a better screen.
 
+**And the eight it still misses are one failure mode, not eight.** All eight
+land in two of six categories, against 2.65 expected by chance (Fisher exact
+p = 1.2e-4); the other four are perfect at 214 of 214. Not one of the eight
+describes danger. Every one describes a process outcome in the process's own
+words: *"they need proof of address to give me an address"*, *"my baby was born
+at home and there is no record of her anywhere"*. So the honest statement of
+what this is bad at is not "hard cases" but **danger described as
+administration**, where the harm is a second-order inference a caseworker makes
+on reading it and the screen does not.
+
 **And that choice has now been priced.** Opus is 7.1x the money and 2.15x the
 wait: **$0.0102 per turn and 2.24 s at p50**, against Haiku's $0.0014 and
 1.04 s. The model is 99.87 percent of a turn's latency, so there is nothing
