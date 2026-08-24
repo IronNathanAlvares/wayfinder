@@ -55,7 +55,7 @@ def test_a_determination_question_pauses_rather_than_answering(
         graph = compile_graph(deps, checkpointer=saver)
         config = thread("amara-1")
         result = graph.invoke(
-            WayfinderState(current_question=QUESTION, today=date(2026, 8, 18)),
+            WayfinderState(current_question=QUESTION, today=date(2026, 8, 24)),
             config,
         )
 
@@ -78,7 +78,7 @@ def test_the_pause_carries_what_a_caseworker_needs_and_no_more(
     with sqlite_checkpointer(tmp_path / "payload.sqlite") as saver:
         graph = compile_graph(deps, checkpointer=saver)
         result = graph.invoke(
-            WayfinderState(current_question=QUESTION, today=date(2026, 8, 18)),
+            WayfinderState(current_question=QUESTION, today=date(2026, 8, 24)),
             thread("amara-2"),
         )
         payload = result["__interrupt__"][0].value
@@ -86,7 +86,7 @@ def test_the_pause_carries_what_a_caseworker_needs_and_no_more(
     assert payload["kind"] == "determination"
     assert payload["question"] == QUESTION
     assert "situation_summary" in payload
-    assert payload["asked_on"] == "2026-08-18"
+    assert payload["asked_on"] == "2026-08-24"
 
 
 def test_resuming_attributes_the_answer_to_the_named_human(
@@ -103,7 +103,7 @@ def test_resuming_attributes_the_answer_to_the_named_human(
         graph = compile_graph(deps, checkpointer=saver)
         config = thread("amara-3")
         graph.invoke(
-            WayfinderState(current_question=QUESTION, today=date(2026, 8, 18)),
+            WayfinderState(current_question=QUESTION, today=date(2026, 8, 24)),
             config,
         )
         final = graph.invoke(
@@ -139,7 +139,7 @@ def test_a_caseworkers_answer_is_not_followed_by_a_refusal(
         graph = compile_graph(deps, checkpointer=saver)
         config = thread("amara-5")
         graph.invoke(
-            WayfinderState(current_question=QUESTION, today=date(2026, 8, 18)),
+            WayfinderState(current_question=QUESTION, today=date(2026, 8, 24)),
             config,
         )
         final = graph.invoke(
@@ -169,7 +169,7 @@ def test_a_determination_cannot_be_resumed_without_naming_who_made_it(
         graph = compile_graph(deps, checkpointer=saver)
         config = thread("amara-4")
         graph.invoke(
-            WayfinderState(current_question=QUESTION, today=date(2026, 8, 18)),
+            WayfinderState(current_question=QUESTION, today=date(2026, 8, 24)),
             config,
         )
         with pytest.raises(Exception, match=r"answered_by|validation"):
@@ -201,7 +201,7 @@ _RESUME_SCRIPT = textwrap.dedent(
     from wayfinder.safety.loader import load_directory, load_lexicon
 
     db, data, action = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
-    today = date(2026, 8, 18)
+    today = date(2026, 8, 24)
     corpus = load_corpus(data, today=today)
     deps = Deps(
         lexicon=load_lexicon(today=today),

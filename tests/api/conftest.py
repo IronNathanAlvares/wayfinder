@@ -26,7 +26,7 @@ from wayfinder.graph.nodes import Deps
 from wayfinder.retrieval.index import Index
 from wayfinder.safety.loader import load_directory, load_lexicon
 
-TODAY = date(2026, 8, 18)
+TODAY = date(2026, 8, 24)
 DATA = Path(__file__).parents[2] / "src" / "wayfinder" / "corpus" / "data"
 
 # Fixed rather than minted, so a failing test is reproducible. Long enough to

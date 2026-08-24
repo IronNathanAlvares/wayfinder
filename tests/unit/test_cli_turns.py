@@ -16,7 +16,7 @@ import pytest
 
 from wayfinder.cli.main import EXIT_CANNOT_EVALUATE, EXIT_OK, main
 
-TODAY = ("--today", "2026-08-18")
+TODAY = ("--today", "2026-08-24")
 
 
 @pytest.fixture(autouse=True)

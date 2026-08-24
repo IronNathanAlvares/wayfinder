@@ -67,7 +67,7 @@ jobs:
         run: |
           uv build --out-dir dist
           WHEEL=$(ls dist/*.whl)
-          uv run --isolated --no-project --with "$WHEEL" wayfinder --today 2026-08-18 corpus check
+          uv run --isolated --no-project --with "$WHEEL" wayfinder --today 2026-08-24 corpus check
 
       # The demo site is a recording of the system, and a recording goes stale
       # silently. This regenerates it and fails if the committed file differs,
@@ -99,7 +99,7 @@ jobs:
       - name: A turn goes through the container
         run: |
           docker run --rm -d --name wf -p 8000:8000 wayfinder:ci \
-            wayfinder --today 2026-08-18 serve --host 0.0.0.0 \
+            wayfinder --today 2026-08-24 serve --host 0.0.0.0 \
             --no-model-screen --db /data/ci.sqlite
           for _ in $(seq 30); do
             curl -sf http://127.0.0.1:8000/v1/corpus/health >/dev/null && break

@@ -22,7 +22,7 @@ from wayfinder.plan.refs import ArtefactKind, artefact_kind
 from wayfinder.plan.situation import Accommodation, ProtectionStage, Situation
 from wayfinder.retrieval.index import Index
 
-BUILT_ON = date(2026, 8, 18)
+BUILT_ON = date(2026, 8, 24)
 
 
 @pytest.fixture(scope="module")
@@ -126,15 +126,45 @@ def test_the_demo_situation_produces_a_usable_plan(shipped: Corpus) -> None:
 
 
 def test_the_corpus_readme_is_honest_about_what_is_missing() -> None:
-    """The README claims three sources were unreachable. Check it still says so.
+    """The README must not overstate coverage, and must not understate it either.
 
-    If somebody later adds those sources without updating the README, the
-    corpus starts overstating its own coverage, which is the quiet failure this
-    project is most exposed to.
+    This used to assert the literal sentence "Habitual Residence Condition is
+    not [modelled]". That sentence had already stopped being true: the condition
+    was modelled against Crosscare while the README still said it was absent, so
+    the test was holding a stale claim in place rather than catching one. A test
+    that pins prose pins whatever the prose said on the day it was written.
+
+    So check the property instead. A publisher the README calls unreachable must
+    not be sitting in `sources/`, in either direction.
     """
     readme = (DEFAULT_CORPUS / "README.md").read_text(encoding="utf-8")
     assert "not advice" in readme
-    assert "Habitual Residence Condition is not" in readme
+
+    hosts = {
+        source.url.split("/")[2].removeprefix("www.")
+        for source in load_corpus(DEFAULT_CORPUS, today=BUILT_ON).sources.values()
+    }
+
+    # The "What is not here" table lists publishers by host. A host that is
+    # cited must not appear there as a live block, and the strikethrough is how
+    # the README records one that was cleared.
+    blocked_table = readme.split("## What is not here")[1].split("##")[0]
+    for line in blocked_table.splitlines():
+        if not line.startswith("| ") or "Result" in line or "---" in line:
+            continue
+        name = line.split("|")[1].strip()
+        cleared = name.startswith("~~")
+        host = name.strip("~ ").split()[0]
+        if host in hosts:
+            assert cleared, (
+                f"{host} is cited in sources/ but the README still lists it as "
+                "unreachable, so the corpus understates what it can cite"
+            )
+        else:
+            assert not cleared, (
+                f"the README says {host} was retrieved, but nothing in sources/ "
+                "cites it, so the corpus overstates its coverage"
+            )
 
 
 def test_shipped_task_files_parse_as_lists_of_mappings() -> None:
@@ -150,7 +180,7 @@ def test_shipped_task_files_parse_as_lists_of_mappings() -> None:
 def test_spans_for_returns_the_tasks_asked_for_in_that_order() -> None:
     """A planning turn's answer follows the plan's ordering, so retrieval has to
     preserve the order it was given rather than impose a relevance one."""
-    today = date(2026, 8, 18)
+    today = date(2026, 8, 24)
     index = Index(load_corpus(DEFAULT_CORPUS, today=today), today=today)
 
     wanted = ["gp.register", "ppsn.apply", "school.enrol_primary"]
@@ -162,7 +192,7 @@ def test_spans_for_returns_the_tasks_asked_for_in_that_order() -> None:
 def test_spans_for_gives_one_source_per_task_by_default() -> None:
     """A task with three sources should not push the other tasks out of a
     plan-shaped answer."""
-    today = date(2026, 8, 18)
+    today = date(2026, 8, 24)
     index = Index(load_corpus(DEFAULT_CORPUS, today=today), today=today)
 
     spans = index.spans_for(["ppsn.apply"])
@@ -173,7 +203,7 @@ def test_spans_for_gives_one_source_per_task_by_default() -> None:
 def test_spans_for_skips_a_task_it_has_no_source_for() -> None:
     """Silently returning nothing for an unknown id is right: the alternative is
     an answer that cites a task the corpus cannot support."""
-    today = date(2026, 8, 18)
+    today = date(2026, 8, 24)
     index = Index(load_corpus(DEFAULT_CORPUS, today=today), today=today)
 
     assert index.spans_for(["no.such.task"]) == ()

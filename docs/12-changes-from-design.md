@@ -878,13 +878,29 @@ reference personas assert exact plans against a synthetic fixture corpus under
 in M2 therefore cannot break M1's tests, and an engine change cannot be masked
 by a content change.
 
-**Three sources could not be fetched.** citizensinformation.ie and gov.ie
-returned 403, and the irishimmigration.ie URL in the design returned 404. Under
-ADR-0005 an unverified source cannot be cited, so every task depending on them
-is absent from the seed corpus. The visible consequence is that the Habitual
-Residence Condition, the canonical determination and the example used throughout
-the design, is not modelled. Adding it from memory would be inventing content.
-Recorded in the corpus README and carried into M2.
+**Three sources could not be fetched, and one of them was our own stale link.**
+citizensinformation.ie and gov.ie returned 403, and the irishimmigration.ie URL
+in the design returned 404. Under ADR-0005 an unverified source cannot be cited,
+so every task depending on them was absent from the seed corpus.
+
+citizensinformation.ie is now cited, read 24 August 2026. Its 403 was real for a
+bare HTTP client, but the address in the design also 404s: the page had moved
+from `claiming-a-social-welfare-payment/` to `social-assistance-payments/`. The
+lesson is worth more than the source. **A publisher recorded as unreachable
+stops being retried**, so half a diagnosis hardened into a settled fact about
+somebody else's server for a week. Check the URL before blaming the host.
+
+It brought two facts nothing else in the corpus had. Asylum seekers are not
+regarded as habitually resident, which is the most consequential sentence in
+this corpus for the people the system is for. And a social welfare appeal has a
+60 day window, where the task previously said the clock starts on the date of
+the letter without saying how long it runs.
+
+That second one exposed a modelling gap rather than a content one: tasks have
+`typical_wait` and no way to say a thing expires. A wait and a deadline are
+opposite quantities, one is time you spend and the other is time you lose, and
+only one of them ends with the door shut. The window is in prose for now, which
+is a stopgap, and the corpus README says so.
 
 **`TC` lint rules disabled.** flake8-type-checking fights Pydantic, which
 resolves annotations at runtime. The purity guarantee comes from the

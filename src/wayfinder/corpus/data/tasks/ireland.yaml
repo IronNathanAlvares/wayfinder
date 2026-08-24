@@ -187,10 +187,23 @@
     - document:ppsn
     - ref: determination:habitual_residence
       note: >
-        Assessed by the Department of Social Protection on five factors. Not all
-        of them have to be satisfied. Nothing in this system decides it.
+        Assessed by a statutorily appointed Deciding Officer on five factors:
+        length and continuity of residence, length and purpose of any absence,
+        nature and pattern of employment, main centre of interest, and future
+        intentions. Not all of them have to be satisfied. Nothing in this system
+        decides it.
+
+        Citizens Information states plainly that asylum seekers are not regarded
+        as habitually resident. That is the single most important sentence on
+        this page for anybody using this system, and it is why the answer here
+        so often turns on protection status rather than on the five factors. It
+        is still a determination and still not ours: what counts as an asylum
+        seeker, when that stops applying, and what a particular person's status
+        is on a particular day are all judgements made by a named authority.
   blocking_severity: critical
   where:
+    - source_id: citizensinformation.habitual_residence
+      span: Rules for satisfying the habitual residence condition
     - source_id: crosscare.habitual_residence
       span: Five Assessment Factors
 
@@ -198,13 +211,17 @@
   title: Appeal a social welfare refusal
   domain: income
   why: >
-    A refusal is not the end of it. But the clock starts on the date of the
+    A refusal is not the end of it. You appeal to the Social Welfare Appeals
+    Office, which is independent of the office that refused you, and you have
+    60 days from the date of the decision to do it. The clock starts on the
     letter, so do not leave it.
   requires:
     - document:ppsn
   typical_wait: P90D
   blocking_severity: important
   where:
+    - source_id: citizensinformation.habitual_residence
+      span: Appealing a decision on habitual residency
     - source_id: crosscare.habitual_residence
       span: Refusal Process
 

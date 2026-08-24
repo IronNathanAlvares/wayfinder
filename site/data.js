@@ -3,7 +3,7 @@
 // script's docstring for what that does and does not include.
 window.WAYFINDER = {
   "generatedFrom": "scripts/build_site_data.py",
-  "today": "2026-08-18",
+  "today": "2026-08-24",
   "plans": {
     "weekOne": {
       "startNow": [
@@ -83,7 +83,7 @@ window.WAYFINDER = {
         {
           "id": "appeal.social_welfare",
           "title": "Appeal a social welfare refusal",
-          "why": "A refusal is not the end of it. But the clock starts on the date of the letter, so do not leave it.\n",
+          "why": "A refusal is not the end of it. You appeal to the Social Welfare Appeals Office, which is independent of the office that refused you, and you have 60 days from the date of the decision to do it. The clock starts on the letter, so do not leave it.\n",
           "doFirst": [
             "Apply for your PPS number"
           ],
@@ -188,7 +188,7 @@ window.WAYFINDER = {
         {
           "id": "appeal.social_welfare",
           "title": "Appeal a social welfare refusal",
-          "why": "A refusal is not the end of it. But the clock starts on the date of the letter, so do not leave it.\n",
+          "why": "A refusal is not the end of it. You appeal to the Social Welfare Appeals Office, which is independent of the office that refused you, and you have 60 days from the date of the decision to do it. The clock starts on the letter, so do not leave it.\n",
           "gatesDays": 90,
           "unblocks": 0
         },
@@ -487,7 +487,7 @@ window.WAYFINDER = {
         "kind": "determination",
         "question": "am I entitled to child benefit?",
         "situationSummary": "Question: am I entitled to child benefit?\n\nProtection stage: applied\nApplied on: 2026-08-04\nAccommodation: homeless\nHousehold: 1 adult(s), 1 child(ren)\nHolds: document:asylum_application_letter, document:national_id, document:temporary_residence_certificate",
-        "askedOn": "2026-08-18"
+        "askedOn": "2026-08-24"
       }
     },
     {
@@ -531,7 +531,7 @@ window.WAYFINDER = {
     "queueItem": {
       "threadId": "amara",
       "asked": "am I entitled to child benefit?",
-      "askedOn": "2026-08-18",
+      "askedOn": "2026-08-24",
       "situationSummary": "Question: am I entitled to child benefit?\n\nProtection stage: applied\nApplied on: 2026-08-04\nAccommodation: homeless\nHousehold: 1 adult(s), 1 child(ren)\nHolds: document:asylum_application_letter, document:national_id, document:temporary_residence_certificate"
     },
     "caseworker": "Clare Nolan, Irish Refugee Council",
@@ -540,9 +540,9 @@ window.WAYFINDER = {
     "attributedTo": "Clare Nolan, Irish Refugee Council"
   },
   "corpusHealth": {
-    "checkedOn": "2026-08-18",
+    "checkedOn": "2026-08-24",
     "tasks": 20,
-    "sources": 8,
+    "sources": 9,
     "artefacts": 17,
     "bands": {
       "normal": [
@@ -601,6 +601,13 @@ window.WAYFINDER = {
           "title": "Medical cards",
           "url": "https://www2.hse.ie/services/medical-cards/",
           "lastVerified": "2026-08-18"
+        },
+        {
+          "id": "citizensinformation.habitual_residence",
+          "publisher": "Citizens Information Board",
+          "title": "The habitual residence condition",
+          "url": "https://www.citizensinformation.ie/en/social-welfare/irish-social-welfare-system/social-assistance-payments/habitual-residence-condition/",
+          "lastVerified": "2026-08-24"
         }
       ],
       "verify": [],

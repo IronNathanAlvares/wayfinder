@@ -70,3 +70,19 @@
   last_verified: 2026-08-18
   verified_by: NA
   language: en
+
+# Retrieved 24 August 2026 in a browser. The corpus README recorded this
+# publisher as HTTP 403 and treated the Habitual Residence Condition as
+# unciteable because of it. The 403 was real, but the cause was partly a moved
+# URL: the page now sits under `social-assistance-payments/` rather than
+# `claiming-a-social-welfare-payment/`, and the old address 404s.
+- id: citizensinformation.habitual_residence
+  title: The habitual residence condition
+  publisher: Citizens Information Board
+  url: https://www.citizensinformation.ie/en/social-welfare/irish-social-welfare-system/social-assistance-payments/habitual-residence-condition/
+  last_verified: 2026-08-24
+  verified_by: NA
+  language: en
+  note: >
+    The page states "Page edited: 24 July 2025". Read today, reviewed by the
+    publisher over a year ago, which is exactly the gap `note` exists to record.

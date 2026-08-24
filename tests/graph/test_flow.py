@@ -24,7 +24,7 @@ from wayfinder.plan.situation import (
 )
 from wayfinder.safety.taxonomy import QuestionClass
 
-TODAY = date(2026, 8, 18)
+TODAY = date(2026, 8, 24)
 NOTHING_KNOWN = Situation()
 
 AMARA = Situation(

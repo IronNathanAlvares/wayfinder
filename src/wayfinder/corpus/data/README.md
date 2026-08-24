@@ -18,7 +18,7 @@ was built:
 
 | Source | Result |
 |---|---|
-| citizensinformation.ie | HTTP 403 |
+| ~~citizensinformation.ie~~ | **Retrieved 24 August 2026.** See below |
 | gov.ie operational guidelines for social welfare in IPAS accommodation | HTTP 403 |
 | irishimmigration.ie work rights page | HTTP 404 at the URL in the design |
 
@@ -26,11 +26,32 @@ Under ADR-0005 an unverified source cannot be cited, so every task that would
 have depended on those pages is absent. That is the rule working rather than
 failing: the corpus is smaller and honest instead of larger and hopeful.
 
-The most visible consequence is that **the Habitual Residence Condition is not
-modelled.** It is the canonical determination in this domain and the example
-used throughout the design, and the pages describing it are exactly the ones
-that could not be fetched. Adding it from memory would be inventing content,
-which is the one thing this corpus must never contain.
+**The citizensinformation.ie block was half a moved URL.** The 403 was real, and
+it is still real for a bare HTTP client. But the address in the design also
+404s now: the page moved from `claiming-a-social-welfare-payment/` to
+`social-assistance-payments/`, and read in a browser at its current address it
+returns normally. Recorded here because "403" was carried for a week as a
+settled fact about the publisher when half of it was a stale link on our side,
+and a source declared unreachable stops being retried.
+
+Two things it carries that nothing else in this corpus did:
+
+**Asylum seekers are not regarded as habitually resident.** Stated plainly by
+the publisher. It is the single most consequential sentence in this corpus for
+the people this system is for, and it was absent. It does not turn the habitual
+residence condition into something this system decides, and `child_benefit.apply`
+still names it as a determination: who counts as an asylum seeker, when that
+stops applying, and what somebody's status is on a given day are all judgements
+made by a Deciding Officer.
+
+**A social welfare appeal has a 60 day window.** Also absent. The appeal task
+said the clock starts on the date of the letter without saying how long the
+clock runs, which for a system whose whole premise is that getting the timing
+right matters was the wrong kind of gap.
+
+The Habitual Residence Condition itself was already modelled, against Crosscare
+Migrant Project. This paragraph used to say it was not, which was true when it
+was written and stopped being true without the paragraph being updated.
 
 Education and banking have no tasks at all for the same reason. The domains
 exist in the model; the content does not exist yet.
@@ -54,8 +75,15 @@ patch here. The replanning output words this carefully in the meantime.
 
 ## What M2 has to do
 
-- Retrieve the blocked sources by another route, and record a real verification.
-- Model the Habitual Residence Condition once there is a source for it.
+- Retrieve the remaining blocked sources by another route, and record a real
+  verification. Check the URL before recording a publisher as unreachable: one
+  of the three was partly a stale link on our side.
+- **Give tasks a deadline, separately from `typical_wait`.** The 60 day appeal
+  window is currently a sentence inside `why`, because the task model has no way
+  to say "this expires". A wait and a deadline are opposite things: one is time
+  you spend, the other is time you lose, and only one of them ends with the door
+  shut. For a system about ordering and timing that is a real modelling gap, and
+  putting it in prose is a stopgap rather than a fix.
 - Expand to roughly forty tasks, including education and banking.
 - Give `accommodation.move_in` something to produce so that being housed reads
   as done rather than as no longer applicable.

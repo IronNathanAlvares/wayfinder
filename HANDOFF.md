@@ -291,12 +291,23 @@ So the remaining work is:
 Getting a corpus written by somebody who did not write the rules is still the
 highest-value item available and still not something testing substitutes for.
 
-**2. The Habitual Residence Condition is still not in the corpus.**
-citizensinformation.ie and gov.ie return 403 to the fetcher, so the canonical
-determination in this whole design, the one the README leads with, is the one
-thing the corpus cannot cite. Everything around it works. The gap is content,
-and under ADR-0005 an unverified source cannot be cited, so it stays absent
-until somebody obtains the pages a way that produces a real `last_verified`.
+**2. The remaining blocked sources, and a deadline field.**
+citizensinformation.ie **is now retrieved and cited** (24 August 2026). Its 403
+was real for a bare client, but the address in the design also 404s: the page
+moved. Worth remembering, because a source recorded as unreachable stops being
+retried. It brought two facts nothing else in the corpus had: that asylum
+seekers are not regarded as habitually resident, and that a social welfare
+appeal has a 60 day window.
+
+gov.ie's operational guidelines still 403, and irishimmigration.ie still 404s at
+the design's URL. Under ADR-0005 those stay uncited.
+
+The modelling gap that surfaced is bigger than either: **tasks have
+`typical_wait` and no way to express a deadline.** The 60 day appeal window sits
+in prose inside `why` because there is nowhere else to put it. A wait and a
+deadline are opposite things, one is time you spend and the other is time you
+lose, and for a system whose premise is that timing matters that is a real hole
+in the model rather than a missing field.
 
 **3. The corpus is 20 tasks against a design that describes about 40.** Four
 domains are covered properly. Employment, and the transition after a protection

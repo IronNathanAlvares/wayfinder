@@ -38,7 +38,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "src" / "wayfinder" / "corpus" / "data"
 EXAMPLES = ROOT / "examples"
 
-TODAY = date(2026, 8, 18)
+TODAY = date(2026, 8, 24)
 CLARE = "Clare Nolan, Irish Refugee Council"
 
 

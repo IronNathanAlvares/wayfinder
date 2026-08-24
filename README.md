@@ -371,9 +371,12 @@ is the same every time and it can be asserted exactly. Four import-linter
 contracts prove the purity rather than asserting it.
 
 **What is unfinished** is listed at the end of [`HANDOFF.md`](HANDOFF.md). The
-short version: the crisis eval corpus is 12 held-out items where certifying the
-gate needs 299, and the Habitual Residence Condition itself is still not in the
-corpus because the source pages return 403.
+short version: the held-out crisis corpus is 320 items and certifying a 0.99
+gate needs roughly a thousand, so the corpus is the binding constraint rather
+than the screen; the applicant side of the API has no accounts by design, which
+makes a thread id a capability to be looked after rather than a secret the
+server can protect; and tasks can express a wait but not a deadline, which is
+why a 60 day appeal window currently lives in prose.
 
 ---
 

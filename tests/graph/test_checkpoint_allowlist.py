@@ -36,7 +36,7 @@ from wayfinder.plan.situation import (
     Situation,
 )
 
-TODAY = date(2026, 8, 18)
+TODAY = date(2026, 8, 24)
 
 # Everything set. A sparse situation would checkpoint fine while leaving half
 # the types on the allowlist unexercised, which is exactly the drift this file

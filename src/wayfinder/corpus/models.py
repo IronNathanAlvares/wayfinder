@@ -35,6 +35,14 @@ class Source(BaseModel):
     verified_by: str = Field(min_length=1)
     language: str = "en"
 
+    # `last_verified` is the day this project read the page. It is not the day
+    # the publisher last reviewed it, and the two can be a year apart: a page
+    # checked today and edited in 2025 is a different thing from one edited last
+    # week, and only the publisher's date says which. Where the page states its
+    # own, it goes here. The sources file has claimed this field exists since
+    # the corpus was written; it did not until now.
+    note: str = ""
+
 
 class Artefact(BaseModel):
     """A document, status or determination the corpus knows how to talk about."""

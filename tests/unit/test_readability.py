@@ -67,7 +67,7 @@ def test_the_shipped_task_text_meets_the_target() -> None:
     from wayfinder.corpus.loader import load_corpus
 
     data = Path(__file__).parents[2] / "src" / "wayfinder" / "corpus" / "data"
-    corpus = load_corpus(data, today=date(2026, 8, 18))
+    corpus = load_corpus(data, today=date(2026, 8, 24))
     too_hard = [
         (t.id, grade_level(t.why))
         for t in corpus.tasks

@@ -48,7 +48,7 @@ OUT = ROOT / "site" / "data.js"
 
 # Frozen, like every other date in this project. A demo that reads the wall
 # clock shows different content every day and cannot be tested.
-TODAY = date(2026, 8, 18)
+TODAY = date(2026, 8, 24)
 
 # One turn per route out of classification, chosen so the deterministic layers
 # resolve every one of them without a model.

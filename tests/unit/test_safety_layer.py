@@ -40,7 +40,7 @@ from wayfinder.safety.models import (
 from wayfinder.safety.normalise import normalise
 from wayfinder.safety.taxonomy import Layer, QuestionClass
 
-TODAY = date(2026, 8, 18)
+TODAY = date(2026, 8, 24)
 
 
 @pytest.fixture(scope="module")
