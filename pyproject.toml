@@ -21,6 +21,7 @@ dependencies = [
 wayfinder = "wayfinder.cli.main:main"
 wayfinder-eval = "wayfinder.eval.gate:main"
 wayfinder-compare = "wayfinder.eval.compare:main"
+wayfinder-latency = "wayfinder.eval.latency:main"
 
 [project.optional-dependencies]
 # The plan engine and the deterministic safety layers install without this.
@@ -87,6 +88,7 @@ ignore = [
 "src/wayfinder/cli/*" = ["T20"]
 "src/wayfinder/eval/gate.py" = ["T20"]
 "src/wayfinder/eval/compare.py" = ["T20"]
+"src/wayfinder/eval/latency.py" = ["T20"]
 # `Depends(...)` and `Header(...)` in a parameter default is how FastAPI
 # declares a dependency. B008 is right in general and wrong here, and the
 # alternative it suggests would mean resolving auth inside every handler.

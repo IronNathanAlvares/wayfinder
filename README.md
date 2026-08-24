@@ -4,7 +4,7 @@ A LangGraph agent team that turns "I have just arrived, what do I do?" into an
 ordered plan with prerequisites, and refuses to answer the questions that need a
 human.
 
-**Status: M1 to M6 built. 611 tests, mypy strict, four import contracts.** A
+**Status: M1 to M6 built. 640 tests, mypy strict, four import contracts.** A
 question goes in through the CLI or the API, the safety layers classify it, a
 determination pauses the graph for a named caseworker, and the answer comes back
 with dated citations or with a refusal that names somebody who can help.
@@ -335,6 +335,14 @@ The gate is still not met, and for a fourth distinct reason: the bound is 0.955,
 and **a perfect 320 out of 320 on this split would only bound at 0.9907.**
 Certifying 0.99 now needs a bigger corpus rather than a better screen.
 
+**And that choice has now been priced.** Opus is 7.1x the money and 2.15x the
+wait: **$0.0102 per turn and 2.24 s at p50**, against Haiku's $0.0014 and
+1.04 s. The model is 99.87 percent of a turn's latency, so there is nothing
+below it worth tuning. Of every 100 crisis turns Haiku misses about 14 and Opus
+about 2.5, which makes the trade an easy one at any traffic worth having.
+Method, caveats and the prompt-caching decision in
+[`docs/15-latency-and-cost.md`](docs/15-latency-and-cost.md).
+
 **What exists.** The plan engine, a twenty-task Irish corpus across eight
 verified sources, BM25 retrieval, the three-layer safety classifier, the crisis
 screen and its directory, the compiled LangGraph with a durable SQLite
@@ -432,6 +440,7 @@ Each is enforced structurally and each has a test. See
 | [13 Deploying the site](docs/13-deploying-the-site.md) | The static demo, its headers, and why the API is not on Vercel |
 | [12 Changes from the design](docs/12-changes-from-design.md) | The twenty-seven things building it proved wrong |
 | [14 Getting started](docs/14-getting-started.md) | Clone to running: every command, Docker, caseworker auth |
+| [15 Latency and cost](docs/15-latency-and-cost.md) | What the screen costs in seconds and dollars |
 | [ADRs](docs/adr/) | Eight decision records |
 
 ---

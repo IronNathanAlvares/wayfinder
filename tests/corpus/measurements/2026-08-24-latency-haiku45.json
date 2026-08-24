@@ -1,0 +1,403 @@
+{
+  "measured_on": "2026-08-24",
+  "split": "crisis-holdout-v4",
+  "note": "Sequential calls through the shipped AnthropicCrisisScreen, one warm-up call discarded. Prices from platform.claude.com, read 2026-08-24.",
+  "result": {
+    "model": "claude-haiku-4-5-20251001",
+    "sampled": 40,
+    "failed": 0,
+    "latency": {
+      "min": 0.8440772000030847,
+      "p50": 1.0422416000074008,
+      "mean": 1.1891715350000596,
+      "p90": 1.3838231000117958,
+      "p95": 2.3689814999961527,
+      "max": 2.9480734999960987
+    },
+    "tokens": {
+      "input_mean": 1513.35,
+      "output_mean": 14.5,
+      "cache_read_mean": 0.0
+    },
+    "cost": {
+      "per_call": 0.0015858500000000002,
+      "per_turn": 0.0014259941796710251,
+      "per_1000_turns": 1.4259941796710252,
+      "per_call_if_cached_projected": 0.0002376725,
+      "per_1000_turns_if_cached_projected": 0.21371479122733025,
+      "cache_breakeven_calls_per_window": 1.2777777777777777,
+      "cache_breakeven_calls_per_hour": 15.333333333333332
+    },
+    "reach": {
+      "turns": 2371,
+      "reached_model": 2132,
+      "caught_by_lexicon": 239,
+      "rate": 0.8991986503584986
+    },
+    "timeout_seconds": 8.0,
+    "over_timeout": 0,
+    "price_source": "platform.claude.com, 2026-08-24"
+  },
+  "calls": [
+    {
+      "seconds": 2.3689814999961527,
+      "input_tokens": 1518,
+      "output_tokens": 16,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 86
+    },
+    {
+      "seconds": 1.2788678999932017,
+      "input_tokens": 1516,
+      "output_tokens": 16,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 75
+    },
+    {
+      "seconds": 1.2125798999913968,
+      "input_tokens": 1517,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 78
+    },
+    {
+      "seconds": 1.129210500002955,
+      "input_tokens": 1515,
+      "output_tokens": 16,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 80
+    },
+    {
+      "seconds": 1.0629935999895679,
+      "input_tokens": 1515,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 71
+    },
+    {
+      "seconds": 1.18941750000522,
+      "input_tokens": 1512,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 62
+    },
+    {
+      "seconds": 0.9065718999918317,
+      "input_tokens": 1515,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 71
+    },
+    {
+      "seconds": 1.008003099996131,
+      "input_tokens": 1514,
+      "output_tokens": 16,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 70
+    },
+    {
+      "seconds": 1.0189584999898216,
+      "input_tokens": 1515,
+      "output_tokens": 16,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 73
+    },
+    {
+      "seconds": 0.9913127999898279,
+      "input_tokens": 1519,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 80
+    },
+    {
+      "seconds": 1.2390581000072416,
+      "input_tokens": 1514,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 61
+    },
+    {
+      "seconds": 1.04854279999563,
+      "input_tokens": 1516,
+      "output_tokens": 16,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 68
+    },
+    {
+      "seconds": 1.168970900005661,
+      "input_tokens": 1515,
+      "output_tokens": 16,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 83
+    },
+    {
+      "seconds": 1.2073385999974562,
+      "input_tokens": 1516,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 63
+    },
+    {
+      "seconds": 0.8990328000072623,
+      "input_tokens": 1513,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 57
+    },
+    {
+      "seconds": 1.1484786000073655,
+      "input_tokens": 1512,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 53
+    },
+    {
+      "seconds": 1.240622199999052,
+      "input_tokens": 1518,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 79
+    },
+    {
+      "seconds": 1.1276705999916885,
+      "input_tokens": 1512,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 52
+    },
+    {
+      "seconds": 0.8607559999945806,
+      "input_tokens": 1514,
+      "output_tokens": 16,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 58
+    },
+    {
+      "seconds": 0.964601900006528,
+      "input_tokens": 1516,
+      "output_tokens": 16,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 75
+    },
+    {
+      "seconds": 0.8440772000030847,
+      "input_tokens": 1513,
+      "output_tokens": 16,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 60
+    },
+    {
+      "seconds": 1.4258040999993682,
+      "input_tokens": 1510,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 53
+    },
+    {
+      "seconds": 1.1251321000017924,
+      "input_tokens": 1515,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 69
+    },
+    {
+      "seconds": 2.9480734999960987,
+      "input_tokens": 1513,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 60
+    },
+    {
+      "seconds": 1.0422416000074008,
+      "input_tokens": 1512,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 53
+    },
+    {
+      "seconds": 0.9500718000053894,
+      "input_tokens": 1513,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 55
+    },
+    {
+      "seconds": 2.560353799999575,
+      "input_tokens": 1512,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 66
+    },
+    {
+      "seconds": 1.0043570999987423,
+      "input_tokens": 1514,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 57
+    },
+    {
+      "seconds": 1.0341289000061806,
+      "input_tokens": 1508,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 48
+    },
+    {
+      "seconds": 0.9665571000077762,
+      "input_tokens": 1516,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 63
+    },
+    {
+      "seconds": 0.9620950999960769,
+      "input_tokens": 1509,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 40
+    },
+    {
+      "seconds": 1.0278957999980776,
+      "input_tokens": 1512,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 52
+    },
+    {
+      "seconds": 0.9874282000091625,
+      "input_tokens": 1510,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 44
+    },
+    {
+      "seconds": 0.983604799999739,
+      "input_tokens": 1510,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 48
+    },
+    {
+      "seconds": 1.0798732999974163,
+      "input_tokens": 1511,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 52
+    },
+    {
+      "seconds": 0.9991265999997267,
+      "input_tokens": 1510,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 52
+    },
+    {
+      "seconds": 1.3838231000117958,
+      "input_tokens": 1511,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 57
+    },
+    {
+      "seconds": 1.0248498000000836,
+      "input_tokens": 1511,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 66
+    },
+    {
+      "seconds": 1.1046468999993522,
+      "input_tokens": 1510,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 58
+    },
+    {
+      "seconds": 1.0407509000069695,
+      "input_tokens": 1512,
+      "output_tokens": 14,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "ok": true,
+      "text_chars": 67
+    }
+  ]
+}

@@ -7,7 +7,7 @@ are easy to get wrong.
 
 ## Where things stand
 
-**M1 to M6 are built.** 611 tests, mypy strict across 87 source files, four
+**M1 to M6 are built.** 640 tests, mypy strict across 89 source files, four
 import-linter contracts kept, 93 percent coverage, green in CI. A question goes
 in through `wayfinder ask` or the API, gets classified, and comes back either as
 an answer with dated citations, as a phone number, as a refusal that names
@@ -329,9 +329,21 @@ it refuses to start without a crisis screen, and a real turn goes through it;
 CI does all three on every push. Nothing has run it for longer than a smoke
 test, so nothing is known about it under any real load or over any real time.
 
-**8. No load or latency measurement.** The crisis screen's timeout is 8 seconds
-and its latency is part of its safety story, and nobody has measured what a real
-turn costs end to end.
+**8. Concurrency and p99 are still unmeasured.** Single-caller latency and cost
+are done: **2.24 s p50, $0.0102 per turn**, and the model is 99.87 percent of
+the wait, so there is nothing worth tuning below it.
+See [`15-latency-and-cost.md`](docs/15-latency-and-cost.md).
+
+What is left is the part that needs load rather than a sample. Forty sequential
+calls cannot establish p99, and p99 is where this matters: a call over the 8
+second timeout returns `DEGRADED`, meaning the turn went unscreened, so the far
+tail is the rate at which the safety layer silently stops working. Nothing here
+says what happens under concurrency, rate limits, or contention either.
+
+Prompt caching is the open cost decision. It would cut the bill 81 percent, to
+$1.93 per thousand turns, but only above roughly 15 turns an hour; below that a
+cold cache makes every call more expensive than sending it uncached. Which side
+of that a deployment sits on is not known, which is why it is not implemented.
 
 ---
 

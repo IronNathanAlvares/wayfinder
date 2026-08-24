@@ -829,3 +829,31 @@ configuration is unsafe, the unsafe configuration should be awkward to reach.
 | Lower the recall gate to what the patterns achieve | The gate is not a target to be met, it is a statement about what is acceptable. Somebody sleeping outside does not care what the classifier could manage |
 | Drop the crisis screen and route everything to a human | The response is a phone number and it should arrive in seconds, not in the days a caseworker queue takes |
 | Keep the model out and accept the recall | This is the one the design implicitly chose, and the measurement says it means missing four crisis turns in five |
+
+---
+
+## What this decision costs, measured 24 August 2026
+
+The choice of Opus was made on recall with no idea what it cost. It is 7.1x the
+money and 2.15x the wait against Haiku 4.5:
+
+| | Opus 5 | Haiku 4.5 |
+|---|---|---|
+| Recall, held out | **0.975** | 0.856 |
+| Latency p50 | 2.24 s | 1.04 s |
+| Cost per turn | $0.0102 | $0.0014 |
+
+Of every 100 crisis turns, Haiku misses about 14 and Opus about 2.5. Even at a
+crisis rate of one turn in a thousand the trade is a few dollars against
+recognising somebody describing a plan to end their life, so the decision is not
+close and does not become close at any plausible traffic. It stands, and now it
+stands on numbers rather than on recall alone.
+
+One thing the measurement changed rather than confirmed: **the 8 second timeout
+has less meaning than it appeared to.** A call over it returns `DEGRADED`, which
+is an unscreened turn, so the tail of the latency distribution is the rate at
+which this layer silently stops working. Forty calls cannot establish p99, so
+what that rate is remains unknown. Monitoring it is a deployment requirement,
+not an optimisation.
+
+Full method and caveats in [`../15-latency-and-cost.md`](../15-latency-and-cost.md).

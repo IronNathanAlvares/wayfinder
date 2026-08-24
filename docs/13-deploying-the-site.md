@@ -181,8 +181,12 @@ Deploying the application for real needs, in order:
    `graph/checkpoint.py` has to come with it.
 3. **A host with a real disk**, or Postgres behind a serverless deployment.
    Railway, Render and Fly all work; Vercel works for the frontend either way.
-4. **A budget.** The crisis screen calls Opus before every turn, which was
-   measured at about $0.012 per turn.
+4. **A budget.** The crisis screen calls Opus before every turn. That is now
+   actually measured rather than estimated: **$0.0102 per turn, $10.17 per
+   thousand**, and about 2.2 seconds of wait on every turn. Prompt caching
+   would take the money to $1.93 per thousand if traffic stays above roughly
+   15 turns an hour, and would cost more below that.
+   See [`15-latency-and-cost.md`](15-latency-and-cost.md).
 
 Until those exist, the honest thing to deploy is the recording, which is what
 this document is about.

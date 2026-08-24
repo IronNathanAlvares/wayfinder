@@ -76,7 +76,7 @@ below uses the `uv run` form, which works either way.
 uv run pytest -q
 ```
 
-611 tests, no network, no key, under three minutes. If this passes,
+640 tests, no network, no key, about two minutes. If this passes,
 everything in §4 and §5 will work.
 
 The corpus has its own integrity check, worth running separately because it is
@@ -432,6 +432,23 @@ pass `--save` too: a run costs money and a terminal scrolls away.
 Use `--limit N` to price a run before committing to it. Only held-out splits are
 offered as choices, because measuring a dev split would report the tuning rather
 than the performance.
+
+The latency and cost harness has a free half, which is the one to run first:
+
+```bash
+uv run wayfinder-latency --dry-run
+```
+
+That reports how often a turn reaches the model and prices the paid run, with no
+API calls at all. The paid half measures the shipped screen:
+
+```bash
+uv run wayfinder-latency --limit 40 --save results.json
+```
+
+Results and method are in [`15-latency-and-cost.md`](15-latency-and-cost.md).
+The short version: 2.24 s at p50 and $0.0102 per turn, and the model is 99.87
+percent of the wait.
 
 ---
 
