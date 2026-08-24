@@ -7,7 +7,7 @@ are easy to get wrong.
 
 ## Where things stand
 
-**M1 to M6 are built.** 640 tests, mypy strict across 89 source files, four
+**M1 to M6 are built.** 645 tests, mypy strict across 89 source files, four
 import-linter contracts kept, 93 percent coverage, green in CI. A question goes
 in through `wayfinder ask` or the API, gets classified, and comes back either as
 an answer with dated citations, as a phone number, as a refusal that names
@@ -309,9 +309,14 @@ holding a thread id can read that plan and post turns to it.
 
 That is a deliberate consequence of the applicant not having an account:
 requiring registration before somebody can find out where the nearest GP is
-defeats the point of the project. It does mean thread ids have to be unguessable
-random tokens issued by a front end, and no such front end exists. Nothing stops
-a caller choosing `amara` as an id today.
+defeats the point of the project.
+
+The guessing half is now closed (change 28): the server mints the id, 256 bits
+from `secrets`, and the caller cannot choose one. What is left is inherent to
+capabilities rather than a defect: an id that leaks is an id somebody else
+holds, and the server cannot tell. Keeping it out of referrer headers, logs and
+shared screens is a deployment concern, and `DELETE /v1/threads/{id}` is the
+revocation.
 
 Still missing around it: no TLS, no rate limiting, no revocation beyond editing
 the registry and restarting, and the SQLite file is not encrypted at rest.

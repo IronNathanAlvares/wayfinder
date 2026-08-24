@@ -48,9 +48,10 @@ AMARA = {
 
 
 def test_a_procedural_turn_comes_back_with_its_citations(client: TestClient) -> None:
-    start(client, "t1")
+    thread = start(client)
     body = client.post(
-        "/v1/threads/t1/turn", json={"question": "how do I apply for a PPS number"}
+        f"/v1/threads/{thread}/turn",
+        json={"question": "how do I apply for a PPS number"},
     ).json()
 
     assert body["status"] == "answered"
@@ -68,9 +69,10 @@ def test_an_entitlement_question_pauses_instead_of_answering(
 
     A client cannot get a determination out of this API, whatever it asks.
     """
-    start(client, "t2", **AMARA)
+    thread = start(client, **AMARA)
     body = client.post(
-        "/v1/threads/t2/turn", json={"question": "am I entitled to child benefit?"}
+        f"/v1/threads/{thread}/turn",
+        json={"question": "am I entitled to child benefit?"},
     ).json()
 
     assert body["status"] == "waiting_for_a_person"
@@ -79,9 +81,9 @@ def test_an_entitlement_question_pauses_instead_of_answering(
 
 
 def test_a_crisis_turn_returns_a_number_and_no_plan(client: TestClient) -> None:
-    start(client, "t3")
+    thread = start(client)
     body = client.post(
-        "/v1/threads/t3/turn",
+        f"/v1/threads/{thread}/turn",
         json={"question": "i have nowhere to sleep tonight with my son"},
     ).json()
 
@@ -92,8 +94,11 @@ def test_a_crisis_turn_returns_a_number_and_no_plan(client: TestClient) -> None:
 def test_an_empty_question_is_rejected_rather_than_classified(
     client: TestClient,
 ) -> None:
-    start(client, "t4")
-    assert client.post("/v1/threads/t4/turn", json={"question": ""}).status_code == 422
+    thread = start(client)
+    assert (
+        client.post(f"/v1/threads/{thread}/turn", json={"question": ""}).status_code
+        == 422
+    )
 
 
 def test_an_unknown_field_is_rejected(client: TestClient) -> None:
@@ -114,8 +119,8 @@ def test_an_unknown_field_is_rejected(client: TestClient) -> None:
 def test_the_plan_separates_what_can_start_from_what_is_waiting(
     client: TestClient,
 ) -> None:
-    start(client, "p1", **AMARA)
-    body = client.get("/v1/threads/p1/plan").json()
+    thread = start(client, **AMARA)
+    body = client.get(f"/v1/threads/{thread}/plan").json()
 
     startable = {item["id"] for item in body["start_now"]}
     assert "ppsn.apply" in startable
@@ -130,8 +135,8 @@ def test_a_task_gated_on_a_determination_names_who_decides_it(
     Child benefit is not refused and not granted. It is handed to the body that
     decides it, by name.
     """
-    start(client, "p2", **AMARA)
-    plan = client.get("/v1/threads/p2/plan").json()
+    thread = start(client, **AMARA)
+    plan = client.get(f"/v1/threads/{thread}/plan").json()
     blocked = {item["id"]: item for item in plan["not_yet"]}
 
     child_benefit = blocked["child_benefit.apply"]
@@ -147,31 +152,32 @@ def test_a_plan_for_an_unknown_thread_is_a_404(client: TestClient) -> None:
 def test_deleting_a_thread_removes_it(client: TestClient) -> None:
     """NG5, checked by asking for it afterwards rather than by trusting the
     204."""
-    start(client, "gone")
-    assert client.delete("/v1/threads/gone").status_code == 204
-    assert client.get("/v1/threads/gone/plan").status_code == 404
+    thread = start(client)
+    assert client.delete(f"/v1/threads/{thread}").status_code == 204
+    assert client.get(f"/v1/threads/{thread}/plan").status_code == 404
 
 
 # --- the caseworker's round trip ---------------------------------------------
 
 
 def test_the_queue_carries_the_question_and_the_context(client: TestClient) -> None:
-    start(client, "q1", **AMARA)
+    thread = start(client, **AMARA)
     client.post(
-        "/v1/threads/q1/turn", json={"question": "do I qualify for a medical card?"}
+        f"/v1/threads/{thread}/turn",
+        json={"question": "do I qualify for a medical card?"},
     )
 
     waiting = client.get("/v1/queue", headers=AUTH).json()["waiting"]
-    assert [item["thread_id"] for item in waiting] == ["q1"]
+    assert [item["thread_id"] for item in waiting] == [thread]
     assert waiting[0]["asked"] == "do I qualify for a medical card?"
     assert waiting[0]["context"]["situation_summary"]
 
 
 def test_the_queue_holds_only_threads_actually_paused(client: TestClient) -> None:
     """A queue that lists answered threads is a queue nobody trusts."""
-    start(client, "answered")
+    thread = start(client)
     client.post(
-        "/v1/threads/answered/turn", json={"question": "how do I open a bank account"}
+        f"/v1/threads/{thread}/turn", json={"question": "how do I open a bank account"}
     )
     assert client.get("/v1/queue", headers=AUTH).json()["waiting"] == []
 
@@ -184,13 +190,14 @@ def test_answering_from_the_queue_attributes_the_answer_to_the_person(
     The system relays a named human's judgement. It does not restate it in its
     own voice.
     """
-    start(client, "q2", **AMARA)
+    thread = start(client, **AMARA)
     client.post(
-        "/v1/threads/q2/turn", json={"question": "am I entitled to child benefit?"}
+        f"/v1/threads/{thread}/turn",
+        json={"question": "am I entitled to child benefit?"},
     )
 
     body = client.post(
-        "/v1/queue/q2/respond",
+        f"/v1/queue/{thread}/respond",
         json={"answer": "You need a habitual residence decision first."},
         headers=AUTH,
     ).json()
@@ -237,11 +244,14 @@ def test_a_token_never_comes_back_in_a_response(client: TestClient) -> None:
 
 def test_an_answer_cannot_be_submitted_anonymously(client: TestClient) -> None:
     """The same door, closed the same way it is closed inside the graph."""
-    start(client, "q3", **AMARA)
+    thread = start(client, **AMARA)
     client.post(
-        "/v1/threads/q3/turn", json={"question": "am I entitled to child benefit?"}
+        f"/v1/threads/{thread}/turn",
+        json={"question": "am I entitled to child benefit?"},
     )
-    response = client.post("/v1/queue/q3/respond", json={"answer": "Yes you qualify."})
+    response = client.post(
+        f"/v1/queue/{thread}/respond", json={"answer": "Yes you qualify."}
+    )
     assert response.status_code == 401
 
 
@@ -253,12 +263,13 @@ def test_the_name_on_a_determination_comes_from_the_token(client: TestClient) ->
     determination being traceable to a named human, and a self-declared name is
     not that.
     """
-    start(client, "q4", **AMARA)
+    thread = start(client, **AMARA)
     client.post(
-        "/v1/threads/q4/turn", json={"question": "am I entitled to child benefit?"}
+        f"/v1/threads/{thread}/turn",
+        json={"question": "am I entitled to child benefit?"},
     )
     body = client.post(
-        "/v1/queue/q4/respond",
+        f"/v1/queue/{thread}/respond",
         json={"answer": "That needs a habitual residence decision."},
         headers={"Authorization": f"Bearer {OTHER_TOKEN}"},
     ).json()
@@ -270,12 +281,13 @@ def test_the_name_on_a_determination_comes_from_the_token(client: TestClient) ->
 def test_a_body_that_still_sends_a_name_is_rejected(client: TestClient) -> None:
     """Loudly, rather than ignored. Somebody upgrading from the old shape should
     be told the field is gone, not left believing it still works."""
-    start(client, "q5", **AMARA)
+    thread = start(client, **AMARA)
     client.post(
-        "/v1/threads/q5/turn", json={"question": "am I entitled to child benefit?"}
+        f"/v1/threads/{thread}/turn",
+        json={"question": "am I entitled to child benefit?"},
     )
     response = client.post(
-        "/v1/queue/q5/respond",
+        f"/v1/queue/{thread}/respond",
         json={"answer": "Yes you qualify.", "answered_by": "Somebody Else"},
         headers=AUTH,
     )
@@ -313,8 +325,8 @@ def test_the_applicant_endpoints_are_not_behind_the_caseworker_lock(
     `docs/14-getting-started.md` and in the handoff notes rather than being
     quietly left for somebody to find.
     """
-    start(client, "open", **AMARA)
-    assert client.get("/v1/threads/open/plan").status_code == 200
+    thread = start(client, **AMARA)
+    assert client.get(f"/v1/threads/{thread}/plan").status_code == 200
 
 
 def test_the_queue_endpoints_refuse_to_run_without_durable_storage(
@@ -391,9 +403,9 @@ def test_the_queue_survives_a_restart(tmp_path: Path) -> None:
             caseworkers=staff(),
         )
         with TestClient(first) as client:
-            start(client, "r1", **AMARA)
+            thread = start(client, **AMARA)
             client.post(
-                "/v1/threads/r1/turn",
+                f"/v1/threads/{thread}/turn",
                 json={"question": "am I entitled to child benefit?"},
             )
 
@@ -407,10 +419,10 @@ def test_the_queue_survives_a_restart(tmp_path: Path) -> None:
         )
         with TestClient(second) as client:
             waiting = client.get("/v1/queue", headers=AUTH).json()["waiting"]
-            assert [item["thread_id"] for item in waiting] == ["r1"]
+            assert [item["thread_id"] for item in waiting] == [thread]
 
             answered = client.post(
-                "/v1/queue/r1/respond",
+                f"/v1/queue/{thread}/respond",
                 json={"answer": "You need a habitual residence decision first."},
                 headers=AUTH,
             ).json()
@@ -431,8 +443,10 @@ def test_a_situation_survives_a_restart(tmp_path: Path) -> None:
             caseworkers=staff(),
         )
         with TestClient(app) as client:
-            start(client, "r2", **AMARA)
-            client.post("/v1/threads/r2/turn", json={"question": "what do I do first?"})
+            thread = start(client, **AMARA)
+            client.post(
+                f"/v1/threads/{thread}/turn", json={"question": "what do I do first?"}
+            )
 
     with sqlite_checkpointer(db) as saver:
         app = create_app(
@@ -442,7 +456,7 @@ def test_a_situation_survives_a_restart(tmp_path: Path) -> None:
             caseworkers=staff(),
         )
         with TestClient(app) as client:
-            plan = client.get("/v1/threads/r2/plan")
+            plan = client.get(f"/v1/threads/{thread}/plan")
 
     assert plan.status_code == 200
     assert "ppsn.apply" in {item["id"] for item in plan.json()["start_now"]}
@@ -465,3 +479,54 @@ def test_the_queue_is_empty_rather_than_broken_on_a_fresh_database(
 
     assert response.status_code == 200
     assert response.json() == {"waiting": []}
+
+
+# --- the thread id is a credential --------------------------------------------
+
+
+def test_the_server_mints_the_thread_id_and_the_caller_cannot_choose_it(
+    client: TestClient,
+) -> None:
+    """The id is a bearer capability: anybody holding it can read that plan.
+
+    An applicant has no account, deliberately, so there is nothing else guarding
+    the thread. A caller-chosen id would therefore be a guessable one, and
+    `amara` was a valid id before this.
+    """
+    refused = client.post("/v1/threads", json={"thread_id": "amara", "situation": {}})
+    assert refused.status_code == 422, "the caller was allowed to choose an id"
+
+    body = client.post("/v1/threads", json={"situation": {}}).json()
+    assert len(body["thread_id"]) >= 40
+
+
+def test_every_minted_thread_id_is_different(client: TestClient) -> None:
+    ids = {start(client) for _ in range(25)}
+    assert len(ids) == 25
+
+
+def test_a_thread_id_says_nothing_about_the_person(client: TestClient) -> None:
+    """An id derived from a situation would be a capability that leaks what it
+    protects. For this population that is the category of data whose disclosure
+    can reach the authorities somebody left.
+    """
+    thread = start(client, **AMARA)
+    lowered = thread.lower()
+    for leak in ("amara", "2026", "08", "homeless", "applied", "ipas"):
+        assert leak not in lowered, f"the id carries {leak!r}"
+
+
+def test_the_response_says_the_id_has_to_be_kept(client: TestClient) -> None:
+    """Handed over once, and it is the only way back to the plan. A client that
+    is not told that will not store it."""
+    body = client.post("/v1/threads", json={"situation": {}}).json()
+    assert "keep_this" in body
+    assert "password" in body["keep_this"]
+
+
+def test_an_unknown_thread_id_is_a_404_rather_than_an_empty_plan(
+    client: TestClient,
+) -> None:
+    """Guessing has to fail visibly rather than returning a blank plan that
+    reads as a real but empty thread."""
+    assert client.get("/v1/threads/not-a-real-id/plan").status_code == 404

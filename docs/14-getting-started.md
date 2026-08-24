@@ -76,7 +76,7 @@ below uses the `uv run` form, which works either way.
 uv run pytest -q
 ```
 
-640 tests, no network, no key, about two minutes. If this passes,
+645 tests, no network, no key, about two minutes. If this passes,
 everything in §4 and §5 will work.
 
 The corpus has its own integrity check, worth running separately because it is
@@ -202,19 +202,36 @@ uv run wayfinder serve --no-model-screen --db ./wayfinder.sqlite
 lasts days, so the queue has to outlive the process. Interactive docs are at
 `http://127.0.0.1:8000/docs`.
 
-Start a thread:
+Start a thread. The server mints the id, you do not choose it:
 
 ```bash
-curl -s -X POST http://127.0.0.1:8000/v1/threads -H 'content-type: application/json' -d '{"thread_id":"amara","situation":{"arrival_date":"2026-08-01","protection_application_date":"2026-08-04","protection_stage":"applied","accommodation":"homeless","household":{"adults":1,"children_ages":[7]},"known_absent":["document:ppsn","document:proof_of_address"]}}'
+curl -s -X POST http://127.0.0.1:8000/v1/threads -H 'content-type: application/json' -d '{"situation":{"arrival_date":"2026-08-01","protection_application_date":"2026-08-04","protection_stage":"applied","accommodation":"homeless","household":{"adults":1,"children_ages":[7]},"known_absent":["document:ppsn","document:proof_of_address"]}}'
+```
+
+```json
+{"thread_id": "CLvf-yfnB12b216HOnLs7rHdL06Tia84PNlnUTXk69E",
+ "keep_this": "This id is how you get back to your plan, and anybody who has it can read it. Keep it like a password."}
+```
+
+Hold onto it, then use it for everything else:
+
+```bash
+export T=CLvf-yfnB12b216HOnLs7rHdL06Tia84PNlnUTXk69E
 ```
 
 ```bash
-curl -s http://127.0.0.1:8000/v1/threads/amara/plan
+curl -s http://127.0.0.1:8000/v1/threads/$T/plan
 ```
 
 ```bash
-curl -s -X POST http://127.0.0.1:8000/v1/threads/amara/turn -H 'content-type: application/json' -d '{"question":"how do I apply for a PPS number?"}'
+curl -s -X POST http://127.0.0.1:8000/v1/threads/$T/turn -H 'content-type: application/json' -d '{"question":"how do I apply for a PPS number?"}'
 ```
+
+**The id is the credential.** There is no login on the applicant side, on
+purpose: requiring registration before somebody can find out where the nearest
+GP is defeats the point. So the id is a bearer capability, 256 bits from
+`secrets`, and nothing about the person goes into it. A body that still sends
+`thread_id` gets a 422 rather than having it quietly ignored.
 
 The situation body is validated with `extra="forbid"`, so a misspelled field is
 a 422 rather than a silently ignored fact about somebody's life.
@@ -517,14 +534,19 @@ that claim is verified by a linter instead of trusted.
 
 Stated here rather than left for somebody to discover.
 
-**Thread ids are bearer capabilities.** Anybody holding a thread id can read that
-thread's plan and post turns to it. The applicant endpoints have no
+**Thread ids are bearer capabilities.** Anybody holding a thread id can read
+that thread's plan and post turns to it. The applicant endpoints have no
 authentication at all, which is a deliberate consequence of the applicant not
 having an account: asking somebody in an emergency accommodation queue to
 register before they can find out where the nearest GP is would defeat the
-point. It does mean a guessable thread id is a real exposure, so ids should be
-generated as random tokens by whatever front end sits in front of this, and
-never derived from anything about the person. That front end does not exist yet.
+point.
+
+The guessing half of that is closed. Ids are minted by the server, 256 bits from
+`secrets`, and the caller cannot choose one. What remains is inherent to the
+model rather than a defect in it: a capability that leaks is a capability
+somebody else holds, and nothing here can tell the difference. A real deployment
+needs the id kept out of referrer headers, server logs and shared screens, and
+`DELETE /v1/threads/{id}` is the revocation.
 
 **There is no rate limiting and no TLS.** Both belong at the reverse proxy, and
 neither is configured here.

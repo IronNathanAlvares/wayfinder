@@ -18,6 +18,7 @@ a delete endpoint, and it is expected to be used.
 
 from __future__ import annotations
 
+import secrets
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -41,9 +42,21 @@ DATA = Path(__file__).resolve().parent.parent / "corpus" / "data"
 
 
 class StartThread(BaseModel):
+    """Starting a thread. Deliberately no `thread_id`.
+
+    The id is the credential. Applicants have no account, on purpose: asking
+    somebody in an emergency accommodation queue to register before they can
+    find out where the nearest GP is defeats the point of the project. That
+    makes a thread id a bearer capability, and a capability the caller chooses
+    is a capability anybody can guess. `amara` was a valid id until now.
+
+    So the server mints it. `extra="forbid"` means a client still sending one is
+    refused loudly rather than having it quietly ignored, which would leave
+    somebody believing they had chosen an id that was really something else.
+    """
+
     model_config = ConfigDict(extra="forbid")
 
-    thread_id: str = Field(min_length=1)
     situation: Situation = Field(default_factory=Situation)
 
 
@@ -164,8 +177,22 @@ def create_app(
 
     @app.post("/v1/threads", status_code=201)
     def start_thread(body: StartThread) -> dict[str, str]:
-        situations[body.thread_id] = body.situation
-        return {"thread_id": body.thread_id}
+        """Mint an unguessable id and hand it back once.
+
+        256 bits from `secrets`. Nothing about the person goes into it: an id
+        derived from a name or a date of birth would be a capability that leaks
+        what it protects, which for this population is the category of data
+        whose disclosure can reach the authorities somebody left.
+        """
+        thread_id = secrets.token_urlsafe(32)
+        situations[thread_id] = body.situation
+        return {
+            "thread_id": thread_id,
+            "keep_this": (
+                "This id is how you get back to your plan, and anybody who has "
+                "it can read it. Keep it like a password."
+            ),
+        }
 
     @app.post("/v1/threads/{thread_id}/turn")
     def send_turn(thread_id: str, body: SendTurn) -> dict[str, Any]:

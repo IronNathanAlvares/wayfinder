@@ -289,7 +289,7 @@ time, since somebody editing YAML wants the whole list.
 silent failure in this system, and an endpoint that returns 200 with a list of
 rotting sources nobody reads is not an alarm. It returns 503.
 
-**Built, with four corrections to this table.**
+**Built, with five corrections to this table.**
 
 Turns are not streamed. A turn either completes or pauses at the handoff, and a
 paused turn has nothing to stream. Streaming would only make the wait feel
@@ -307,6 +307,10 @@ back empty after a redeploy while the graph was still paused on disk. See change
 Both `/v1/queue` endpoints return 503 when no checkpointer is configured. An
 empty list would read as "nothing is waiting" rather than "this is not set up",
 and the difference matters to whoever is on call.
+
+`POST /v1/threads` no longer takes a `thread_id`. The server mints it. An
+applicant has no account, so the id is the only thing guarding the thread, and
+an id the caller chooses is one anybody can guess. See change 28.
 
 The queue endpoints are behind a caseworker credential, and the response body
 for `respond` lost its `answered_by` field. That field was free text, so the

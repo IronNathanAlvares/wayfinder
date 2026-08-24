@@ -77,8 +77,12 @@ def stateless() -> Iterator[TestClient]:
         yield c
 
 
-def start(client: TestClient, thread_id: str, **situation: Any) -> None:
-    response = client.post(
-        "/v1/threads", json={"thread_id": thread_id, "situation": situation}
-    )
+def start(client: TestClient, **situation: Any) -> str:
+    """Start a thread and return the id the server minted for it.
+
+    The id is no longer the caller's to choose, so tests have to carry it the
+    way a real client does rather than naming threads for readability.
+    """
+    response = client.post("/v1/threads", json={"situation": situation})
     assert response.status_code == 201, response.text
+    return str(response.json()["thread_id"])

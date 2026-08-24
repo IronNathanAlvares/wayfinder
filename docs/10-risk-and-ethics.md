@@ -94,11 +94,13 @@ of the following are optional:
 6. Independent review of the crisis lexicon by somebody who does this work.
 7. An access model for the applicant side. The caseworker queue is behind a
    credential and a determination is signed with the name that credential is
-   registered to, which is the part ADR-0004 depends on. But a thread id is
-   currently a bearer capability, and the data behind it is what somebody in the
-   protection process has disclosed about their own circumstances. For this
-   population that is not a routine access-control gap, it is the category of
-   data where disclosure can reach the authorities somebody left.
+   registered to, which is the part ADR-0004 depends on. A thread id is
+   unguessable now rather than caller-chosen, but it is still a bearer
+   capability, and the data behind it is what somebody in the protection process
+   has disclosed about their own circumstances. For this population that is not
+   a routine access-control gap, it is the category of data where disclosure can
+   reach the authorities somebody left. An id that leaks is an id somebody else
+   holds, so this needs handling rules and not just entropy.
 
 Listing these is not a plan to do them. It is being honest that a demo and a
 deployed service are different things, and that the gap between them is mostly
